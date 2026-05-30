@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { msalConfig } from './auth/msalConfig'
 import LoginScreen from './components/LoginScreen'
+import FolderBrowser from './components/FolderBrowser'
+import { useAppStore } from './store/useAppStore'
 
 const msalInstance = new PublicClientApplication(msalConfig)
 
 export default function App() {
   const [account, setAccount] = useState<AccountInfo | null>(null)
   const [initializing, setInitializing] = useState(true)
+  const { reset } = useAppStore()
 
   useEffect(() => {
     msalInstance.initialize().then(() => {
@@ -15,21 +18,10 @@ export default function App() {
       if (accounts.length > 0) setAccount(accounts[0])
       setInitializing(false)
     })
-
-    const callbackId = msalInstance.addEventCallback((event) => {
-      if (event.eventType === 'msal:loginSuccess' && event.payload) {
-        const payload = event.payload as { account: AccountInfo }
-        setAccount(payload.account)
-      }
-    })
-
-    return () => {
-      if (callbackId) msalInstance.removeEventCallback(callbackId)
-    }
   }, [])
 
   const handleLogout = () => {
-    msalInstance.logoutPopup().then(() => setAccount(null))
+    msalInstance.logoutPopup().then(() => { setAccount(null); reset() })
   }
 
   if (initializing) {
@@ -41,7 +33,7 @@ export default function App() {
   }
 
   if (!account) {
-    return <LoginScreen msalInstance={msalInstance} />
+    return <LoginScreen msalInstance={msalInstance} onLogin={setAccount} />
   }
 
   return (
@@ -58,8 +50,8 @@ export default function App() {
           </button>
         </div>
       </header>
-      <main className="flex items-center justify-center h-[calc(100vh-65px)]">
-        <p className="text-gray-500">Mapnavigatie komt hier — Stap 3</p>
+      <main className="h-[calc(100vh-65px)] overflow-y-auto">
+        <FolderBrowser msalInstance={msalInstance} account={account} />
       </main>
     </div>
   )

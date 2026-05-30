@@ -1,13 +1,15 @@
-import { PublicClientApplication } from '@azure/msal-browser'
+import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { loginRequest } from '../auth/msalConfig'
 
 interface Props {
   msalInstance: PublicClientApplication
+  onLogin: (account: AccountInfo) => void
 }
 
-export default function LoginScreen({ msalInstance }: Props) {
+export default function LoginScreen({ msalInstance, onLogin }: Props) {
   const handleLogin = async () => {
-    await msalInstance.loginPopup(loginRequest)
+    const result = await msalInstance.loginPopup(loginRequest)
+    if (result?.account) onLogin(result.account)
   }
 
   return (
