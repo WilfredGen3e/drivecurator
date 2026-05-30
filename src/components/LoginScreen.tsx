@@ -21,16 +21,18 @@ export default function LoginScreen({ msalInstance, onLogin }: Props) {
         </div>
         <button
           onClick={handleLogin}
-          className="flex items-center gap-3 mx-auto bg-fluent-accent hover:bg-fluent-accent-hover text-white font-semibold px-5 py-2 text-sm transition-colors"
-          style={{ borderRadius: 2 }}
+          className="flex items-center gap-3 mx-auto font-semibold px-5 py-2 text-sm transition-colors"
+          style={{ borderRadius: 2, backgroundColor: '#0078d4', color: '#ffffff' }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#106ebe')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#0078d4')}
         >
-          <svg width="18" height="18" viewBox="0 0 21 21" fill="none">
+          <svg width="18" height="18" viewBox="0 0 21 21" fill="none" style={{ flexShrink: 0 }}>
             <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
             <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
             <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
             <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
           </svg>
-          Inloggen met Microsoft
+          <span style={{ color: '#ffffff' }}>Inloggen met Microsoft</span>
         </button>
       </div>
     </div>
