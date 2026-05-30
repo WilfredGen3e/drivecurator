@@ -172,7 +172,7 @@ DriveCurator ondersteunt ook een donker thema via een `data-theme="dark"` attrib
 
 ## Authenticatie
 - Library: `@azure/msal-browser` v3
-- Authority: `https://login.microsoftonline.com/consumers` — uitsluitend persoonlijke Microsoft accounts (outlook.com, hotmail.com, live.com). Geen werk- of schoolaccounts.
+- Authority: `https://login.microsoftonline.com/common` — persoonlijke én organisatieaccounts. Werkt ook als de App Registration in een organisatietenant zit.
 - Scopes: `Files.ReadWrite`, `User.Read`, `offline_access`
 - Login via popup (`loginPopup`), niet redirect
 - Client ID komt uit `VITE_MSAL_CLIENT_ID` in `.env.local` (nooit committen)
