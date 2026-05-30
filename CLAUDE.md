@@ -1,10 +1,11 @@
 # DriveSwipe — Claude Code Instructies
 
 ## Wat is DriveSwipe?
-DriveSwipe is een Azure Static Web App waarmee gebruikers snel en efficiënt hun persoonlijke OneDrive foto's kunnen opschonen via een swipe-interface. Gebruikers loggen in met hun eigen Microsoft account, zien hun foto's één voor één of in een grid, en kunnen ze verwijderen (naar prullenbak) of in mappen plaatsen.
+DriveSwipe is een Azure Static Web App waarmee gebruikers snel en efficiënt hun persoonlijke OneDrive foto's kunnen opschonen via een swipe-interface. Gebruikers loggen in met hun eigen Microsoft account (outlook.com / hotmail.com), zien hun foto's één voor één, en kunnen ze verwijderen (naar prullenbak) of in mappen plaatsen.
 
 ## Repo & Deployment
-- **GitHub repo:** `driveswipe`
+- **GitHub repo:** `https://github.com/WilfredGen3e/driveswipe`
+- **Lokaal:** `/Users/stefan/git/driveswipe`
 - **Hosting:** Azure Static Web App
 - **CI/CD:** Elke push naar `main` deployt automatisch via GitHub Actions
 - **URL:** `https://driveswipe.azurestaticapps.net`
@@ -32,12 +33,15 @@ DriveSwipe is een Azure Static Web App waarmee gebruikers snel en efficiënt hun
 
 ---
 
-## Authenticatie — Belangrijk
-- Gebruik `@azure/msal-browser` v3
-- Authority: `https://login.microsoftonline.com/consumers` voor persoonlijke Microsoft accounts
+## Authenticatie
+- Library: `@azure/msal-browser` v3
+- Authority: `https://login.microsoftonline.com/consumers` — uitsluitend persoonlijke Microsoft accounts (outlook.com, hotmail.com, live.com). Geen werk- of schoolaccounts.
 - Scopes: `Files.ReadWrite`, `User.Read`, `offline_access`
-- Client ID komt uit `VITE_MSAL_CLIENT_ID` environment variable
-- Elke gebruiker logt in met zijn eigen Microsoft account → eigen OneDrive, geen gedeelde data
+- Login via popup (`loginPopup`), niet redirect
+- Client ID komt uit `VITE_MSAL_CLIENT_ID` in `.env.local` (nooit committen)
+- Azure App Registration: platform type = **Single-page application (SPA)**, niet Web
+- Client ID: `c79b6759-89fd-46e0-9266-56d6bff3a8f0`
+- Redirect URI's: `http://localhost:5173` (dev) en productie-URL
 
 ---
 
@@ -47,23 +51,26 @@ driveswipe/
 ├── public/
 ├── src/
 │   ├── auth/
-│   │   └── msalConfig.ts
+│   │   └── msalConfig.ts          — MSAL config + loginRequest scopes
 │   ├── services/
-│   │   └── graphService.ts
+│   │   └── graphService.ts        — alle Graph API calls
 │   ├── store/
-│   │   └── useAppStore.ts
+│   │   └── useAppStore.ts         — Zustand global state
 │   ├── components/
-│   │   ├── LoginScreen.tsx
-│   │   ├── FolderBrowser.tsx
-│   │   ├── GridView.tsx
-│   │   ├── TriageView.tsx
-│   │   ├── ActionBar.tsx
-│   │   └── UndoToast.tsx
-│   ├── App.tsx
-│   └── main.tsx
+│   │   ├── LoginScreen.tsx        — inlogpagina met Microsoft knop
+│   │   ├── FolderBrowser.tsx      — mapnavigatie vóór triage
+│   │   ├── FolderSidebar.tsx      — sidebar tijdens triage
+│   │   ├── TriageView.tsx         — hoofdscherm foto beoordelen
+│   │   ├── ActionBar.tsx          — knoppen (niet meer actief gebruikt, vervangen door TriageView knoppen)
+│   │   └── UndoToast.tsx          — undo notificatie onderaan scherm
+│   ├── App.tsx                    — root component, routing tussen schermen
+│   ├── main.tsx
+│   ├── index.css
+│   └── vite-env.d.ts
 ├── CLAUDE.md
 ├── PRD.md
 ├── .env.example
+├── .env.local                     — bevat VITE_MSAL_CLIENT_ID (niet gecommit)
 ├── staticwebapp.config.json
 ├── package.json
 └── vite.config.ts
@@ -71,30 +78,106 @@ driveswipe/
 
 ---
 
-## Graph API Endpoints
+## Hoe de app werkt
+
+### Schermflow
 ```
-GET    /me/drive/root/children           — root mappen ophalen
-GET    /me/drive/items/{id}/children     — map inhoud
-GET    /me/drive/items/{id}/thumbnails   — thumbnails
-PATCH  /me/drive/items/{id}             — verplaatsen naar andere map
-DELETE /me/drive/items/{id}             — naar prullenbak (niet permanent)
+LoginScreen → FolderBrowser → [laden] → TriageView
+                                            ↓
+                                        FolderBrowser (via "Terug" of reset)
+```
+
+### 1. LoginScreen
+- Toont "Inloggen met Microsoft" knop
+- Na succesvolle `loginPopup()` wordt `onLogin(account)` aangeroepen in App.tsx
+- App.tsx slaat het account op in React state en toont de rest van de app
+
+### 2. FolderBrowser
+- Laadt de root-mappen van OneDrive via `getRootFolders()`
+- Gebruiker navigeert door mappen met breadcrumb (meerdere niveaus diep)
+- Knop "Start in [mapnaam]" roept `getFolderContents()` aan met lazy loading:
+  - Eerste pagina (200 foto's) → direct `setPhotos()` → triage start
+  - Volgende pagina's → `appendPhotos()` op de achtergrond
+- Teller toont `1 / 200+` zolang nog niet alles geladen is
+
+### 3. TriageView
+- Layout: sidebar links (256px) + foto-paneel rechts
+- Foto wordt zo groot mogelijk weergegeven (`large` thumbnail = 800×800px)
+- Onder de foto: bestandsnaam, datum (EXIF takenDateTime of aanmaakdatum), camera, bestandsgrootte
+- Knoppen: ← Vorige | 🗑 Verwijderen | → Volgende
+- Sidebar-knop (hamburgermenu) verbergt/toont de zijbalk
+- Verwijderen: `deleteItem()` → verplaatst naar OneDrive prullenbak (niet permanent)
+- Volgende: `nextPhoto()` zonder API call
+- Vorige: `prevPhoto()` zonder API call
+- Na verwijderen/verplaatsen: toast met "Ongedaan maken" knop (4 seconden zichtbaar)
+- Undo van verplaatsen: werkt via `moveItem()` terug naar originele map
+- Undo van verwijderen: niet mogelijk via API, toast meldt dit
+
+### 4. FolderSidebar
+- Eigen navigatiestate (los van FolderBrowser)
+- Toont mappen in huidige navigatielocatie
+- Klik op mapnaam → navigeer erin (submappen laden)
+- `→` knop naast map → verplaatst huidige foto naar die map via `moveItem()`
+- Breadcrumb bovenaan voor terugnavigeren
+- "+ Nieuwe map" knop onderaan (alleen zichtbaar als je in een map zit, niet in root)
+  - Inline tekstinvoer, Enter = aanmaken, Escape = annuleren
+  - Nieuwe map verschijnt direct in de lijst
+
+---
+
+## Graph API — Belangrijke details
+
+### Endpoints in gebruik
+```
+GET  /me/drive/root/children                                    — root mappen
+GET  /me/drive/items/{id}/children                              — submappen
+GET  /me/drive/items/{id}/children?$expand=thumbnails&$top=200  — foto's + thumbnails
+DELETE /me/drive/items/{id}                                     — naar prullenbak
+PATCH  /me/drive/items/{id}  { parentReference: { id } }       — verplaatsen
+POST   /me/drive/items/{id}/children  { name, folder: {} }     — map aanmaken
+```
+
+### Paginering
+`getFolderContents()` volgt `@odata.nextLink` totdat er geen volgende pagina meer is. Elke pagina = 200 items. Bij tienduizenden foto's zijn dit honderden API calls.
+
+### Thumbnails
+- `large` (800×800) wordt gebruikt voor weergave — voldoende scherpte voor beoordeling
+- `medium` (176×176) als fallback als `large` niet beschikbaar is
+- Thumbnails worden meegeladen via `$expand=thumbnails` in hetzelfde request
+
+### Token
+`acquireTokenSilent()` vernieuwt het token automatisch. Geen handmatige token-afhandeling nodig.
+
+---
+
+## Omgeving starten
+```bash
+cd /Users/stefan/git/driveswipe
+npm install
+cp .env.example .env.local
+# Vul VITE_MSAL_CLIENT_ID in (zie boven)
+npm run dev
+# → http://localhost:5173
 ```
 
 ---
 
-## Fasering — Bouw ALLEEN wat in de actieve fase staat
+## Fasering — Status
 
-### ✅ Fase 1 — MVP (nu bouwen)
-- [ ] A1 — Inloggen met Microsoft account via MSAL popup
-- [ ] A2 — Uitloggen
-- [ ] M1 — OneDrive mapnavigatie, map selecteren
-- [ ] T1 — Foto's één voor één weergeven, groot
-- [ ] T2 — Swipe-links / knop = verwijderen naar prullenbak
-- [ ] T3 — Swipe-rechts / knop = bewaren (volgende foto)
-- [ ] T4 — Knop = verplaatsen naar map (map-picker)
-- [ ] T6 — Undo: laatste actie ongedaan maken
-- [ ] T7 — Voortgangsindicator (foto 12 van 143)
-- [ ] P1 — Verwijderen gaat naar OneDrive prullenbak (niet permanent)
+### ✅ Fase 1 — MVP (gebouwd)
+- [x] A1 — Inloggen met Microsoft account via MSAL popup
+- [x] A2 — Uitloggen
+- [x] M1 — OneDrive mapnavigatie, meerdere niveaus diep, breadcrumb
+- [x] T1 — Foto's één voor één weergeven, groot (800×800)
+- [x] T2 — Knop verwijderen → OneDrive prullenbak
+- [x] T3 — Knop bewaren (volgende foto)
+- [x] T4 — Sidebar met mappen + verplaats-knop per map
+- [x] T6 — Undo: laatste actie ongedaan maken (move werkt, delete niet via API)
+- [x] T7 — Voortgangsindicator (foto 12 van 143+)
+- [x] P1 — Verwijderen gaat naar OneDrive prullenbak (niet permanent)
+- [x] Extra — Foto-metadata: datum, camera, bestandsgrootte
+- [x] Extra — Nieuwe map aanmaken vanuit sidebar
+- [x] Extra — Lazy loading: eerste 200 foto's direct, rest op achtergrond
 
 ### 🔒 Fase 2 — Nog niet bouwen
 - Grid-modus, bulk selectie, toetsenbordshortcuts, metadata, video support
@@ -104,63 +187,14 @@ DELETE /me/drive/items/{id}             — naar prullenbak (niet permanent)
 
 ---
 
-## Testplan Fase 1 — Vink af na implementatie
-
-### Unit Tests
-- [ ] U1 — `graphService.getFolderContents()` retourneert array van DriveItems
-- [ ] U2 — `graphService.deleteItem()` verstuurt DELETE naar juist endpoint
-- [ ] U3 — `graphService.moveItem()` verstuurt PATCH met juiste parentReference
-- [ ] U4 — Undo-stack draait laatste actie terug
-- [ ] U5 — Triage-teller loopt correct op
-
-### Integratie Tests
-- [ ] I1 — Inloggen met Microsoft account → token ontvangen, naam zichtbaar
-- [ ] I2 — Map ophalen → thumbnails zichtbaar in triage
-- [ ] I3 — Foto verwijderen → staat in OneDrive prullenbak
-- [ ] I4 — Foto verplaatsen → staat in doelmap
-- [ ] I5 — Uitloggen → loginscherm zichtbaar
-
-### UI Tests
-- [ ] UI1 — Swipe-links → verwijder-animatie, volgende foto
-- [ ] UI2 — Swipe-rechts → bewaar-animatie, volgende foto
-- [ ] UI6 — Undo → foto terug in lijst, toast zichtbaar
-- [ ] UI7 — Voortgangsteller klopt
-
-### Device Tests
-- [ ] R1 — iPhone Safari — swipe werkt met touch
-- [ ] R3 — Desktop Chrome/Edge — volledig functioneel
-
-### Edge Cases
-- [ ] E1 — Lege map → melding "Geen foto's"
-- [ ] E2 — Laatste foto verwijderd → "Map leeg" + terugknop
-- [ ] E4 — Sessie verlopen → stille re-auth via MSAL
-
----
-
-## Definition of Done
-Een feature is klaar wanneer:
-- [ ] Code geschreven en gecommit op `main`
-- [ ] Relevante testcases hierboven afgevinkt
-- [ ] Getest met echte OneDrive (persoonlijk Microsoft account)
-- [ ] Getest op mobiel (iPhone Safari) én desktop Chrome
-- [ ] Geen console errors in `npm run build`
-- [ ] Azure Static Web App deployment succesvol
+## Bekende beperkingen
+- Undo van verwijderen is niet mogelijk via Graph API (bestand staat in prullenbak, maar herstel vereist gebruikersactie in OneDrive)
+- Foto's worden geladen als thumbnail (800px), niet het origineel — voor beoordeling voldoende
+- Bij zeer grote mappen (10.000+) duurt het volledig laden enkele minuten; triage start wel direct na de eerste 200
 
 ---
 
 ## Commerciële Guardrails
-Dit is nu een persoonlijke app maar wordt mogelijk commercieel. Houd rekening met:
 - Bouw componenten modulair — geen spaghetti logica in één component
-- Scheid auth-logica van business-logica (makkelijk later te vervangen door Azure AD B2C)
+- Scheid auth-logica van business-logica
 - Gebruik een `features` config object voor toekomstige feature flags
-- Log user actions gestructureerd (console.info voor nu, later te vervangen door analytics)
-
----
-
-## Omgeving starten
-```bash
-npm install
-cp .env.example .env.local
-# Vul VITE_MSAL_CLIENT_ID in
-npm run dev
-```
