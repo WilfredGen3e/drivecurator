@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { DriveItem } from '../services/graphService'
+import { UserProfile } from '../services/apiService'
 
 type UndoAction =
   | { type: 'delete'; item: DriveItem; previousFolderId: string }
@@ -15,6 +16,7 @@ interface AppStore {
   loadingCount: number
   fullyLoaded: boolean
   error: string | null
+  currentUser: UserProfile | null
 
   setFolder: (id: string, name: string) => void
   setPhotos: (photos: DriveItem[]) => void
@@ -27,6 +29,7 @@ interface AppStore {
   setLoadingCount: (count: number) => void
   setFullyLoaded: (fullyLoaded: boolean) => void
   setError: (error: string | null) => void
+  setCurrentUser: (user: UserProfile | null) => void
   reset: () => void
 }
 
@@ -40,6 +43,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   loadingCount: 0,
   fullyLoaded: false,
   error: null,
+  currentUser: null,
 
   setFolder: (id, name) => set({ currentFolderId: id, currentFolderName: name, photos: [], currentIndex: 0, undoStack: [] }),
 
@@ -71,6 +75,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setFullyLoaded: (fullyLoaded) => set({ fullyLoaded }),
 
   setError: (error) => set({ error }),
+
+  setCurrentUser: (currentUser) => set({ currentUser }),
 
   reset: () => set({ currentFolderId: null, currentFolderName: '', photos: [], currentIndex: 0, undoStack: [], loading: false, loadingCount: 0, fullyLoaded: false }),
 }))

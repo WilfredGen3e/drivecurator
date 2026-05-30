@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, deleteItem, moveItem } from '../services/graphService'
+import { incrementUsage, FreeLimitReachedError } from '../services/apiService'
+import PaywallModal from './PaywallModal'
 
 function PhotoMeta({ photo }: { photo: DriveItem }) {
   const date = photo.photo?.takenDateTime ?? photo.fileSystemInfo?.createdDateTime
@@ -33,11 +35,29 @@ interface Props {
 }
 
 export default function TriageView({ msalInstance, account, onBack }: Props) {
-  const { photos, currentIndex, currentFolderName, currentFolderId, nextPhoto, prevPhoto, pushUndo, popUndo, fullyLoaded } = useAppStore()
+  const { photos, currentIndex, currentFolderName, currentFolderId, nextPhoto, prevPhoto, pushUndo, popUndo, fullyLoaded, currentUser, setCurrentUser } = useAppStore()
   const [toast, setToast] = useState<{ message: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [showPaywall, setShowPaywall] = useState(false)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const checkUsage = async (): Promise<boolean> => {
+    if (currentUser?.isPremium || currentUser?.isAdmin) return true
+    try {
+      const updated = await incrementUsage(msalInstance, account)
+      setCurrentUser(updated)
+      return true
+    } catch (e) {
+      if (e instanceof FreeLimitReachedError) {
+        setCurrentUser(e.userProfile)
+        setShowPaywall(true)
+        return false
+      }
+      // API onbereikbaar — laat actie door (degradeer graceful)
+      return true
+    }
+  }
 
   const photo = photos[currentIndex]
   const total = photos.length
@@ -53,6 +73,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
     if (!photo || busy) return
     setBusy(true)
     try {
+      if (!await checkUsage()) return
       await deleteItem(msalInstance, account, photo.id)
       pushUndo({ type: 'delete', item: photo, previousFolderId: currentFolderId! })
       nextPhoto()
@@ -62,15 +83,22 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
     }
   }
 
-  const handleKeep = () => {
+  const handleKeep = async () => {
     if (!photo || busy) return
-    nextPhoto()
+    setBusy(true)
+    try {
+      if (!await checkUsage()) return
+      nextPhoto()
+    } finally {
+      setBusy(false)
+    }
   }
 
   const handleMove = async (targetFolder: DriveItem) => {
     if (!photo || busy) return
     setBusy(true)
     try {
+      if (!await checkUsage()) return
       await moveItem(msalInstance, account, photo.id, targetFolder.id)
       pushUndo({ type: 'move', item: photo, previousFolderId: currentFolderId! })
       nextPhoto()
@@ -202,6 +230,12 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       </div>
 
       {toast && <UndoToast message={toast.message} onUndo={handleUndo} />}
+      {showPaywall && (
+        <PaywallModal
+          photosTriaged={currentUser?.photosTriaged ?? 200}
+          onBack={onBack}
+        />
+      )}
     </div>
   )
 }

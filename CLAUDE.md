@@ -182,9 +182,54 @@ DriveCurator ondersteunt ook een donker thema via een `data-theme="dark"` attrib
 
 ---
 
+## API — Azure Functions
+
+De `api/` map bevat Azure Functions die automatisch worden meegedeployd met de Static Web App.
+
+### Endpoints
+| Method | Pad | Beschrijving |
+|--------|-----|-------------|
+| POST | `/api/register` | Maak gebruiker aan of update bestaande. Geeft gebruikersobject terug. Aanroepen na elke login. |
+| GET | `/api/me` | Haal huidige gebruiker op (status, limiet, premium). |
+| POST | `/api/usage` | Verhoog triage-teller met 1. Geeft 403 terug als gratis limiet bereikt is. |
+
+### Auth
+Alle endpoints verwachten een geldig MSAL access token als `Authorization: Bearer <token>`. Het token wordt gevalideerd via een Graph API call (`/me`).
+
+### Database
+Azure Table Storage — tabel `users`:
+- **PartitionKey**: `"user"` (vast)
+- **RowKey**: Microsoft account ID (OID)
+- **Velden**: displayName, email, photosTriaged, isPremium, isAdmin, createdAt
+
+### Rollen
+- `isAdmin: true` → `stefansiemerink@outlook.com` — onbeperkt, geen paywall
+- `isPremium: true` → betaalde gebruiker — onbeperkt
+- Gratis gebruiker → maximaal 200 foto's (`FREE_TIER_LIMIT` in `api/shared/userDto.js`)
+
+### Gedeelde code
+```
+api/shared/
+├── auth.js        — token verificatie via Graph API
+├── tableClient.js — Table Storage verbinding
+└── userDto.js     — FREE_TIER_LIMIT, ADMIN_EMAILS, toUserDto()
+```
+
+### Lokaal draaien
+Zie `STORAGE_SETUP.md` voor de volledige instructies. Vereist `api/local.settings.json` met `AZURE_STORAGE_CONNECTION_STRING`.
+
+---
+
 ## Bestandsstructuur
 ```
 drivecurator/
+├── api/
+│   ├── register/          — POST /api/register
+│   ├── me/                — GET /api/me
+│   ├── usage/             — POST /api/usage
+│   ├── shared/            — gedeelde hulpfuncties
+│   ├── host.json
+│   └── package.json
 ├── public/
 ├── src/
 │   ├── auth/

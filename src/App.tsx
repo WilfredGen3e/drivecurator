@@ -1,28 +1,44 @@
 import { useEffect, useState } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { msalConfig } from './auth/msalConfig'
+import LandingPage from './components/LandingPage'
 import LoginScreen from './components/LoginScreen'
 import FolderBrowser from './components/FolderBrowser'
 import TriageView from './components/TriageView'
 import { useAppStore } from './store/useAppStore'
+import { registerUser } from './services/apiService'
 
 const msalInstance = new PublicClientApplication(msalConfig)
 
 export default function App() {
   const [account, setAccount] = useState<AccountInfo | null>(null)
   const [initializing, setInitializing] = useState(true)
-  const { reset, currentFolderId, loading } = useAppStore()
+  const [showApp, setShowApp] = useState(false)
+  const { reset, currentFolderId, loading, setCurrentUser } = useAppStore()
+
+  const handleRegistration = async (acc: AccountInfo) => {
+    try {
+      const user = await registerUser(msalInstance, acc)
+      setCurrentUser(user)
+    } catch {
+      // non-fatal — app works without usage tracking
+    }
+  }
 
   useEffect(() => {
-    msalInstance.initialize().then(() => {
+    msalInstance.initialize().then(async () => {
       const accounts = msalInstance.getAllAccounts()
-      if (accounts.length > 0) setAccount(accounts[0])
+      if (accounts.length > 0) {
+        setAccount(accounts[0])
+        setShowApp(true)
+        await handleRegistration(accounts[0])
+      }
       setInitializing(false)
     })
   }, [])
 
   const handleLogout = () => {
-    msalInstance.logoutPopup().then(() => { setAccount(null); reset() })
+    msalInstance.logoutPopup().then(() => { setAccount(null); setCurrentUser(null); reset(); setShowApp(false) })
   }
 
   if (initializing) {
@@ -33,8 +49,21 @@ export default function App() {
     )
   }
 
+  if (!showApp) {
+    return <LandingPage onLogin={() => setShowApp(true)} />
+  }
+
   if (!account) {
-    return <LoginScreen msalInstance={msalInstance} onLogin={setAccount} />
+    return (
+      <LoginScreen
+        msalInstance={msalInstance}
+        onLogin={async (acc) => {
+          setAccount(acc)
+          setShowApp(true)
+          await handleRegistration(acc)
+        }}
+      />
+    )
   }
 
   return (
