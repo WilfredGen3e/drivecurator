@@ -40,7 +40,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <header className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
-        <h1 className="text-xl font-bold">DriveSwipe</h1>
+        <h1 className="text-xl font-bold">DriveCurator</h1>
         <div className="flex items-center gap-4">
           <span className="text-gray-400 text-sm">{account.name}</span>
           <button

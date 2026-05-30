@@ -1,4 +1,4 @@
-# PRD — DriveSwipe
+# PRD — DriveCurator
 **Versie:** 1.0  
 **Doel:** Een webapp die draait op Azure waarmee gebruikers snel en efficiënt hun OneDrive foto's kunnen opschonen, sorteren en in mappen plaatsen — zonder het frustrerende selecteer-gedoe van OneDrive zelf.
 
@@ -338,7 +338,7 @@ Browser → Auth (Azure AD B2C of Auth0)
 - De huidige **component-structuur** blijft ongewijzigd — alleen een auth-laag en een paywall-wrapper komen erbij
 
 ### 11.4 Wat we nu al slim doen (zonder extra werk)
-- Naamkeuze **DriveSwipe** — niet generiek, geen trademark-conflict, domeinnaam waarschijnlijk beschikbaar
+- Naamkeuze **DriveCurator** — niet generiek, geen trademark-conflict, domeinnaam waarschijnlijk beschikbaar
 - GitHub repo `cloudcull` — publiek te maken als open source met een commerciële licentie later
 - Azure Static Web App — schaalt automatisch mee, geen server te beheren
 - Microsoft Graph API — dekt 400M+ OneDrive gebruikers wereldwijd als potentiële markt

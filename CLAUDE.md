@@ -1,14 +1,14 @@
-# DriveSwipe — Claude Code Instructies
+# DriveCurator — Claude Code Instructies
 
-## Wat is DriveSwipe?
-DriveSwipe is een Azure Static Web App waarmee gebruikers snel en efficiënt hun persoonlijke OneDrive foto's kunnen opschonen via een swipe-interface. Gebruikers loggen in met hun eigen Microsoft account (outlook.com / hotmail.com), zien hun foto's één voor één, en kunnen ze verwijderen (naar prullenbak) of in mappen plaatsen.
+## Wat is DriveCurator?
+DriveCurator is een Azure Static Web App waarmee gebruikers snel en efficiënt hun persoonlijke OneDrive foto's kunnen opschonen via een swipe-interface. Gebruikers loggen in met hun eigen Microsoft account (outlook.com / hotmail.com), zien hun foto's één voor één, en kunnen ze verwijderen (naar prullenbak) of in mappen plaatsen.
 
 ## Repo & Deployment
-- **GitHub repo:** `https://github.com/WilfredGen3e/driveswipe`
-- **Lokaal:** `/Users/stefan/git/driveswipe`
+- **GitHub repo:** `https://github.com/WilfredGen3e/drivecurator`
+- **Lokaal:** `/Users/stefan/git/drivecurator`
 - **Hosting:** Azure Static Web App
 - **CI/CD:** Elke push naar `main` deployt automatisch via GitHub Actions
-- **URL:** `https://driveswipe.azurestaticapps.net`
+- **URL:** `https://drivecurator.azurestaticapps.net`
 
 ---
 
@@ -47,7 +47,7 @@ DriveSwipe is een Azure Static Web App waarmee gebruikers snel en efficiënt hun
 
 ## Bestandsstructuur
 ```
-driveswipe/
+drivecurator/
 ├── public/
 ├── src/
 │   ├── auth/
@@ -152,7 +152,7 @@ POST   /me/drive/items/{id}/children  { name, folder: {} }     — map aanmaken
 
 ## Omgeving starten
 ```bash
-cd /Users/stefan/git/driveswipe
+cd /Users/stefan/git/drivecurator
 npm install
 cp .env.example .env.local
 # Vul VITE_MSAL_CLIENT_ID in (zie boven)

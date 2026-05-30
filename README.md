@@ -1,4 +1,4 @@
-# DriveSwipe
+# DriveCurator
 
 Snel je OneDrive foto's opschonen via een swipe-interface. Inloggen met je eigen Microsoft account, foto's beoordelen, bewaren of verwijderen — zonder het pieterpeuterige selecteer-gedoe van OneDrive zelf.
 
@@ -19,8 +19,8 @@ Snel je OneDrive foto's opschonen via een swipe-interface. Inloggen met je eigen
 
 ### Installatie
 ```bash
-git clone https://github.com/jouw-gebruikersnaam/driveswipe
-cd driveswipe
+git clone https://github.com/jouw-gebruikersnaam/drivecurator
+cd drivecurator
 npm install
 cp .env.example .env.local
 ```
@@ -39,7 +39,7 @@ App draait op `http://localhost:5173`
 
 ### 1. App Registration aanmaken
 1. Ga naar [portal.azure.com](https://portal.azure.com) → **Azure Active Directory** → **App Registrations** → **New registration**
-2. Naam: `DriveSwipe`
+2. Naam: `DriveCurator`
 3. Account type: `Accounts in any organizational directory and personal Microsoft accounts`
 4. Redirect URI: `Single-page application (SPA)` → `http://localhost:5173`
 5. Klik **Register**
@@ -51,11 +51,11 @@ App draait op `http://localhost:5173`
 
 ### 2. Redirect URI toevoegen voor productie
 In de App Registration → **Authentication** → voeg toe:
-- `https://driveswipe.azurestaticapps.net`
+- `https://drivecurator.azurestaticapps.net`
 
 ### 3. Azure Static Web App aanmaken
 1. Ga naar [portal.azure.com](https://portal.azure.com) → **Static Web Apps** → **Create**
-2. Koppel aan je GitHub repo `driveswipe`
+2. Koppel aan je GitHub repo `drivecurator`
 3. Framework: `React` · App location: `/` · Output: `dist`
 4. Na aanmaken: **Configuration** → voeg toe:
    - `VITE_MSAL_CLIENT_ID` = jouw client ID

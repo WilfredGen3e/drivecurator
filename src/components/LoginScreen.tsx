@@ -15,7 +15,7 @@ export default function LoginScreen({ msalInstance, onLogin }: Props) {
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center">
       <div className="text-center space-y-6">
-        <h1 className="text-4xl font-bold text-white">DriveSwipe</h1>
+        <h1 className="text-4xl font-bold text-white">DriveCurator</h1>
         <p className="text-gray-400">Ruim je OneDrive op met één swipe</p>
         <button
           onClick={handleLogin}
