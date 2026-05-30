@@ -96,7 +96,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
     }
   }
 
-  const thumbnail = photo?.thumbnails?.[0]?.medium?.url
+  const thumbnail = photo?.thumbnails?.[0]?.large?.url ?? photo?.thumbnails?.[0]?.medium?.url
 
   if (done || !photo) {
     return (

@@ -9,7 +9,7 @@ export interface DriveItem {
   file?: { mimeType: string }
   photo?: { takenDateTime?: string; cameraMake?: string; cameraModel?: string }
   fileSystemInfo?: { createdDateTime?: string; lastModifiedDateTime?: string }
-  thumbnails?: { medium?: { url: string } }[]
+  thumbnails?: { medium?: { url: string }; large?: { url: string } }[]
 }
 
 async function getToken(msalInstance: PublicClientApplication, account: AccountInfo): Promise<string> {
