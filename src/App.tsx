@@ -11,7 +11,7 @@ const msalInstance = new PublicClientApplication(msalConfig)
 export default function App() {
   const [account, setAccount] = useState<AccountInfo | null>(null)
   const [initializing, setInitializing] = useState(true)
-  const { reset, currentFolderId, loading, loadingCount } = useAppStore()
+  const { reset, currentFolderId, loading } = useAppStore()
 
   useEffect(() => {
     msalInstance.initialize().then(() => {
@@ -55,9 +55,7 @@ export default function App() {
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full gap-4">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-400 text-sm">
-              {loadingCount > 0 ? `${loadingCount.toLocaleString('nl-NL')} foto's gevonden…` : 'Laden…'}
-            </p>
+            <p className="text-gray-400 text-sm">Eerste foto's laden…</p>
           </div>
         ) : currentFolderId
           ? <TriageView msalInstance={msalInstance} account={account} onBack={reset} />

@@ -32,7 +32,7 @@ interface Props {
 }
 
 export default function TriageView({ msalInstance, account, onBack }: Props) {
-  const { photos, currentIndex, currentFolderName, currentFolderId, nextPhoto, prevPhoto, pushUndo, popUndo } = useAppStore()
+  const { photos, currentIndex, currentFolderName, currentFolderId, nextPhoto, prevPhoto, pushUndo, popUndo, fullyLoaded } = useAppStore()
   const [toast, setToast] = useState<{ message: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -147,7 +147,9 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             ← Terug
           </button>
           <span className="text-gray-400 text-sm font-medium truncate flex-1 text-center">{currentFolderName}</span>
-          <span className="text-gray-500 text-sm flex-shrink-0">{currentIndex + 1} / {total}</span>
+          <span className="text-gray-500 text-sm flex-shrink-0">
+            {currentIndex + 1} / {total}{!fullyLoaded && '+'}
+          </span>
         </div>
 
         {/* voortgangsbalk */}

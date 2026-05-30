@@ -17,7 +17,7 @@ export default function FolderBrowser({ msalInstance, account }: Props) {
   const [folders, setFolders] = useState<DriveItem[]>([])
   const [breadcrumb, setBreadcrumb] = useState<BreadcrumbItem[]>([])
   const [loading, setLoading] = useState(true)
-  const { setFolder, setPhotos, setLoading: setAppLoading, setLoadingCount, setError } = useAppStore()
+  const { setFolder, setPhotos, appendPhotos, setLoading: setAppLoading, setFullyLoaded, setError } = useAppStore()
 
   const loadFolders = async (parentId: string | null) => {
     setLoading(true)
@@ -59,11 +59,17 @@ export default function FolderBrowser({ msalInstance, account }: Props) {
     setFolder(folder.id, folder.name)
     setAppLoading(true)
     try {
-      const photos = await getFolderContents(msalInstance, account, folder.id, setLoadingCount)
-      setPhotos(photos)
+      await getFolderContents(msalInstance, account, folder.id, (photos, isFirst) => {
+        if (isFirst) {
+          setPhotos(photos)
+          setAppLoading(false)   // triage start direct na eerste pagina
+        } else {
+          appendPhotos(photos)
+        }
+      })
+      setFullyLoaded(true)
     } catch {
       setError('Kon foto\'s niet ophalen')
-    } finally {
       setAppLoading(false)
     }
   }

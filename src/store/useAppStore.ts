@@ -13,16 +13,19 @@ interface AppStore {
   undoStack: UndoAction[]
   loading: boolean
   loadingCount: number
+  fullyLoaded: boolean
   error: string | null
 
   setFolder: (id: string, name: string) => void
   setPhotos: (photos: DriveItem[]) => void
+  appendPhotos: (photos: DriveItem[]) => void
   nextPhoto: () => void
   prevPhoto: () => void
   pushUndo: (action: UndoAction) => void
   popUndo: () => UndoAction | undefined
   setLoading: (loading: boolean) => void
   setLoadingCount: (count: number) => void
+  setFullyLoaded: (fullyLoaded: boolean) => void
   setError: (error: string | null) => void
   reset: () => void
 }
@@ -35,11 +38,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
   undoStack: [],
   loading: false,
   loadingCount: 0,
+  fullyLoaded: false,
   error: null,
 
   setFolder: (id, name) => set({ currentFolderId: id, currentFolderName: name, photos: [], currentIndex: 0, undoStack: [] }),
 
-  setPhotos: (photos) => set({ photos, currentIndex: 0 }),
+  setPhotos: (photos) => set({ photos, currentIndex: 0, fullyLoaded: false }),
+
+  appendPhotos: (photos) => set((state) => ({
+    photos: [...state.photos, ...photos],
+    loadingCount: state.photos.length + photos.length,
+  })),
 
   nextPhoto: () => set((state) => ({ currentIndex: Math.min(state.currentIndex + 1, state.photos.length) })),
 
@@ -59,7 +68,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   setLoadingCount: (loadingCount) => set({ loadingCount }),
 
+  setFullyLoaded: (fullyLoaded) => set({ fullyLoaded }),
+
   setError: (error) => set({ error }),
 
-  reset: () => set({ currentFolderId: null, currentFolderName: '', photos: [], currentIndex: 0, undoStack: [], loading: false, loadingCount: 0 }),
+  reset: () => set({ currentFolderId: null, currentFolderName: '', photos: [], currentIndex: 0, undoStack: [], loading: false, loadingCount: 0, fullyLoaded: false }),
 }))

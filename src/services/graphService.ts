@@ -63,23 +63,21 @@ export async function getFolderContents(
   msalInstance: PublicClientApplication,
   account: AccountInfo,
   folderId: string,
-  onProgress?: (count: number) => void,
-): Promise<DriveItem[]> {
-  const all: DriveItem[] = []
+  onPage: (photos: DriveItem[], isFirst: boolean) => void,
+): Promise<void> {
   let url: string | undefined =
     `/me/drive/items/${folderId}/children?$expand=thumbnails&$select=id,name,size,file,folder,photo,fileSystemInfo,thumbnails&$top=200`
+  let isFirst = true
 
   while (url) {
     const data: { value: DriveItem[]; '@odata.nextLink'?: string } = await graphFetch(
       msalInstance, account, url,
     )
     const photos = data.value.filter((item: DriveItem) => item.file?.mimeType.startsWith('image/'))
-    all.push(...photos)
-    onProgress?.(all.length)
+    onPage(photos, isFirst)
+    isFirst = false
     url = data['@odata.nextLink']
   }
-
-  return all
 }
 
 export async function deleteItem(
