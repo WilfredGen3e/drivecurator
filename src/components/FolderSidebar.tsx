@@ -66,19 +66,19 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled 
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 border-r border-gray-800">
+    <div className="flex flex-col h-full bg-fluent-bg-secondary border-r border-fluent-border">
       {/* breadcrumb */}
-      <div className="px-3 py-3 border-b border-gray-800 min-h-[48px]">
-        <div className="flex items-center gap-1 flex-wrap text-xs">
-          <button onClick={handleRoot} className="text-blue-400 hover:text-blue-300 transition-colors truncate max-w-[60px]">
+      <div className="px-3 py-2 border-b border-fluent-border min-h-[40px] flex items-center">
+        <div className="flex items-center gap-1 flex-wrap text-xs min-w-0">
+          <button onClick={handleRoot} className="text-fluent-accent hover:underline truncate max-w-[60px] transition-colors">
             OneDrive
           </button>
           {breadcrumb.map((crumb, i) => (
             <span key={crumb.id} className="flex items-center gap-1 min-w-0">
-              <span className="text-gray-600">/</span>
+              <span className="text-fluent-text-disabled">/</span>
               <button
                 onClick={() => handleBreadcrumbClick(i)}
-                className={`transition-colors truncate max-w-[80px] ${i === breadcrumb.length - 1 ? 'text-white' : 'text-blue-400 hover:text-blue-300'}`}
+                className={`transition-colors truncate max-w-[72px] ${i === breadcrumb.length - 1 ? 'text-fluent-text-primary font-medium' : 'text-fluent-accent hover:underline'}`}
                 title={crumb.name}
               >
                 {crumb.name}
@@ -89,31 +89,30 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled 
       </div>
 
       {/* mappenlijst */}
-      <div className="flex-1 overflow-y-auto py-1">
+      <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex justify-center py-6">
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : folders.length === 0 ? (
-          <p className="text-gray-600 text-xs text-center py-6 px-3">Geen mappen</p>
+          <p className="text-fluent-text-disabled text-xs text-center py-6 px-3">Geen mappen</p>
         ) : (
           folders.map((folder) => (
-            <div key={folder.id} className="flex items-center gap-1 px-2 py-1 group hover:bg-gray-800 rounded mx-1">
-              {/* navigeer in map */}
+            <div key={folder.id} className="flex items-center gap-1 px-2 py-1 hover:bg-fluent-bg-hover group border-b border-fluent-border last:border-0">
               <button
                 onClick={() => handleNavigate(folder)}
-                className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                className="flex items-center gap-2 flex-1 min-w-0 text-left py-0.5"
                 title={folder.name}
               >
                 <FolderIcon />
-                <span className="text-sm text-gray-300 truncate">{folder.name}</span>
+                <span className="text-sm text-fluent-text-primary truncate">{folder.name}</span>
               </button>
-              {/* verplaats naar deze map */}
               <button
                 onClick={() => onMove(folder)}
                 disabled={disabled}
                 title={`Verplaats naar ${folder.name}`}
-                className="flex-shrink-0 p-1.5 rounded text-gray-500 hover:text-white hover:bg-blue-600 transition-colors disabled:opacity-30"
+                className="flex-shrink-0 p-1.5 text-fluent-text-disabled hover:text-white hover:bg-fluent-accent transition-colors disabled:opacity-30"
+                style={{ borderRadius: 2 }}
               >
                 <MoveArrowIcon />
               </button>
@@ -122,9 +121,9 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled 
         )}
       </div>
 
-      {/* nieuwe map aanmaken */}
+      {/* nieuwe map */}
       {currentId && (
-        <div className="border-t border-gray-800 p-2">
+        <div className="border-t border-fluent-border p-2">
           {showInput ? (
             <div className="flex gap-1">
               <input
@@ -134,18 +133,21 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled 
                 onChange={(e) => setNewFolderName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleCreateFolder(); if (e.key === 'Escape') setShowInput(false) }}
                 placeholder="Mapnaam..."
-                className="flex-1 bg-gray-800 text-white text-sm px-2 py-1.5 rounded border border-gray-700 focus:outline-none focus:border-blue-500 min-w-0"
+                className="flex-1 bg-fluent-bg-primary text-fluent-text-primary text-sm px-2 py-1 border border-fluent-border-strong focus:outline-none focus:border-fluent-accent min-w-0"
+                style={{ borderRadius: 2 }}
               />
               <button
                 onClick={handleCreateFolder}
                 disabled={creating || !newFolderName.trim()}
-                className="px-2 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-500 disabled:opacity-40 transition-colors flex-shrink-0"
+                className="px-2 py-1 bg-fluent-accent text-white text-sm hover:bg-fluent-accent-hover disabled:opacity-40 transition-colors flex-shrink-0"
+                style={{ borderRadius: 2 }}
               >
                 {creating ? '…' : '✓'}
               </button>
               <button
                 onClick={() => { setShowInput(false); setNewFolderName('') }}
-                className="px-2 py-1.5 text-gray-400 hover:text-white text-sm rounded transition-colors flex-shrink-0"
+                className="px-2 py-1 text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover text-sm transition-colors flex-shrink-0"
+                style={{ borderRadius: 2 }}
               >
                 ✕
               </button>
@@ -153,9 +155,10 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled 
           ) : (
             <button
               onClick={() => setShowInput(true)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 text-gray-500 hover:text-white text-sm rounded hover:bg-gray-800 transition-colors"
+              className="w-full flex items-center gap-2 px-2 py-1.5 text-fluent-text-secondary hover:text-fluent-text-primary text-sm hover:bg-fluent-bg-hover transition-colors"
+              style={{ borderRadius: 2 }}
             >
-              <span className="text-lg leading-none">+</span>
+              <span className="text-base leading-none">+</span>
               <span>Nieuwe map</span>
             </button>
           )}
@@ -167,7 +170,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled 
 
 function FolderIcon() {
   return (
-    <svg className="w-4 h-4 flex-shrink-0 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+    <svg className="w-4 h-4 flex-shrink-0 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
       <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
     </svg>
   )
