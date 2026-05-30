@@ -3,6 +3,7 @@ import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { msalConfig } from './auth/msalConfig'
 import LoginScreen from './components/LoginScreen'
 import FolderBrowser from './components/FolderBrowser'
+import TriageView from './components/TriageView'
 import { useAppStore } from './store/useAppStore'
 
 const msalInstance = new PublicClientApplication(msalConfig)
@@ -10,7 +11,7 @@ const msalInstance = new PublicClientApplication(msalConfig)
 export default function App() {
   const [account, setAccount] = useState<AccountInfo | null>(null)
   const [initializing, setInitializing] = useState(true)
-  const { reset } = useAppStore()
+  const { reset, currentFolderId } = useAppStore()
 
   useEffect(() => {
     msalInstance.initialize().then(() => {
@@ -51,7 +52,9 @@ export default function App() {
         </div>
       </header>
       <main className="h-[calc(100vh-65px)] overflow-y-auto">
-        <FolderBrowser msalInstance={msalInstance} account={account} />
+        {currentFolderId
+          ? <TriageView msalInstance={msalInstance} account={account} onBack={reset} />
+          : <FolderBrowser msalInstance={msalInstance} account={account} />}
       </main>
     </div>
   )

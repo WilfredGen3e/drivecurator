@@ -4,8 +4,11 @@ import { loginRequest } from '../auth/msalConfig'
 export interface DriveItem {
   id: string
   name: string
+  size?: number
   folder?: object
   file?: { mimeType: string }
+  photo?: { takenDateTime?: string; cameraMake?: string; cameraModel?: string }
+  fileSystemInfo?: { createdDateTime?: string; lastModifiedDateTime?: string }
   thumbnails?: { medium?: { url: string } }[]
 }
 
@@ -42,6 +45,19 @@ export async function getRootFolders(
   return data.value.filter((item) => item.folder)
 }
 
+export async function getSubFolders(
+  msalInstance: PublicClientApplication,
+  account: AccountInfo,
+  folderId: string,
+): Promise<DriveItem[]> {
+  const data = await graphFetch<{ value: DriveItem[] }>(
+    msalInstance,
+    account,
+    `/me/drive/items/${folderId}/children`,
+  )
+  return data.value.filter((item) => item.folder)
+}
+
 export async function getFolderContents(
   msalInstance: PublicClientApplication,
   account: AccountInfo,
@@ -50,7 +66,7 @@ export async function getFolderContents(
   const data = await graphFetch<{ value: DriveItem[] }>(
     msalInstance,
     account,
-    `/me/drive/items/${folderId}/children?$expand=thumbnails`,
+    `/me/drive/items/${folderId}/children?$expand=thumbnails&$select=id,name,size,file,folder,photo,fileSystemInfo,thumbnails`,
   )
   return data.value.filter((item) => item.file?.mimeType.startsWith('image/'))
 }
@@ -72,5 +88,17 @@ export async function moveItem(
   await graphFetch<DriveItem>(msalInstance, account, `/me/drive/items/${itemId}`, {
     method: 'PATCH',
     body: JSON.stringify({ parentReference: { id: targetFolderId } }),
+  })
+}
+
+export async function createFolder(
+  msalInstance: PublicClientApplication,
+  account: AccountInfo,
+  parentFolderId: string,
+  name: string,
+): Promise<DriveItem> {
+  return graphFetch<DriveItem>(msalInstance, account, `/me/drive/items/${parentFolderId}/children`, {
+    method: 'POST',
+    body: JSON.stringify({ name, folder: {}, '@microsoft.graph.conflictBehavior': 'rename' }),
   })
 }
