@@ -33,6 +33,143 @@ DriveCurator is een Azure Static Web App waarmee gebruikers snel en efficiënt h
 
 ---
 
+## Stijlgids — DriveCurator
+
+DriveCurator volgt de **Microsoft Fluent Design** stijl, vergelijkbaar met onedrive.live.com. Vertrouwd voor OneDrive-gebruikers, maar met eigen identiteit.
+
+### Kleuren
+
+```css
+/* Primair */
+--color-accent:        #0078d4;   /* Microsoft blauw — knoppen, links, actieve states */
+--color-accent-hover:  #106ebe;   /* Donkerder blauw voor hover */
+--color-accent-light:  #deecf9;   /* Lichtblauw voor geselecteerde items */
+
+/* Achtergronden */
+--color-bg-primary:    #ffffff;   /* Hoofdachtergrond */
+--color-bg-secondary:  #f5f5f5;   /* Zijbalk, header */
+--color-bg-hover:      #edebe9;   /* Hover state op rijen/items */
+--color-bg-selected:   #deecf9;   /* Geselecteerd item */
+
+/* Tekst */
+--color-text-primary:  #201f1e;   /* Hoofdtekst */
+--color-text-secondary:#605e5c;   /* Subtekst, labels */
+--color-text-disabled: #a19f9d;   /* Uitgeschakeld */
+
+/* Borders */
+--color-border:        #edebe9;   /* Standaard border */
+--color-border-strong: #c8c6c4;   /* Zichtbare border */
+
+/* Semantisch */
+--color-danger:        #d13438;   /* Verwijderen */
+--color-danger-light:  #fde7e9;   /* Verwijder-hover achtergrond */
+--color-success:       #107c10;   /* Bewaren/bevestigen */
+--color-success-light: #dff6dd;   /* Bewaar-hover achtergrond */
+```
+
+### Typografie
+
+```css
+font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+/* Groottes */
+--font-size-xs:   12px;   /* Labels, metadata */
+--font-size-sm:   14px;   /* Standaard UI tekst */
+--font-size-base: 16px;   /* Body */
+--font-size-lg:   18px;   /* Sectietitels */
+--font-size-xl:   24px;   /* Paginatitels */
+
+/* Gewichten */
+font-weight: 400;   /* Body tekst */
+font-weight: 600;   /* Koppen, labels */
+```
+
+### Componenten
+
+**Knoppen**
+```css
+/* Primaire knop */
+background: #0078d4;
+color: #ffffff;
+border: none;
+border-radius: 2px;
+padding: 6px 16px;
+font-size: 14px;
+font-weight: 600;
+
+/* Secundaire knop */
+background: #ffffff;
+color: #201f1e;
+border: 1px solid #8a8886;
+border-radius: 2px;
+
+/* Destructief (verwijderen) */
+background: #d13438;
+color: #ffffff;
+
+/* Hover: gebruik --color-accent-hover of --color-bg-hover */
+```
+
+**Topbar / commandobalk**
+```css
+background: #ffffff;
+border-bottom: 1px solid #edebe9;
+height: 48px;
+padding: 0 16px;
+```
+
+**Zijbalk**
+```css
+background: #f5f5f5;
+border-right: 1px solid #edebe9;
+width: 220px;
+```
+
+**Foto-grid items**
+```css
+border-radius: 2px;
+border: 1px solid transparent;
+/* Bij hover: */
+border-color: #edebe9;
+background: #f5f5f5;
+```
+
+**Geselecteerd item**
+```css
+background: #deecf9;
+border-color: #0078d4;
+```
+
+### Donker thema
+
+DriveCurator ondersteunt ook een donker thema via een `data-theme="dark"` attribuut op `<body>`.
+
+```css
+[data-theme="dark"] {
+  --color-bg-primary:    #1b1a19;
+  --color-bg-secondary:  #252423;
+  --color-bg-hover:      #323130;
+  --color-bg-selected:   #004578;
+  --color-text-primary:  #f3f2f1;
+  --color-text-secondary:#c8c6c4;
+  --color-border:        #323130;
+  --color-border-strong: #484644;
+  --color-accent:        #479ef5;
+  --color-accent-hover:  #62abf5;
+}
+```
+
+### Wat te vermijden
+- ❌ Geen afgeronde hoeken groter dan `4px` (Fluent gebruikt scherpe hoeken)
+- ❌ Geen zware schaduwen — alleen subtiele `box-shadow: 0 1px 2px rgba(0,0,0,0.1)`
+- ❌ Geen felle of niet-Microsoft kleuren als accent
+- ❌ Geen andere fonts dan Segoe UI / system-ui
+- ❌ Geen gradient achtergronden
+- ✅ Veel witruimte
+- ✅ Vlakke, functionele UI — de foto's zijn het middelpunt
+
+---
+
 ## Authenticatie
 - Library: `@azure/msal-browser` v3
 - Authority: `https://login.microsoftonline.com/consumers` — uitsluitend persoonlijke Microsoft accounts (outlook.com, hotmail.com, live.com). Geen werk- of schoolaccounts.
