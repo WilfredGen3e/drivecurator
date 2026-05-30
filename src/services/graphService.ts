@@ -24,7 +24,8 @@ async function graphFetch<T>(
   options?: RequestInit,
 ): Promise<T> {
   const token = await getToken(msalInstance, account)
-  const response = await fetch(`https://graph.microsoft.com/v1.0${url}`, {
+  const fullUrl = url.startsWith('https://') ? url : `https://graph.microsoft.com/v1.0${url}`
+  const response = await fetch(fullUrl, {
     ...options,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -62,13 +63,23 @@ export async function getFolderContents(
   msalInstance: PublicClientApplication,
   account: AccountInfo,
   folderId: string,
+  onProgress?: (count: number) => void,
 ): Promise<DriveItem[]> {
-  const data = await graphFetch<{ value: DriveItem[] }>(
-    msalInstance,
-    account,
-    `/me/drive/items/${folderId}/children?$expand=thumbnails&$select=id,name,size,file,folder,photo,fileSystemInfo,thumbnails`,
-  )
-  return data.value.filter((item) => item.file?.mimeType.startsWith('image/'))
+  const all: DriveItem[] = []
+  let url: string | undefined =
+    `/me/drive/items/${folderId}/children?$expand=thumbnails&$select=id,name,size,file,folder,photo,fileSystemInfo,thumbnails&$top=200`
+
+  while (url) {
+    const data: { value: DriveItem[]; '@odata.nextLink'?: string } = await graphFetch(
+      msalInstance, account, url,
+    )
+    const photos = data.value.filter((item: DriveItem) => item.file?.mimeType.startsWith('image/'))
+    all.push(...photos)
+    onProgress?.(all.length)
+    url = data['@odata.nextLink']
+  }
+
+  return all
 }
 
 export async function deleteItem(

@@ -12,6 +12,7 @@ interface AppStore {
   currentIndex: number
   undoStack: UndoAction[]
   loading: boolean
+  loadingCount: number
   error: string | null
 
   setFolder: (id: string, name: string) => void
@@ -21,6 +22,7 @@ interface AppStore {
   pushUndo: (action: UndoAction) => void
   popUndo: () => UndoAction | undefined
   setLoading: (loading: boolean) => void
+  setLoadingCount: (count: number) => void
   setError: (error: string | null) => void
   reset: () => void
 }
@@ -32,6 +34,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   currentIndex: 0,
   undoStack: [],
   loading: false,
+  loadingCount: 0,
   error: null,
 
   setFolder: (id, name) => set({ currentFolderId: id, currentFolderName: name, photos: [], currentIndex: 0, undoStack: [] }),
@@ -52,9 +55,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
     return last
   },
 
-  setLoading: (loading) => set({ loading }),
+  setLoading: (loading) => set({ loading, loadingCount: 0 }),
+
+  setLoadingCount: (loadingCount) => set({ loadingCount }),
 
   setError: (error) => set({ error }),
 
-  reset: () => set({ currentFolderId: null, currentFolderName: '', photos: [], currentIndex: 0, undoStack: [] }),
+  reset: () => set({ currentFolderId: null, currentFolderName: '', photos: [], currentIndex: 0, undoStack: [], loading: false, loadingCount: 0 }),
 }))

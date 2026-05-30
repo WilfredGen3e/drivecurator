@@ -17,7 +17,7 @@ export default function FolderBrowser({ msalInstance, account }: Props) {
   const [folders, setFolders] = useState<DriveItem[]>([])
   const [breadcrumb, setBreadcrumb] = useState<BreadcrumbItem[]>([])
   const [loading, setLoading] = useState(true)
-  const { setFolder, setPhotos, setLoading: setAppLoading, setError } = useAppStore()
+  const { setFolder, setPhotos, setLoading: setAppLoading, setLoadingCount, setError } = useAppStore()
 
   const loadFolders = async (parentId: string | null) => {
     setLoading(true)
@@ -59,7 +59,7 @@ export default function FolderBrowser({ msalInstance, account }: Props) {
     setFolder(folder.id, folder.name)
     setAppLoading(true)
     try {
-      const photos = await getFolderContents(msalInstance, account, folder.id)
+      const photos = await getFolderContents(msalInstance, account, folder.id, setLoadingCount)
       setPhotos(photos)
     } catch {
       setError('Kon foto\'s niet ophalen')
