@@ -32,7 +32,7 @@ interface Props {
 }
 
 export default function TriageView({ msalInstance, account, onBack }: Props) {
-  const { photos, currentIndex, currentFolderName, currentFolderId, nextPhoto, pushUndo, popUndo } = useAppStore()
+  const { photos, currentIndex, currentFolderName, currentFolderId, nextPhoto, prevPhoto, pushUndo, popUndo } = useAppStore()
   const [toast, setToast] = useState<{ message: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -158,35 +158,38 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           />
         </div>
 
-        {/* foto */}
-        <div className="flex-1 flex items-center justify-center p-4 min-h-0">
+        {/* foto — vult alle beschikbare ruimte */}
+        <div className="flex-1 min-h-0 px-3 pt-2">
           {thumbnail ? (
             <img
               src={thumbnail}
               alt={photo.name}
-              className="max-h-full max-w-full object-contain rounded-lg shadow-2xl"
+              className="w-full h-full object-contain rounded-lg shadow-2xl"
             />
           ) : (
-            <div className="w-48 h-48 bg-gray-800 rounded-lg flex items-center justify-center">
-              <span className="text-gray-500 text-xs text-center px-2">{photo.name}</span>
+            <div className="w-full h-full bg-gray-800 rounded-lg flex items-center justify-center">
+              <span className="text-gray-500 text-xs text-center px-4">{photo.name}</span>
             </div>
           )}
         </div>
 
-        {/* metadata */}
-        <div className="flex-shrink-0 px-4 pb-2 text-center space-y-0.5">
-          <p className="text-gray-600 text-xs truncate">{photo.name}</p>
-          <PhotoMeta photo={photo} />
-        </div>
-
-        {/* knoppen */}
-        <div className="flex items-center justify-center gap-8 px-6 pb-6 flex-shrink-0">
-          <ActionBtn onClick={handleDelete} disabled={busy} color="red" label="Verwijderen">
-            <TrashIcon />
-          </ActionBtn>
-          <ActionBtn onClick={handleKeep} disabled={busy} color="green" label="Volgende">
-            <NextIcon />
-          </ActionBtn>
+        {/* metadata + knoppen — vaste hoogte onderaan */}
+        <div className="flex-shrink-0 px-4 pt-2 pb-4 space-y-3">
+          <div className="text-center space-y-0.5">
+            <p className="text-gray-600 text-xs truncate">{photo.name}</p>
+            <PhotoMeta photo={photo} />
+          </div>
+          <div className="flex items-center justify-center gap-8">
+            <ActionBtn onClick={prevPhoto} disabled={currentIndex === 0} color="gray" label="Vorige">
+              <PrevIcon />
+            </ActionBtn>
+            <ActionBtn onClick={handleDelete} disabled={busy} color="red" label="Verwijderen">
+              <TrashIcon />
+            </ActionBtn>
+            <ActionBtn onClick={handleKeep} disabled={busy} color="green" label="Volgende">
+              <NextIcon />
+            </ActionBtn>
+          </div>
         </div>
       </div>
 
@@ -198,13 +201,14 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 function ActionBtn({ onClick, disabled, color, label, children }: {
   onClick: () => void
   disabled: boolean
-  color: 'red' | 'green'
+  color: 'red' | 'green' | 'gray'
   label: string
   children: React.ReactNode
 }) {
   const colors = {
     red: 'bg-red-500/20 text-red-400 hover:bg-red-500/40 border-red-500/30',
     green: 'bg-green-500/20 text-green-400 hover:bg-green-500/40 border-green-500/30',
+    gray: 'bg-gray-700/40 text-gray-400 hover:bg-gray-700 border-gray-600/30',
   }
   return (
     <div className="flex flex-col items-center gap-2">
@@ -232,6 +236,14 @@ function NextIcon() {
   return (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  )
+}
+
+function PrevIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
     </svg>
   )
 }
