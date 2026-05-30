@@ -177,7 +177,7 @@ DriveCurator ondersteunt ook een donker thema via een `data-theme="dark"` attrib
 - Login via popup (`loginPopup`), niet redirect
 - Client ID komt uit `VITE_MSAL_CLIENT_ID` in `.env.local` (nooit committen)
 - Azure App Registration: platform type = **Single-page application (SPA)**, niet Web
-- Client ID: `c79b6759-89fd-46e0-9266-56d6bff3a8f0`
+- Client ID: `42aaa073-c678-4a5c-afba-6b54c6a2dac0`
 - Redirect URI's: `http://localhost:5173` (dev) en productie-URL
 
 ---
