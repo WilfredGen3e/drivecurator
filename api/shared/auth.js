@@ -8,14 +8,14 @@ function decodeJwtPayload(token) {
 }
 
 function verifyAndGetGraphUser(req) {
-  const auth = req.headers['authorization'];
-  if (!auth?.startsWith('Bearer ')) return { user: null, reason: 'no_bearer_header' };
+  const token = req.headers['x-id-token'];
+  if (!token) return { user: null, reason: 'no_x_id_token_header' };
 
-  const payload = decodeJwtPayload(auth.slice(7));
+  const payload = decodeJwtPayload(token);
   if (!payload) return { user: null, reason: 'invalid_jwt' };
 
   const id = payload.oid || payload.sub;
-  if (!id) return { user: null, reason: `no_id: iss=${payload.iss} keys=${Object.keys(payload).join(',')}` };
+  if (!id) return { user: null, reason: 'no_user_id_in_token' };
 
   const now = Math.floor(Date.now() / 1000);
   if (payload.exp && payload.exp < now) return { user: null, reason: 'token_expired' };
