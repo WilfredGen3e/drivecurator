@@ -15,7 +15,7 @@ function verifyAndGetGraphUser(req) {
   if (!payload) return { user: null, reason: 'invalid_jwt' };
 
   const id = payload.oid || payload.sub;
-  if (!id) return { user: null, reason: `no_user_id_in_token: keys=${Object.keys(payload).join(',')}` };
+  if (!id) return { user: null, reason: 'no_user_id_in_token' };
 
   const now = Math.floor(Date.now() / 1000);
   if (payload.exp && payload.exp < now) return { user: null, reason: 'token_expired' };

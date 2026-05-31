@@ -24,7 +24,7 @@ async function getToken(msalInstance: PublicClientApplication, account: AccountI
   const response = await msalInstance
     .acquireTokenSilent({ scopes: ['User.Read'], account })
     .catch(() => msalInstance.acquireTokenPopup({ scopes: ['User.Read'], account }))
-  return response.accessToken
+  return response.idToken
 }
 
 export async function registerUser(
