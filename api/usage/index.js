@@ -8,9 +8,9 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const graphUser = await verifyAndGetGraphUser(req);
+  const { user: graphUser, reason } = await verifyAndGetGraphUser(req);
   if (!graphUser) {
-    context.res = { status: 401, body: 'Unauthorized', headers: corsHeaders() };
+    context.res = { status: 401, body: `Unauthorized: ${reason}`, headers: corsHeaders() };
     return;
   }
 
