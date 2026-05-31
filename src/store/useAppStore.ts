@@ -23,6 +23,7 @@ interface AppStore {
   appendPhotos: (photos: DriveItem[]) => void
   nextPhoto: () => void
   prevPhoto: () => void
+  removeCurrentPhoto: () => void
   pushUndo: (action: UndoAction) => void
   popUndo: () => UndoAction | undefined
   setLoading: (loading: boolean) => void
@@ -57,6 +58,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
   nextPhoto: () => set((state) => ({ currentIndex: Math.min(state.currentIndex + 1, state.photos.length) })),
 
   prevPhoto: () => set((state) => ({ currentIndex: Math.max(state.currentIndex - 1, 0) })),
+
+  removeCurrentPhoto: () => set((state) => {
+    const photos = state.photos.filter((_, i) => i !== state.currentIndex)
+    return { photos, currentIndex: Math.min(state.currentIndex, photos.length) }
+  }),
 
   pushUndo: (action) => set((state) => ({ undoStack: [...state.undoStack, action] })),
 

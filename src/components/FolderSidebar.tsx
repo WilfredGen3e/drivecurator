@@ -53,7 +53,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled 
 
   const handleCreateFolder = async () => {
     const name = newFolderName.trim()
-    if (!name || !currentId) return
+    if (!name) return
     setCreating(true)
     try {
       const folder = await createFolder(msalInstance, account, currentId, name)
@@ -122,48 +122,46 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled 
       </div>
 
       {/* nieuwe map */}
-      {currentId && (
-        <div className="border-t border-fluent-border p-2">
-          {showInput ? (
-            <div className="flex gap-1">
-              <input
-                autoFocus
-                type="text"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleCreateFolder(); if (e.key === 'Escape') setShowInput(false) }}
-                placeholder="Mapnaam..."
-                className="flex-1 bg-fluent-bg-primary text-fluent-text-primary text-sm px-2 py-1 border border-fluent-border-strong focus:outline-none focus:border-fluent-accent min-w-0"
-                style={{ borderRadius: 2 }}
-              />
-              <button
-                onClick={handleCreateFolder}
-                disabled={creating || !newFolderName.trim()}
-                className="px-2 py-1 bg-fluent-accent text-white text-sm hover:bg-fluent-accent-hover disabled:opacity-40 transition-colors flex-shrink-0"
-                style={{ borderRadius: 2 }}
-              >
-                {creating ? '…' : '✓'}
-              </button>
-              <button
-                onClick={() => { setShowInput(false); setNewFolderName('') }}
-                className="px-2 py-1 text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover text-sm transition-colors flex-shrink-0"
-                style={{ borderRadius: 2 }}
-              >
-                ✕
-              </button>
-            </div>
-          ) : (
+      <div className="border-t border-fluent-border p-2">
+        {showInput ? (
+          <div className="flex gap-1">
+            <input
+              autoFocus
+              type="text"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleCreateFolder(); if (e.key === 'Escape') setShowInput(false) }}
+              placeholder="Mapnaam..."
+              className="flex-1 bg-fluent-bg-primary text-fluent-text-primary text-sm px-2 py-1 border border-fluent-border-strong focus:outline-none focus:border-fluent-accent min-w-0"
+              style={{ borderRadius: 2 }}
+            />
             <button
-              onClick={() => setShowInput(true)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 text-fluent-text-secondary hover:text-fluent-text-primary text-sm hover:bg-fluent-bg-hover transition-colors"
+              onClick={handleCreateFolder}
+              disabled={creating || !newFolderName.trim()}
+              className="px-2 py-1 bg-fluent-accent text-white text-sm hover:bg-fluent-accent-hover disabled:opacity-40 transition-colors flex-shrink-0"
               style={{ borderRadius: 2 }}
             >
-              <span className="text-base leading-none">+</span>
-              <span>Nieuwe map</span>
+              {creating ? '…' : '✓'}
             </button>
-          )}
-        </div>
-      )}
+            <button
+              onClick={() => { setShowInput(false); setNewFolderName('') }}
+              className="px-2 py-1 text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover text-sm transition-colors flex-shrink-0"
+              style={{ borderRadius: 2 }}
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowInput(true)}
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-fluent-text-secondary hover:text-fluent-text-primary text-sm hover:bg-fluent-bg-hover transition-colors"
+            style={{ borderRadius: 2 }}
+          >
+            <span className="text-base leading-none">+</span>
+            <span>Nieuwe map</span>
+          </button>
+        )}
+      </div>
     </div>
   )
 }

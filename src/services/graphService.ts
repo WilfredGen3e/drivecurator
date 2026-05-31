@@ -103,10 +103,13 @@ export async function moveItem(
 export async function createFolder(
   msalInstance: PublicClientApplication,
   account: AccountInfo,
-  parentFolderId: string,
+  parentFolderId: string | null,
   name: string,
 ): Promise<DriveItem> {
-  return graphFetch<DriveItem>(msalInstance, account, `/me/drive/items/${parentFolderId}/children`, {
+  const url = parentFolderId
+    ? `/me/drive/items/${parentFolderId}/children`
+    : `/me/drive/root/children`
+  return graphFetch<DriveItem>(msalInstance, account, url, {
     method: 'POST',
     body: JSON.stringify({ name, folder: {}, '@microsoft.graph.conflictBehavior': 'rename' }),
   })

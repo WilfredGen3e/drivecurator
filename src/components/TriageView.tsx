@@ -35,7 +35,7 @@ interface Props {
 }
 
 export default function TriageView({ msalInstance, account, onBack }: Props) {
-  const { photos, currentIndex, currentFolderName, currentFolderId, nextPhoto, prevPhoto, pushUndo, popUndo, fullyLoaded, currentUser, setCurrentUser } = useAppStore()
+  const { photos, currentIndex, currentFolderName, currentFolderId, nextPhoto, prevPhoto, removeCurrentPhoto, pushUndo, popUndo, fullyLoaded, currentUser, setCurrentUser } = useAppStore()
   const [toast, setToast] = useState<{ message: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -76,7 +76,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       if (!await checkUsage()) return
       await deleteItem(msalInstance, account, photo.id)
       pushUndo({ type: 'delete', item: photo, previousFolderId: currentFolderId! })
-      nextPhoto()
+      removeCurrentPhoto()
       showToast(`"${photo.name}" verwijderd`)
     } finally {
       setBusy(false)
@@ -101,7 +101,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       if (!await checkUsage()) return
       await moveItem(msalInstance, account, photo.id, targetFolder.id)
       pushUndo({ type: 'move', item: photo, previousFolderId: currentFolderId! })
-      nextPhoto()
+      removeCurrentPhoto()
       showToast(`Verplaatst naar "${targetFolder.name}"`)
     } finally {
       setBusy(false)
