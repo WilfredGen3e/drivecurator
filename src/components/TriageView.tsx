@@ -35,7 +35,7 @@ interface Props {
 }
 
 export default function TriageView({ msalInstance, account, onBack }: Props) {
-  const { photos, currentIndex, currentFolderName, currentFolderId, nextPhoto, prevPhoto, removeCurrentPhoto, pushUndo, popUndo, fullyLoaded, currentUser, setCurrentUser } = useAppStore()
+  const { photos, currentIndex, currentFolderName, currentFolderId, nextPhoto, prevPhoto, removeCurrentPhoto, pushUndo, popUndo, undoStack, fullyLoaded, currentUser, setCurrentUser } = useAppStore()
   const [toast, setToast] = useState<{ message: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -216,6 +216,9 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             <PhotoMeta photo={photo} />
           </div>
           <div className="flex items-center justify-center gap-6">
+            <ActionBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} variant="secondary" label="Ongedaan">
+              <UndoIcon />
+            </ActionBtn>
             <ActionBtn onClick={prevPhoto} disabled={currentIndex === 0} variant="secondary" label="Vorige">
               <PrevIcon />
             </ActionBtn>
@@ -287,6 +290,14 @@ function PrevIcon() {
   return (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+    </svg>
+  )
+}
+
+function UndoIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h10a5 5 0 015 5v1M3 10l4-4M3 10l4 4" />
     </svg>
   )
 }
