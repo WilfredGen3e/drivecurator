@@ -8,9 +8,11 @@ function decodeJwtPayload(token) {
 }
 
 function verifyAndGetGraphUser(req) {
-  const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+  const raw = req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body || ''));
+  let body = {};
+  try { body = JSON.parse(raw || '{}'); } catch {}
   const token = body.token;
-  if (!token) return { user: null, reason: `no_token: type=${typeof req.body} raw=${JSON.stringify(req.body || '').slice(0, 80)}` };
+  if (!token) return { user: null, reason: `no_token: body_type=${typeof req.body} rawBody_type=${typeof req.rawBody} raw_len=${(raw||'').length} raw=${raw.slice(0,80)}` };
 
   const payload = decodeJwtPayload(token);
   if (!payload) return { user: null, reason: 'invalid_jwt' };
