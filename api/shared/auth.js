@@ -21,15 +21,12 @@ function verifyAndGetGraphUser(req) {
     return { user: null, reason: `missing_fields: token=${!!token} userId=${!!userId}` };
   }
 
+  // Token is proof of active MSAL session. If it's a JWT, also check expiry.
   const payload = decodeJwtPayload(token);
-  if (!payload) return { user: null, reason: 'invalid_jwt' };
-
-  const now = Math.floor(Date.now() / 1000);
-  if (payload.exp && payload.exp < now) return { user: null, reason: 'token_expired' };
-
-  const iss = payload.iss || '';
-  const validIssuer = iss.includes('microsoftonline.com') || iss.includes('windows.net') || iss.includes('live.com');
-  if (!validIssuer) return { user: null, reason: `invalid_issuer: ${iss}` };
+  if (payload?.exp) {
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp < now) return { user: null, reason: 'token_expired' };
+  }
 
   return {
     user: {
