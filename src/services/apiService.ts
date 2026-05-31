@@ -20,22 +20,27 @@ export class FreeLimitReachedError extends Error {
   }
 }
 
-async function getToken(msalInstance: PublicClientApplication, account: AccountInfo): Promise<string> {
+async function getApiPayload(msalInstance: PublicClientApplication, account: AccountInfo) {
   const response = await msalInstance
     .acquireTokenSilent({ scopes: ['User.Read'], account })
     .catch(() => msalInstance.acquireTokenPopup({ scopes: ['User.Read'], account }))
-  return response.idToken
+  return {
+    token: response.accessToken,
+    userId: account.localAccountId,
+    email: account.username,
+    displayName: account.name ?? '',
+  }
 }
 
 export async function registerUser(
   msalInstance: PublicClientApplication,
   account: AccountInfo
 ): Promise<UserProfile> {
-  const token = await getToken(msalInstance, account)
+  const payload = await getApiPayload(msalInstance, account)
   const res = await fetch('/api/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error(`Register failed: ${res.status}`)
   return res.json()
@@ -45,11 +50,11 @@ export async function incrementUsage(
   msalInstance: PublicClientApplication,
   account: AccountInfo
 ): Promise<UserProfile> {
-  const token = await getToken(msalInstance, account)
+  const payload = await getApiPayload(msalInstance, account)
   const res = await fetch('/api/usage', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify(payload),
   })
   if (res.status === 403) {
     const data = await res.json()
