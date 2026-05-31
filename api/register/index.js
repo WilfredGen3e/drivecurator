@@ -14,7 +14,14 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const table = getUsersTable();
+  let table;
+  try {
+    table = getUsersTable();
+  } catch (e) {
+    context.res = { status: 500, body: `table_init_error: ${e.message}`, headers: corsHeaders() };
+    return;
+  }
+
   await table.createTable().catch(() => {});
 
   const userId = graphUser.id;
@@ -29,18 +36,23 @@ module.exports = async function (context, req) {
       'Merge'
     );
     entity = await table.getEntity('user', userId);
-  } catch {
-    entity = {
-      partitionKey: 'user',
-      rowKey: userId,
-      displayName: graphUser.displayName,
-      email,
-      photosTriaged: 0,
-      isPremium: isAdmin,
-      isAdmin,
-      createdAt: new Date().toISOString(),
-    };
-    await table.createEntity(entity);
+  } catch (e1) {
+    try {
+      entity = {
+        partitionKey: 'user',
+        rowKey: userId,
+        displayName: graphUser.displayName,
+        email,
+        photosTriaged: 0,
+        isPremium: isAdmin,
+        isAdmin,
+        createdAt: new Date().toISOString(),
+      };
+      await table.createEntity(entity);
+    } catch (e2) {
+      context.res = { status: 500, body: `storage_error: getEntity=${e1.message} | createEntity=${e2.message}`, headers: corsHeaders() };
+      return;
+    }
   }
 
   context.res = {
