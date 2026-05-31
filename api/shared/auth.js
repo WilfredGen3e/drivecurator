@@ -1,24 +1,34 @@
-async function verifyAndGetGraphUser(req) {
+function decodeJwtPayload(token) {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function verifyAndGetGraphUser(req) {
   const auth = req.headers['authorization'];
   if (!auth?.startsWith('Bearer ')) return { user: null, reason: 'no_bearer_header' };
-  const token = auth.slice(7);
 
-  let res;
-  try {
-    res = await fetch(
-      'https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName',
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-  } catch (e) {
-    return { user: null, reason: `fetch_error: ${e.message}` };
-  }
+  const payload = decodeJwtPayload(auth.slice(7));
+  if (!payload) return { user: null, reason: 'invalid_jwt' };
 
-  if (!res.ok) {
-    let body = '';
-    try { body = await res.text() } catch {}
-    return { user: null, reason: `graph_${res.status}: ${body.slice(0, 200)}` };
-  }
-  return { user: await res.json(), reason: null };
+  const id = payload.oid || payload.sub;
+  if (!id) return { user: null, reason: 'no_user_id_in_token' };
+
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.exp && payload.exp < now) return { user: null, reason: 'token_expired' };
+
+  return {
+    user: {
+      id,
+      displayName: payload.name || '',
+      mail: payload.email || payload.preferred_username || '',
+      userPrincipalName: payload.preferred_username || payload.email || '',
+    },
+    reason: null,
+  };
 }
 
 module.exports = { verifyAndGetGraphUser };
