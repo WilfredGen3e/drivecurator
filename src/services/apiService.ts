@@ -34,7 +34,8 @@ export async function registerUser(
   const token = await getToken(msalInstance, account)
   const res = await fetch('/api/register', {
     method: 'POST',
-    headers: { 'X-Id-Token': token },
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
   })
   if (!res.ok) throw new Error(`Register failed: ${res.status}`)
   return res.json()
@@ -47,7 +48,8 @@ export async function incrementUsage(
   const token = await getToken(msalInstance, account)
   const res = await fetch('/api/usage', {
     method: 'POST',
-    headers: { 'X-Id-Token': token },
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
   })
   if (res.status === 403) {
     const data = await res.json()

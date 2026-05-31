@@ -8,8 +8,8 @@ function decodeJwtPayload(token) {
 }
 
 function verifyAndGetGraphUser(req) {
-  const token = req.headers['x-id-token'];
-  if (!token) return { user: null, reason: 'no_x_id_token_header' };
+  const token = req.body?.token;
+  if (!token) return { user: null, reason: 'no_token_in_body' };
 
   const payload = decodeJwtPayload(token);
   if (!payload) return { user: null, reason: 'invalid_jwt' };
