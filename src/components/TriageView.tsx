@@ -217,14 +217,6 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           </button>
           <span className="flex-1 text-sm font-semibold text-fluent-text-primary truncate text-center">{currentFolderName}</span>
           <button
-            onClick={handleUndo}
-            disabled={busy || undoStack.length === 0}
-            className="p-2 text-fluent-text-secondary disabled:opacity-30 transition-colors"
-            title="Ongedaan maken"
-          >
-            <UndoIcon />
-          </button>
-          <button
             onClick={() => setShowTouchFilter(v => !v)}
             className={`p-2 transition-colors ${showTouchFilter ? 'text-fluent-accent' : 'text-fluent-text-secondary'}`}
             title="Filter"
@@ -284,12 +276,10 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 
         {/* Actie-balk */}
         <div className="bg-fluent-bg-primary border-t border-fluent-border flex-shrink-0 flex items-stretch" style={{ height: 72 }}>
-          <TouchActionBtn
-            onClick={() => setFilteredIndex(i => Math.max(0, i - 1))}
-            disabled={filteredIndex === 0 || busy}
-            label="Vorige"
-            color="secondary"
-          >
+          <TouchActionBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} label="Ongedaan" color="secondary">
+            <UndoIcon />
+          </TouchActionBtn>
+          <TouchActionBtn onClick={() => setFilteredIndex(i => Math.max(0, i - 1))} disabled={filteredIndex === 0 || busy} label="Vorige" color="secondary">
             <PrevIcon />
           </TouchActionBtn>
           <TouchActionBtn onClick={handleDelete} disabled={busy} label="Verwijderen" color="danger">

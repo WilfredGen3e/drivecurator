@@ -2,13 +2,11 @@ import { useState, useEffect } from 'react'
 
 export function useIsTouch() {
   const [isTouch, setIsTouch] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+    () => typeof window !== 'undefined' && navigator.maxTouchPoints > 0
   )
   useEffect(() => {
-    const mq = window.matchMedia('(pointer: coarse)')
-    const handler = (e: MediaQueryListEvent) => setIsTouch(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
+    // maxTouchPoints is static — no listener needed
+    setIsTouch(navigator.maxTouchPoints > 0)
   }, [])
   return isTouch
 }
