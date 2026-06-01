@@ -15,25 +15,46 @@ function parseBody(req) {
 
 function verifyAndGetGraphUser(req) {
   const body = parseBody(req);
-  const { token, userId, email, displayName } = body;
 
-  if (!token || !userId) {
-    return { user: null, reason: `missing_fields: token=${!!token} userId=${!!userId}` };
+  // Body-based auth (existing pattern: token + userId in body)
+  let token = body.token;
+  let userId = body.userId;
+  let email = body.email || '';
+  let displayName = body.displayName || '';
+
+  // Fall back to Authorization header (for GET requests without body)
+  if (!token) {
+    const authHeader = (req.headers?.authorization || req.headers?.Authorization || '');
+    if (authHeader.startsWith('Bearer ')) token = authHeader.slice(7);
   }
 
-  // Token is proof of active MSAL session. If it's a JWT, also check expiry.
+  if (!token) {
+    return { user: null, reason: 'missing_token' };
+  }
+
   const payload = decodeJwtPayload(token);
   if (payload?.exp) {
     const now = Math.floor(Date.now() / 1000);
     if (payload.exp < now) return { user: null, reason: 'token_expired' };
   }
 
+  // If userId not in body, derive from JWT claims
+  if (!userId && payload) {
+    userId = payload.oid || payload.sub || null;
+    email = email || payload.upn || payload.preferred_username || payload.email || '';
+    displayName = displayName || payload.name || '';
+  }
+
+  if (!userId) {
+    return { user: null, reason: `missing_userId: token=${!!token}` };
+  }
+
   return {
     user: {
       id: userId,
-      displayName: displayName || '',
-      mail: email || '',
-      userPrincipalName: email || '',
+      displayName,
+      mail: email,
+      userPrincipalName: email,
     },
     reason: null,
   };

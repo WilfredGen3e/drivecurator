@@ -77,8 +77,8 @@ export async function adminUpdateUser(
   const payload = await getApiPayload(msalInstance, account)
   const res = await fetch('/api/admin/users', {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${payload.token}` },
-    body: JSON.stringify({ userId, ...patch }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...payload, userId, ...patch }),
   })
   if (!res.ok) throw new Error(`Admin update failed: ${res.status}`)
   return res.json()
@@ -92,8 +92,8 @@ export async function adminDeleteUser(
   const payload = await getApiPayload(msalInstance, account)
   const res = await fetch('/api/admin/users', {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${payload.token}` },
-    body: JSON.stringify({ userId }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...payload, userId }),
   })
   if (!res.ok) throw new Error(`Admin delete failed: ${res.status}`)
 }
