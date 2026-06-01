@@ -30,6 +30,7 @@ interface AppStore {
   setLoadingCount: (count: number) => void
   setFullyLoaded: (fullyLoaded: boolean) => void
   setError: (error: string | null) => void
+  removePhotoById: (id: string) => void
   setCurrentUser: (user: UserProfile | null) => void
   reset: () => void
 }
@@ -81,6 +82,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setFullyLoaded: (fullyLoaded) => set({ fullyLoaded }),
 
   setError: (error) => set({ error }),
+
+  removePhotoById: (id) => set((state) => ({ photos: state.photos.filter(p => p.id !== id) })),
 
   setCurrentUser: (currentUser) => set({ currentUser }),
 
