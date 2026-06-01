@@ -217,6 +217,14 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           </button>
           <span className="flex-1 text-sm font-semibold text-fluent-text-primary truncate text-center">{currentFolderName}</span>
           <button
+            onClick={handleUndo}
+            disabled={busy || undoStack.length === 0}
+            className="p-2 text-fluent-text-secondary disabled:opacity-30 transition-colors"
+            title="Ongedaan maken"
+          >
+            <UndoIcon />
+          </button>
+          <button
             onClick={() => setShowTouchFilter(v => !v)}
             className={`p-2 transition-colors ${showTouchFilter ? 'text-fluent-accent' : 'text-fluent-text-secondary'}`}
             title="Filter"
