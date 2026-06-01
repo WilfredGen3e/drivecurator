@@ -5,7 +5,6 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "route": "admin/users",
       "methods": ["get", "patch", "delete", "options"]
     },
     {
