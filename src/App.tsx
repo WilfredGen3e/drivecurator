@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { msalConfig } from './auth/msalConfig'
 import LandingPage from './components/LandingPage'
-import LoginScreen from './components/LoginScreen'
 import FolderBrowser from './components/FolderBrowser'
 import TriageView from './components/TriageView'
 import BlockedScreen from './components/BlockedScreen'
@@ -60,21 +59,18 @@ export default function App() {
     return <BlockedScreen onLogout={handleLogout} />
   }
 
-  if (!showApp) {
-    return <LandingPage onLogin={() => setShowApp(true)} />
+  const handleLogin = async () => {
+    const { loginRequest } = await import('./auth/msalConfig')
+    const result = await msalInstance.loginPopup(loginRequest)
+    if (result?.account) {
+      setAccount(result.account)
+      setShowApp(true)
+      await handleRegistration(result.account)
+    }
   }
 
-  if (!account) {
-    return (
-      <LoginScreen
-        msalInstance={msalInstance}
-        onLogin={async (acc) => {
-          setAccount(acc)
-          setShowApp(true)
-          await handleRegistration(acc)
-        }}
-      />
-    )
+  if (!showApp || !account) {
+    return <LandingPage onLogin={handleLogin} />
   }
 
   return (

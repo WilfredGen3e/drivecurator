@@ -1,5 +1,5 @@
 interface Props {
-  onLogin: () => void
+  onLogin: () => Promise<void>
 }
 
 const features = [
@@ -60,108 +60,65 @@ export default function LandingPage({ onLogin }: Props) {
             </svg>
             <span className="font-semibold text-fluent-text-primary">DriveCurator</span>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="text-sm px-4 py-1.5 border border-fluent-border-strong text-fluent-text-primary hover:bg-fluent-bg-hover transition-colors rounded-sm">
-              Aanmelden
-            </button>
-            <button
-              onClick={onLogin}
-              className="text-sm px-4 py-1.5 bg-fluent-accent text-white hover:bg-fluent-accent-hover transition-colors rounded-sm font-semibold"
-            >
-              Inloggen
-            </button>
-          </div>
+          <button
+            onClick={onLogin}
+            className="text-sm px-4 py-1.5 bg-fluent-accent text-white hover:bg-fluent-accent-hover transition-colors rounded-sm font-semibold"
+          >
+            Aanmelden
+          </button>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-24 flex flex-col lg:flex-row items-center gap-16">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-fluent-accent uppercase tracking-wide mb-3">
-            OneDrive foto beheer
-          </p>
-          <h1 className="text-4xl font-semibold text-fluent-text-primary leading-tight mb-5">
-            Breng orde in je<br />OneDrive fotobak.
-          </h1>
-          <p className="text-lg text-fluent-text-secondary mb-8 max-w-md leading-relaxed">
-            OneDrive maakt automatisch een backup van je camerarol. Foto's stapelen zich op — per maand in een mapje, of in één grote vergaarbak. DriveCurator laat je er rustig doorheen lopen en alles opruimen.
-          </p>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onLogin}
-              className="bg-fluent-accent text-white px-5 py-2.5 text-sm font-semibold hover:bg-fluent-accent-hover transition-colors rounded-sm"
-            >
-              Gratis beginnen met Microsoft
-            </button>
-            <span className="text-sm text-fluent-text-secondary">Geen account nodig</span>
-          </div>
+      {/* Hero — gecentreerd */}
+      <section className="max-w-2xl mx-auto px-6 pt-24 pb-16 text-center">
+        <p className="text-sm font-semibold text-fluent-accent uppercase tracking-wide mb-4">
+          OneDrive foto beheer
+        </p>
+        <h1 className="text-4xl font-semibold text-fluent-text-primary leading-tight mb-5">
+          Breng orde in je<br />OneDrive fotobak.
+        </h1>
+        <p className="text-lg text-fluent-text-secondary mb-10 leading-relaxed">
+          OneDrive maakt automatisch een backup van je camerarol. Foto's stapelen zich op.
+          DriveCurator laat je er rustig doorheen lopen en alles opruimen — foto voor foto.
+        </p>
+
+        {/* Free plan callout */}
+        <div className="border border-fluent-border bg-fluent-bg-secondary rounded-sm p-6 mb-8 text-left">
+          <p className="text-xs font-semibold text-fluent-accent uppercase tracking-wide mb-3">Gratis plan</p>
+          <ul className="space-y-2 mb-4">
+            {[
+              '200 foto\'s cureren — bewaren of verwijderen',
+              'Foto\'s gaan naar de OneDrive prullenbak, niet voorgoed weg',
+              'Mappen aanmaken en foto\'s direct verplaatsen',
+              'Geen installatie — werkt in de browser',
+            ].map(item => (
+              <li key={item} className="flex items-start gap-2 text-sm text-fluent-text-primary">
+                <svg className="w-4 h-4 text-fluent-success flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-fluent-text-secondary">Meer nodig? Neem contact op voor een uitgebreid plan.</p>
         </div>
 
-        {/* App mockup */}
-        <div className="flex-1 flex justify-center lg:justify-end w-full">
-          <div className="w-full max-w-md border border-fluent-border-strong rounded-sm overflow-hidden" style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}>
-            {/* App header */}
-            <div className="h-10 bg-white border-b border-fluent-border flex items-center px-3 gap-2">
-              <svg className="w-4 h-4 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-              </svg>
-              <span className="text-xs font-semibold text-fluent-text-primary">DriveCurator</span>
-              <span className="ml-auto text-xs text-fluent-text-secondary">Stefan</span>
-            </div>
-            {/* App body */}
-            <div className="flex" style={{ height: 260 }}>
-              {/* Sidebar */}
-              <div className="w-36 bg-fluent-bg-secondary border-r border-fluent-border p-2 flex flex-col gap-0.5 flex-shrink-0">
-                <p className="text-xs text-fluent-text-disabled px-2 py-1 font-semibold uppercase tracking-wide">Mappen</p>
-                {['Camera', '2024', 'Vakantie', 'Familie'].map((name, i) => (
-                  <div
-                    key={name}
-                    className={`text-xs px-2 py-1 rounded-sm flex items-center gap-1.5 ${
-                      i === 0
-                        ? 'bg-fluent-accent-light text-fluent-accent font-semibold'
-                        : 'text-fluent-text-secondary'
-                    }`}
-                  >
-                    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                    </svg>
-                    {name}
-                  </div>
-                ))}
-              </div>
-              {/* Main area */}
-              <div className="flex-1 flex flex-col min-w-0">
-                {/* Photo placeholder */}
-                <div className="flex-1 bg-fluent-bg-secondary flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-28 h-20 bg-fluent-border-strong rounded-sm flex items-center justify-center">
-                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                {/* Photo info */}
-                <div className="px-3 py-2 border-t border-fluent-border">
-                  <p className="text-xs font-semibold text-fluent-text-primary">IMG_4521.jpg</p>
-                  <p className="text-xs text-fluent-text-secondary">12 jan 2024 · 4.2 MB · 34 van 143</p>
-                </div>
-                {/* Action buttons */}
-                <div className="flex border-t border-fluent-border">
-                  <button className="flex-1 py-2 text-xs text-fluent-text-secondary hover:bg-fluent-bg-hover flex items-center justify-center gap-1 border-r border-fluent-border">
-                    ← Vorige
-                  </button>
-                  <button className="flex-1 py-2 text-xs text-white bg-fluent-danger flex items-center justify-center gap-1 border-r border-fluent-border">
-                    Verwijder
-                  </button>
-                  <button className="flex-1 py-2 text-xs text-white bg-fluent-accent flex items-center justify-center gap-1">
-                    Volgende →
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* CTA */}
+        <button
+          onClick={onLogin}
+          className="flex items-center gap-3 mx-auto bg-fluent-accent text-white px-7 py-3 text-base font-semibold hover:bg-fluent-accent-hover transition-colors rounded-sm"
+        >
+          <svg width="20" height="20" viewBox="0 0 21 21" fill="none" style={{ flexShrink: 0 }}>
+            <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
+            <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
+            <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
+            <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
+          </svg>
+          Aanmelden met Microsoft
+        </button>
+        <p className="text-xs text-fluent-text-secondary mt-3">
+          Je bestaande Microsoft account — geen nieuw wachtwoord nodig.
+        </p>
       </section>
 
       {/* Features */}
