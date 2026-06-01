@@ -17,6 +17,14 @@ module.exports = async function (context, req) {
   try {
     const table = getUsersTable();
     const entity = await table.getEntity('user', graphUser.id);
+    if (entity.isBlocked) {
+      context.res = {
+        status: 403,
+        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'account_blocked' }),
+      };
+      return;
+    }
     context.res = {
       status: 200,
       headers: { ...corsHeaders(), 'Content-Type': 'application/json' },

@@ -1,16 +1,14 @@
 interface Props {
-  photosTriaged: number
-  onBack: () => void
+  onLogout: () => void
 }
 
-export default function PaywallModal({ photosTriaged, onBack }: Props) {
+export default function BlockedScreen({ onLogout }: Props) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="min-h-screen bg-fluent-bg-secondary flex items-center justify-center">
       <div
         className="bg-white border border-fluent-border w-full max-w-md mx-4 p-8"
         style={{ borderRadius: 2, boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
       >
-        {/* Logo */}
         <div className="flex items-center gap-2 mb-6">
           <svg className="w-5 h-5 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
@@ -18,36 +16,31 @@ export default function PaywallModal({ photosTriaged, onBack }: Props) {
           <span className="font-semibold text-fluent-text-primary">DriveCurator</span>
         </div>
 
-        {/* Icoon */}
-        <div className="w-12 h-12 bg-fluent-accent-light rounded-sm flex items-center justify-center mb-5">
-          <svg className="w-6 h-6 text-fluent-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        <div className="w-12 h-12 bg-fluent-danger-light rounded-sm flex items-center justify-center mb-5">
+          <svg className="w-6 h-6 text-fluent-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
           </svg>
         </div>
 
         <h2 className="text-xl font-semibold text-fluent-text-primary mb-2">
-          Je gratis tegoed is op
+          Account geblokkeerd
         </h2>
-        <p className="text-sm text-fluent-text-secondary mb-1 leading-relaxed">
-          Je hebt {photosTriaged} foto's beoordeeld — dat is jouw huidige maximum.
-        </p>
         <p className="text-sm text-fluent-text-secondary mb-6 leading-relaxed">
-          Wil je meer foto's cureren? Neem contact op met de beheerder om je limiet te verhogen.
+          Je account heeft momenteel geen toegang tot DriveCurator. Neem contact op met de beheerder om dit op te lossen.
         </p>
 
         <a
-          href="mailto:stefansiemerink@outlook.com?subject=DriveCurator%20-%20Limiet%20verhogen"
+          href="mailto:stefansiemerink@outlook.com?subject=DriveCurator%20-%20Account%20geblokkeerd"
           className="block w-full bg-fluent-accent text-white text-sm font-semibold py-2.5 text-center hover:bg-fluent-accent-hover transition-colors rounded-sm mb-3"
         >
           Neem contact op
         </a>
 
-        {/* Terugknop */}
         <button
-          onClick={onBack}
+          onClick={onLogout}
           className="w-full text-sm text-fluent-text-secondary py-2 hover:text-fluent-text-primary transition-colors"
         >
-          Terug naar mappen
+          Uitloggen
         </button>
       </div>
     </div>

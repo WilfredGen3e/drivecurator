@@ -1,6 +1,6 @@
 const { verifyAndGetGraphUser } = require('../shared/auth');
 const { getUsersTable } = require('../shared/tableClient');
-const { resolveEmail, isAdminEmail, toUserDto, corsHeaders } = require('../shared/userDto');
+const { FREE_TIER_LIMIT, resolveEmail, isAdminEmail, toUserDto, corsHeaders } = require('../shared/userDto');
 
 module.exports = async function (context, req) {
   if (req.method === 'OPTIONS') {
@@ -46,6 +46,8 @@ module.exports = async function (context, req) {
         photosTriaged: 0,
         isPremium: isAdmin,
         isAdmin,
+        isBlocked: false,
+        freeTierLimit: FREE_TIER_LIMIT,
         createdAt: new Date().toISOString(),
       };
       await table.createEntity(entity);

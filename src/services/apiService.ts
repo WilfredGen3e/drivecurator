@@ -7,6 +7,7 @@ export interface UserProfile {
   photosTriaged: number
   isPremium: boolean
   isAdmin: boolean
+  isBlocked: boolean
   freeTierLimit: number
   hasReachedLimit: boolean
   remaining: number | null
@@ -17,6 +18,12 @@ export class FreeLimitReachedError extends Error {
   constructor(profile: UserProfile) {
     super('free_limit_reached')
     this.userProfile = profile
+  }
+}
+
+export class AccountBlockedError extends Error {
+  constructor() {
+    super('account_blocked')
   }
 }
 
@@ -43,7 +50,52 @@ export async function registerUser(
     body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error(`Register failed: ${res.status}`)
+  const user: UserProfile = await res.json()
+  if (user.isBlocked) throw new AccountBlockedError()
+  return user
+}
+
+export async function adminListUsers(
+  msalInstance: PublicClientApplication,
+  account: AccountInfo
+): Promise<UserProfile[]> {
+  const payload = await getApiPayload(msalInstance, account)
+  const res = await fetch('/api/admin/users', {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${payload.token}` },
+  })
+  if (!res.ok) throw new Error(`Admin list failed: ${res.status}`)
   return res.json()
+}
+
+export async function adminUpdateUser(
+  msalInstance: PublicClientApplication,
+  account: AccountInfo,
+  userId: string,
+  patch: Partial<Pick<UserProfile, 'freeTierLimit' | 'isPremium' | 'isBlocked'>>
+): Promise<UserProfile> {
+  const payload = await getApiPayload(msalInstance, account)
+  const res = await fetch('/api/admin/users', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${payload.token}` },
+    body: JSON.stringify({ userId, ...patch }),
+  })
+  if (!res.ok) throw new Error(`Admin update failed: ${res.status}`)
+  return res.json()
+}
+
+export async function adminDeleteUser(
+  msalInstance: PublicClientApplication,
+  account: AccountInfo,
+  userId: string
+): Promise<void> {
+  const payload = await getApiPayload(msalInstance, account)
+  const res = await fetch('/api/admin/users', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${payload.token}` },
+    body: JSON.stringify({ userId }),
+  })
+  if (!res.ok) throw new Error(`Admin delete failed: ${res.status}`)
 }
 
 export async function incrementUsage(

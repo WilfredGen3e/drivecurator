@@ -28,9 +28,10 @@ module.exports = async function (context, req) {
     return;
   }
 
+  const limit = entity.freeTierLimit ?? FREE_TIER_LIMIT;
   if (!entity.isPremium && !entity.isAdmin) {
     const current = entity.photosTriaged || 0;
-    if (current >= FREE_TIER_LIMIT) {
+    if (current >= limit) {
       context.res = {
         status: 403,
         headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
