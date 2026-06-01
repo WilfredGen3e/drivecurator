@@ -60,7 +60,7 @@ export async function adminListUsers(
   account: AccountInfo
 ): Promise<UserProfile[]> {
   const payload = await getApiPayload(msalInstance, account)
-  const res = await fetch('/api/adminUsers', {
+  const res = await fetch('/api/manageUsers', {
     method: 'GET',
     headers: { Authorization: `Bearer ${payload.token}` },
   })
@@ -75,7 +75,7 @@ export async function adminUpdateUser(
   patch: Partial<Pick<UserProfile, 'freeTierLimit' | 'isPremium' | 'isBlocked'>>
 ): Promise<UserProfile> {
   const payload = await getApiPayload(msalInstance, account)
-  const res = await fetch('/api/adminUsers', {
+  const res = await fetch('/api/manageUsers', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...payload, userId, ...patch }),
@@ -90,7 +90,7 @@ export async function adminDeleteUser(
   userId: string
 ): Promise<void> {
   const payload = await getApiPayload(msalInstance, account)
-  const res = await fetch('/api/adminUsers', {
+  const res = await fetch('/api/manageUsers', {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...payload, userId }),

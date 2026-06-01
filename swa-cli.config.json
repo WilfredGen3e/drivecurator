@@ -1,0 +1,11 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "drivecurator": {
+      "appLocation": ".",
+      "apiLocation": "api",
+      "outputLocation": "dist",
+      "appDevserverUrl": "http://localhost:5173"
+    }
+  }
+}
