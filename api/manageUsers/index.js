@@ -21,9 +21,10 @@ module.exports = async function (context, req) {
   }
 
   const table = getUsersTable();
+  const body = req.body || {};
 
-  // GET — lijst alle gebruikers
-  if (req.method === 'GET') {
+  // POST zonder userId = lijst alle gebruikers
+  if (req.method === 'POST' && !body.userId) {
     const users = [];
     for await (const entity of table.listEntities({ queryOptions: { filter: "PartitionKey eq 'user'" } })) {
       users.push(toUserDto(entity));
@@ -37,9 +38,7 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const body = req.body || {};
   const { userId } = body;
-
   if (!userId) {
     context.res = { status: 400, body: 'userId is required', headers: corsHeaders() };
     return;

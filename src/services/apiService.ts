@@ -61,8 +61,9 @@ export async function adminListUsers(
 ): Promise<UserProfile[]> {
   const payload = await getApiPayload(msalInstance, account)
   const res = await fetch('/api/manageUsers', {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${payload.token}` },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
   })
   if (!res.ok) throw new Error(`Admin list failed: ${res.status}`)
   return res.json()
