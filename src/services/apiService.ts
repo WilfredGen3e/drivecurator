@@ -79,7 +79,7 @@ export async function adminUpdateUser(
   const res = await fetch('/api/manageUsers', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...payload, userId, ...patch }),
+    body: JSON.stringify({ ...payload, targetUserId: userId, ...patch }),
   })
   if (!res.ok) throw new Error(`Admin update failed: ${res.status}`)
   return res.json()
@@ -94,7 +94,7 @@ export async function adminDeleteUser(
   const res = await fetch('/api/manageUsers', {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...payload, userId }),
+    body: JSON.stringify({ ...payload, targetUserId: userId }),
   })
   if (!res.ok) throw new Error(`Admin delete failed: ${res.status}`)
 }

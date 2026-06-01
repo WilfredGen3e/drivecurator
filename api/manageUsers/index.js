@@ -23,8 +23,8 @@ module.exports = async function (context, req) {
   const table = getUsersTable();
   const body = req.body || {};
 
-  // POST zonder userId = lijst alle gebruikers
-  if (req.method === 'POST' && !body.userId) {
+  // POST — lijst alle gebruikers
+  if (req.method === 'POST') {
     const users = [];
     for await (const entity of table.listEntities({ queryOptions: { filter: "PartitionKey eq 'user'" } })) {
       users.push(toUserDto(entity));
@@ -38,15 +38,15 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const { userId } = body;
-  if (!userId) {
-    context.res = { status: 400, body: 'userId is required', headers: corsHeaders() };
+  // PATCH / DELETE — targetUserId is de te bewerken gebruiker
+  const { targetUserId } = body;
+  if (!targetUserId) {
+    context.res = { status: 400, body: 'targetUserId is required', headers: corsHeaders() };
     return;
   }
 
-  // PATCH — update freeTierLimit, isPremium, isBlocked
   if (req.method === 'PATCH') {
-    const patch = { partitionKey: 'user', rowKey: userId };
+    const patch = { partitionKey: 'user', rowKey: targetUserId };
     let hasField = false;
 
     if (typeof body.freeTierLimit === 'number') { patch.freeTierLimit = Math.max(0, body.freeTierLimit); hasField = true; }
@@ -60,7 +60,7 @@ module.exports = async function (context, req) {
 
     try {
       await table.updateEntity(patch, 'Merge');
-      const updated = await table.getEntity('user', userId);
+      const updated = await table.getEntity('user', targetUserId);
       context.res = {
         status: 200,
         headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
@@ -72,10 +72,9 @@ module.exports = async function (context, req) {
     return;
   }
 
-  // DELETE — verwijder gebruiker
   if (req.method === 'DELETE') {
     try {
-      await table.deleteEntity('user', userId);
+      await table.deleteEntity('user', targetUserId);
       context.res = { status: 204, headers: corsHeaders() };
     } catch (e) {
       context.res = { status: 404, body: `User not found: ${e.message}`, headers: corsHeaders() };
