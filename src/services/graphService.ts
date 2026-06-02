@@ -10,6 +10,7 @@ export interface DriveItem {
   photo?: { takenDateTime?: string; cameraMake?: string; cameraModel?: string }
   fileSystemInfo?: { createdDateTime?: string; lastModifiedDateTime?: string }
   thumbnails?: { medium?: { url: string }; large?: { url: string } }[]
+  location?: { latitude: number; longitude: number; altitude?: number }
 }
 
 async function getToken(msalInstance: PublicClientApplication, account: AccountInfo): Promise<string> {
@@ -66,7 +67,7 @@ export async function getFolderContents(
   onPage: (photos: DriveItem[], isFirst: boolean) => void,
 ): Promise<void> {
   let url: string | undefined =
-    `/me/drive/items/${folderId}/children?$expand=thumbnails&$select=id,name,size,file,folder,photo,fileSystemInfo,thumbnails&$top=200`
+    `/me/drive/items/${folderId}/children?$expand=thumbnails&$select=id,name,size,file,folder,photo,fileSystemInfo,thumbnails,location&$top=200`
   let isFirst = true
 
   while (url) {
