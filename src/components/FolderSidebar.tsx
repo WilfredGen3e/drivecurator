@@ -102,20 +102,22 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
           <p className="text-fluent-text-disabled text-xs text-center py-6 px-3">Geen mappen</p>
         ) : (
           folders.map((folder) => (
-            <div key={folder.id} className="flex items-center gap-1 px-2 py-1 hover:bg-fluent-bg-hover group border-b border-fluent-border last:border-0">
+            <div key={folder.id} className="px-2 py-1.5 hover:bg-fluent-bg-hover border-b border-fluent-border last:border-0 leading-snug">
               <button
                 onClick={() => handleNavigate(folder)}
-                className="flex items-center gap-2 flex-1 min-w-0 text-left py-0.5"
+                className="inline text-left text-sm text-fluent-text-primary"
                 title={folder.name}
               >
-                <FolderIcon />
-                <span className="text-sm text-fluent-text-primary truncate">{folder.name}</span>
+                <svg className="inline-block align-middle mr-1 w-4 h-4 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                </svg>
+                <span className="align-middle">{folder.name}</span>
               </button>
               <button
                 onClick={() => onMove(folder, breadcrumb)}
                 disabled={disabled}
                 title={`Verplaats naar ${folder.name}`}
-                className="flex-shrink-0 p-1.5 text-fluent-text-disabled hover:text-white hover:bg-fluent-accent transition-colors disabled:opacity-30"
+                className="inline-flex items-center align-middle ml-1.5 p-1 text-fluent-text-disabled hover:text-white hover:bg-fluent-accent transition-colors disabled:opacity-30"
                 style={{ borderRadius: 2 }}
               >
                 <MoveArrowIcon />
@@ -170,13 +172,6 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
   )
 }
 
-function FolderIcon() {
-  return (
-    <svg className="w-4 h-4 flex-shrink-0 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
-      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-    </svg>
-  )
-}
 
 function MoveArrowIcon() {
   return (
