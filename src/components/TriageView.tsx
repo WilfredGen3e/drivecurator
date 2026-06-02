@@ -445,7 +445,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   return (
     <div className="flex h-full">
       <div className={`flex-shrink-0 transition-all duration-200 ${sidebarOpen ? 'w-56' : 'w-0 overflow-hidden'}`}>
-        <FolderSidebar msalInstance={msalInstance} account={account} onMove={handleMove} disabled={busy} />
+        <FolderSidebar key={lastFolderBreadcrumb.map(c => c.id).join('/')} msalInstance={msalInstance} account={account} onMove={handleMove} disabled={busy} initialBreadcrumb={lastFolderBreadcrumb} />
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 bg-fluent-bg-primary">
