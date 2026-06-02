@@ -1,7 +1,10 @@
 # DriveCurator — Claude Code Instructies
 
 ## Wat is DriveCurator?
-DriveCurator is een Azure Static Web App waarmee gebruikers snel en efficiënt hun persoonlijke OneDrive foto's kunnen opschonen via een swipe-interface. Gebruikers loggen in met hun eigen Microsoft account (outlook.com / hotmail.com), zien hun foto's één voor één, en kunnen ze verwijderen (naar prullenbak) of in mappen plaatsen.
+DriveCurator is een Azure Static Web App waarmee gebruikers snel en efficiënt hun persoonlijke OneDrive foto's kunnen opschonen. Gebruikers loggen in met hun eigen Microsoft account (outlook.com / hotmail.com) en kiezen tussen twee modi:
+
+- **Handmatig organiseren** — foto's één voor één beoordelen via swipe-interface, verwijderen of verplaatsen naar map
+- **Slim sorteren** — de app analyseert alle foto's automatisch en groepeert ze in categorieën (locatie/vakantie, schermafbeeldingen, WhatsApp, maandelijks, burst-reeksen, duplicaten); hele groepen in één keer verplaatsen
 
 ## Repo & Deployment
 - **GitHub repo:** `https://github.com/WilfredGen3e/drivecurator`
@@ -227,32 +230,47 @@ drivecurator/
 │   ├── register/          — POST /api/register
 │   ├── me/                — GET /api/me
 │   ├── usage/             — POST /api/usage
-│   ├── shared/            — gedeelde hulpfuncties
+│   ├── shared/
+│   │   ├── auth.js        — token verificatie via Graph API
+│   │   ├── tableClient.js — Table Storage verbinding
+│   │   └── userDto.js     — FREE_TIER_LIMIT, ADMIN_EMAILS, toUserDto()
 │   ├── host.json
 │   └── package.json
 ├── public/
 ├── src/
 │   ├── auth/
-│   │   └── msalConfig.ts          — MSAL config + loginRequest scopes
+│   │   └── msalConfig.ts              — MSAL config + loginRequest scopes
 │   ├── services/
-│   │   └── graphService.ts        — alle Graph API calls
+│   │   ├── graphService.ts            — alle Graph API calls
+│   │   ├── clusterService.ts          — GPS-clustering + Nominatim geocoding
+│   │   ├── analysisService.ts         — foto-analyse: clusters, burst, duplicaten, maandgroepen
+│   │   └── apiService.ts              — calls naar /api/* (register, me, usage)
 │   ├── store/
-│   │   └── useAppStore.ts         — Zustand global state
+│   │   └── useAppStore.ts             — Zustand global state
+│   ├── hooks/
+│   │   └── useIsTouch.ts              — detecteert touch-apparaat
 │   ├── components/
-│   │   ├── LoginScreen.tsx        — inlogpagina met Microsoft knop
-│   │   ├── FolderBrowser.tsx      — mapnavigatie vóór triage
-│   │   ├── FolderSidebar.tsx      — sidebar tijdens triage
-│   │   ├── TriageView.tsx         — hoofdscherm foto beoordelen
-│   │   ├── ActionBar.tsx          — knoppen (niet meer actief gebruikt, vervangen door TriageView knoppen)
-│   │   └── UndoToast.tsx          — undo notificatie onderaan scherm
-│   ├── App.tsx                    — root component, routing tussen schermen
+│   │   ├── LandingPage.tsx            — startpagina vóór login
+│   │   ├── LoginScreen.tsx            — inlogpagina met Microsoft knop
+│   │   ├── BlockedScreen.tsx          — paywall / geblokkeerd scherm
+│   │   ├── PaywallModal.tsx           — upgrade-modal bij limietbereik
+│   │   ├── AdminPortal.tsx            — beheerdersinzicht (alleen admin-account)
+│   │   ├── OrganizeHome.tsx           — keuze tussen handmatig en slim sorteren
+│   │   ├── FolderBrowser.tsx          — mapnavigatie vóór triage/analyse
+│   │   ├── FolderSidebar.tsx          — sidebar: mappen + verplaats-knop
+│   │   ├── TriageView.tsx             — handmatige triage: foto voor foto
+│   │   ├── SmartSortView.tsx          — slim sorteren: analyse + categorie-dashboard
+│   │   ├── ClusterTriageView.tsx      — triage binnen één cluster (swipe + knoppen)
+│   │   ├── ActionBar.tsx              — (legacy, niet meer actief)
+│   │   └── UndoToast.tsx              — undo-notificatie
+│   ├── App.tsx                        — root component, routing tussen schermen
 │   ├── main.tsx
 │   ├── index.css
 │   └── vite-env.d.ts
 ├── CLAUDE.md
 ├── PRD.md
 ├── .env.example
-├── .env.local                     — bevat VITE_MSAL_CLIENT_ID (niet gecommit)
+├── .env.local                         — bevat VITE_MSAL_CLIENT_ID (niet gecommit)
 ├── staticwebapp.config.json
 ├── package.json
 └── vite.config.ts
@@ -264,46 +282,85 @@ drivecurator/
 
 ### Schermflow
 ```
-LoginScreen → FolderBrowser → [laden] → TriageView
-                                            ↓
-                                        FolderBrowser (via "Terug" of reset)
+LandingPage → LoginScreen → OrganizeHome
+                                ├── Handmatig → FolderBrowser → TriageView
+                                └── Slim sorteren → SmartSortView
+                                                        ├── FolderBrowser (mapkeuze)
+                                                        ├── [analyse + geocoding]
+                                                        ├── Dashboard (6 categorieën)
+                                                        ├── Categorie-overzicht (cluster-kaarten)
+                                                        └── ClusterTriageView (per cluster)
 ```
 
-### 1. LoginScreen
-- Toont "Inloggen met Microsoft" knop
-- Na succesvolle `loginPopup()` wordt `onLogin(account)` aangeroepen in App.tsx
-- App.tsx slaat het account op in React state en toont de rest van de app
+### 1. LandingPage / LoginScreen
+- LandingPage is de publieke startpagina (uitleg, voordelen)
+- LoginScreen toont "Inloggen met Microsoft" knop
+- Na succesvolle `loginPopup()` → `apiService.register()` aanroepen → OrganizeHome
+- App.tsx beheert de globale auth-state
 
-### 2. FolderBrowser
-- Laadt de root-mappen van OneDrive via `getRootFolders()`
-- Gebruiker navigeert door mappen met breadcrumb (meerdere niveaus diep)
-- Knop "Start in [mapnaam]" roept `getFolderContents()` aan met lazy loading:
-  - Eerste pagina (200 foto's) → direct `setPhotos()` → triage start
-  - Volgende pagina's → `appendPhotos()` op de achtergrond
-- Teller toont `1 / 200+` zolang nog niet alles geladen is
+### 2. OrganizeHome
+- Keuze tussen twee modi: Handmatig organiseren of Slim sorteren
+- Geen verdere logica — puur navigatie
 
-### 3. TriageView
-- Layout: sidebar links (256px) + foto-paneel rechts
-- Foto wordt zo groot mogelijk weergegeven (`large` thumbnail = 800×800px)
-- Onder de foto: bestandsnaam, datum (EXIF takenDateTime of aanmaakdatum), camera, bestandsgrootte
-- Knoppen: ← Vorige | 🗑 Verwijderen | → Volgende
-- Sidebar-knop (hamburgermenu) verbergt/toont de zijbalk
-- Verwijderen: `deleteItem()` → verplaatst naar OneDrive prullenbak (niet permanent)
-- Volgende: `nextPhoto()` zonder API call
-- Vorige: `prevPhoto()` zonder API call
-- Na verwijderen/verplaatsen: toast met "Ongedaan maken" knop (4 seconden zichtbaar)
-- Undo van verplaatsen: werkt via `moveItem()` terug naar originele map
-- Undo van verwijderen: niet mogelijk via API, toast meldt dit
+### 3. Handmatige triage (FolderBrowser → TriageView)
+- FolderBrowser: navigatie door OneDrive-mappen met breadcrumb
+- "Start in [map]" → `getFolderContents()` met lazy loading:
+  - Eerste 200 foto's → direct triage starten
+  - Rest → `appendPhotos()` op de achtergrond
+- TriageView: foto voor foto, sidebar links + foto rechts
+  - `large` thumbnail (800×800px), fallback naar `medium`
+  - Metadata: bestandsnaam, datum (EXIF of aanmaakdatum), camera, bestandsgrootte
+  - Knoppen: ← Vorige | 🗑 Verwijderen | → Volgende | map-selector in sidebar
+  - Touch: swipe links = verwijderen, swipe rechts = volgende, swipe omhoog = verplaatsen
+  - Verwijderen → OneDrive prullenbak (niet permanent)
+  - Undo verplaatsen werkt; undo verwijderen is niet mogelijk via API
 
-### 4. FolderSidebar
-- Eigen navigatiestate (los van FolderBrowser)
-- Toont mappen in huidige navigatielocatie
-- Klik op mapnaam → navigeer erin (submappen laden)
-- `→` knop naast map → verplaatst huidige foto naar die map via `moveItem()`
-- Breadcrumb bovenaan voor terugnavigeren
-- "+ Nieuwe map" knop onderaan (alleen zichtbaar als je in een map zit, niet in root)
-  - Inline tekstinvoer, Enter = aanmaken, Escape = annuleren
-  - Nieuwe map verschijnt direct in de lijst
+### 4. Slim sorteren (SmartSortView)
+- **Stap 1 — Mapkeuze:** FolderBrowser, zelfde als handmatig
+- **Stap 2 — Analyse:** `analyzePhotos()` in `analysisService.ts`
+  - Alle foto's worden in één keer opgehaald (alle pagina's)
+  - Detectie van 6 categorieën (zie hieronder)
+  - Nominatim geocoding voor locatie-clusters (max 1 req/sec)
+  - Voortgangsindicator tijdens laden + geocoding
+- **Stap 3 — Dashboard:** 6 categorie-kaarten met tellers
+- **Stap 4 — Categorie:** lijst van clusters/sets als kaarten, elk met thumbnails
+  - "Verplaatsen naar…" → bottom sheet met FolderSidebar → bulk move (5 parallel workers)
+  - "Triagen" → ClusterTriageView voor die cluster
+  - "Overslaan" → cluster uit de lijst verwijderen
+- **Stap 5 — ClusterTriageView:** zelfde swipe-interface als handmatige triage, maar binnen één cluster
+
+### 5. FolderSidebar
+- Eigen navigatiestate, herbruikbaar in zowel handmatige triage als SmartSortView
+- Klik op map → navigeer erin; `→` knop → verplaats huidige foto
+- Breadcrumb voor terugnavigeren
+- "+ Nieuwe map" (alleen binnen een map, niet in root); inline invoer, Enter = aanmaken
+
+---
+
+## Analyse-logica
+
+### analysisService.ts — `analyzePhotos(photos)`
+Geeft een `AnalysisResult` terug met:
+
+| Veld | Beschrijving |
+|------|-------------|
+| `locationClusters` | GPS-clusters via `clusterService`, geocoded via Nominatim |
+| `screenshots` | Herkend op bestandsnaam (`screenshot`, `schermafbeelding`) of PNG zonder cameraMake |
+| `whatsapp` | Herkend op bestandsnaam (`IMG-*-WA*`, `wa\d{4}`, `whatsapp`, `instagram`, `snapchat`, `tiktok`) |
+| `monthlyGroups` | Camera-foto's zonder GPS, gegroepeerd per jaar-maand |
+| `burstSets` | 3+ foto's van dezelfde camera binnen 3 seconden van elkaar |
+| `duplicateSets` | Foto's met exact dezelfde `takenDateTime` (afgekapt op seconde) |
+
+### clusterService.ts — `clusterPhotos(photos)`
+- GPS-foto's worden gesorteerd op datum en greedy geclusterd
+- Twee foto's zitten in dezelfde cluster als: tijdkloof ≤ 7 dagen én afstand ≤ 75 km (Haversine)
+- Clusters kleiner dan 3 foto's gaan naar "Overig"
+- `geocodeClusters()` verrijkt clusters met plaatsnaam via Nominatim reverse geocoding
+
+### ClusterType
+```typescript
+type ClusterType = 'location' | 'screenshots' | 'whatsapp' | 'monthly' | 'other' | 'burst' | 'duplicate'
+```
 
 ---
 
@@ -361,11 +418,26 @@ npm run dev
 - [x] Extra — Nieuwe map aanmaken vanuit sidebar
 - [x] Extra — Lazy loading: eerste 200 foto's direct, rest op achtergrond
 
-### 🔒 Fase 2 — Nog niet bouwen
-- Grid-modus, bulk selectie, toetsenbordshortcuts, metadata, video support
+### ✅ Fase 2 — Slim sorteren (gebouwd)
+- [x] OrganizeHome — keuze tussen handmatig en slim sorteren
+- [x] SmartSortView — volledige analyse + categorie-dashboard
+- [x] GPS-clustering met Nominatim geocoding (locatie-clusters)
+- [x] Screenshot-detectie (bestandsnaam + PNG-heuristiek)
+- [x] WhatsApp/social media-detectie (bestandsnaam)
+- [x] Maandelijkse groepen (camera-foto's zonder GPS)
+- [x] Burst-reeksen (3+ foto's binnen 3 sec, zelfde camera)
+- [x] Duplicaten-detectie (exact zelfde takenDateTime)
+- [x] ClusterTriageView — swipe-triage binnen één cluster
+- [x] Bulk move — hele cluster in één keer verplaatsen (5 parallel workers)
+- [x] LandingPage — publieke startpagina
+- [x] Backend (Azure Functions) — gebruikersbeheer, usage-teller, freemium-limiet
+- [x] Paywall — gratis limiet van 200 foto's, admin/premium onbeperkt
+- [x] AdminPortal — beheerdersoverzicht
 
 ### 🔒 Fase 3 — Nog niet bouwen
-- Persistente sessie, favoriete map, commerciële features
+- Grid-modus, bulk selectie, toetsenbordshortcuts, video support
+- Persistente sessie, favoriete startmap
+- Google Photos integratie, AI-suggesties
 
 ---
 
