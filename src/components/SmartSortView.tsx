@@ -16,6 +16,7 @@ interface Props {
 type Phase =
   | { name: 'browse' }
   | { name: 'initializing'; photoCount: number; geoStep: number; geoTotal: number }
+  | { name: 'error'; message: string; folder: { id: string; name: string } }
   | { name: 'dashboard' }
   | { name: 'category'; key: string; label: string; clusters: PhotoCluster[] }
   | { name: 'triage'; key: string; label: string; clusters: PhotoCluster[]; clusterId: string }
@@ -88,8 +89,9 @@ export default function SmartSortView({ msalInstance, account, onBack }: Props) 
 
       setResult(analysisResult)
       setPhase({ name: 'dashboard' })
-    } catch {
-      setPhase({ name: 'browse' })
+    } catch (err) {
+      console.error('[SmartSort] Analyse mislukt:', err)
+      setPhase({ name: 'error', message: err instanceof Error ? err.message : String(err), folder: f })
     }
   }
 
@@ -162,6 +164,37 @@ export default function SmartSortView({ msalInstance, account, onBack }: Props) 
             </div>
           </div>
         )}
+      </div>
+    )
+  }
+
+  // ── Fout ──────────────────────────────────────────────────────────────────
+  if (phase.name === 'error') {
+    return (
+      <div className="h-full flex flex-col items-center justify-center gap-5 px-6 text-center bg-fluent-bg-secondary">
+        <svg className="w-10 h-10 text-fluent-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+        <div>
+          <p className="font-semibold text-fluent-text-primary">Analyse mislukt</p>
+          <p className="text-fluent-text-secondary text-sm mt-1 max-w-sm">{phase.message}</p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => handleFolderSelected(phase.folder)}
+            className="bg-fluent-accent hover:bg-fluent-accent-hover text-white px-5 py-2 text-sm font-semibold transition-colors"
+            style={{ borderRadius: 2 }}
+          >
+            Opnieuw proberen
+          </button>
+          <button
+            onClick={() => setPhase({ name: 'browse' })}
+            className="border border-fluent-border-strong text-fluent-text-secondary hover:bg-fluent-bg-hover px-5 py-2 text-sm transition-colors"
+            style={{ borderRadius: 2 }}
+          >
+            Andere map kiezen
+          </button>
+        </div>
       </div>
     )
   }

@@ -194,13 +194,16 @@ export async function geocodeClusters(
       await new Promise((r) => setTimeout(r, wait))
     }
 
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 8000)
     try {
       const { latitude, longitude } = cluster.centroid!
       const url =
         `https://nominatim.openstreetmap.org/reverse` +
         `?lat=${latitude}&lon=${longitude}&format=json&accept-language=nl`
 
-      const res = await fetch(url)
+      const res = await fetch(url, { signal: controller.signal })
+      clearTimeout(timer)
       lastCallAt = Date.now()
 
       if (res.ok) {
@@ -218,7 +221,8 @@ export async function geocodeClusters(
         }
       }
     } catch {
-      // Geocoding mislukt — datumgebaseerd label blijft staan
+      clearTimeout(timer)
+      // Geocoding mislukt of timeout — datumgebaseerd label blijft staan
     }
 
     onProgress?.(n + 1, locationIndices.length)
