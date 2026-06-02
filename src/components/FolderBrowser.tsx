@@ -7,6 +7,7 @@ interface Props {
   msalInstance: PublicClientApplication
   account: AccountInfo
   onBack?: () => void
+  onFolderSelected?: (folder: { id: string; name: string }) => void
 }
 
 interface BreadcrumbItem {
@@ -14,7 +15,7 @@ interface BreadcrumbItem {
   name: string
 }
 
-export default function FolderBrowser({ msalInstance, account, onBack }: Props) {
+export default function FolderBrowser({ msalInstance, account, onBack, onFolderSelected }: Props) {
   const [folders, setFolders] = useState<DriveItem[]>([])
   const [breadcrumb, setBreadcrumb] = useState<BreadcrumbItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -107,12 +108,15 @@ export default function FolderBrowser({ msalInstance, account, onBack }: Props) 
       {/* start-knop voor huidige map */}
       {currentFolder && (
         <button
-          onClick={() => handleStartTriage(currentFolder)}
+          onClick={() => onFolderSelected
+            ? onFolderSelected(currentFolder)
+            : handleStartTriage(currentFolder)
+          }
           className="w-full flex items-center gap-3 px-4 py-2.5 text-left bg-fluent-accent hover:bg-fluent-accent-hover text-white font-semibold text-sm transition-colors"
           style={{ borderRadius: 2 }}
         >
           <PlayIcon />
-          <span>Start in "{currentFolder.name}"</span>
+          <span>{onFolderSelected ? `Analyseren in "${currentFolder.name}"` : `Start in "${currentFolder.name}"`}</span>
         </button>
       )}
 

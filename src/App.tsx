@@ -3,6 +3,7 @@ import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { msalConfig } from './auth/msalConfig'
 import LandingPage from './components/LandingPage'
 import OrganizeHome from './components/OrganizeHome'
+import SmartSortView from './components/SmartSortView'
 import FolderBrowser from './components/FolderBrowser'
 import TriageView from './components/TriageView'
 import BlockedScreen from './components/BlockedScreen'
@@ -18,7 +19,7 @@ export default function App() {
   const [showApp, setShowApp] = useState(false)
   const [blocked, setBlocked] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
-  const [screen, setScreen] = useState<'home' | 'browse'>('home')
+  const [screen, setScreen] = useState<'home' | 'browse' | 'smart-sort'>('home')
   const { reset, currentFolderId, loading, setCurrentUser, currentUser } = useAppStore()
 
   const handleRegistration = async (acc: AccountInfo) => {
@@ -118,7 +119,9 @@ export default function App() {
           ? <TriageView msalInstance={msalInstance} account={account} onBack={() => { reset(); setScreen('home') }} />
           : screen === 'browse'
             ? <FolderBrowser msalInstance={msalInstance} account={account} onBack={() => setScreen('home')} />
-            : <OrganizeHome onManual={() => setScreen('browse')} />}
+            : screen === 'smart-sort'
+              ? <SmartSortView msalInstance={msalInstance} account={account} onBack={() => setScreen('home')} />
+              : <OrganizeHome onManual={() => setScreen('browse')} onSmartSort={() => setScreen('smart-sort')} />}
       </main>
     </div>
   )

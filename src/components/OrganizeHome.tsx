@@ -1,8 +1,9 @@
 interface Props {
   onManual: () => void
+  onSmartSort: () => void
 }
 
-export default function OrganizeHome({ onManual }: Props) {
+export default function OrganizeHome({ onManual, onSmartSort }: Props) {
   return (
     <div className="h-full flex flex-col items-center justify-center px-6 bg-fluent-bg-secondary">
       <div className="w-full max-w-xl">
@@ -31,23 +32,25 @@ export default function OrganizeHome({ onManual }: Props) {
             </p>
           </button>
 
-          {/* Placeholder tweede functie */}
-          <div
-            className="flex-1 text-left bg-fluent-bg-primary border border-fluent-border p-5 opacity-50 cursor-not-allowed select-none"
+          {/* Slim sorteren */}
+          <button
+            onClick={onSmartSort}
+            className="flex-1 text-left bg-fluent-bg-primary border border-fluent-border hover:border-fluent-accent hover:bg-fluent-accent-light transition-colors p-5 group"
             style={{ borderRadius: 2 }}
           >
             <div className="mb-3">
-              <svg className="w-8 h-8 text-fluent-text-disabled" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <svg className="w-8 h-8 text-fluent-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <p className="font-semibold text-fluent-text-secondary text-base mb-1">
-              Binnenkort beschikbaar
+            <p className="font-semibold text-fluent-text-primary text-base mb-1 group-hover:text-fluent-accent transition-colors">
+              Slim sorteren
             </p>
-            <p className="text-fluent-text-disabled text-sm">
-              Een nieuwe manier om je foto's te organiseren. Komt binnenkort.
+            <p className="text-fluent-text-secondary text-sm">
+              De app herkent automatisch vakanties, schermafbeeldingen en meer. Verplaats alles in één keer per pakketje.
             </p>
-          </div>
+          </button>
 
         </div>
       </div>
