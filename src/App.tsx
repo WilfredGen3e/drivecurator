@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { msalConfig } from './auth/msalConfig'
 import LandingPage from './components/LandingPage'
+import OrganizeHome from './components/OrganizeHome'
 import FolderBrowser from './components/FolderBrowser'
 import TriageView from './components/TriageView'
 import BlockedScreen from './components/BlockedScreen'
@@ -17,6 +18,7 @@ export default function App() {
   const [showApp, setShowApp] = useState(false)
   const [blocked, setBlocked] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
+  const [screen, setScreen] = useState<'home' | 'browse'>('home')
   const { reset, currentFolderId, loading, setCurrentUser, currentUser } = useAppStore()
 
   const handleRegistration = async (acc: AccountInfo) => {
@@ -113,8 +115,10 @@ export default function App() {
             <p className="text-fluent-text-secondary text-sm">Eerste foto's laden…</p>
           </div>
         ) : currentFolderId
-          ? <TriageView msalInstance={msalInstance} account={account} onBack={reset} />
-          : <FolderBrowser msalInstance={msalInstance} account={account} />}
+          ? <TriageView msalInstance={msalInstance} account={account} onBack={() => { reset(); setScreen('home') }} />
+          : screen === 'browse'
+            ? <FolderBrowser msalInstance={msalInstance} account={account} onBack={() => setScreen('home')} />
+            : <OrganizeHome onManual={() => setScreen('browse')} />}
       </main>
     </div>
   )

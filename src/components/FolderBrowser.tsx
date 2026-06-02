@@ -6,6 +6,7 @@ import { useAppStore } from '../store/useAppStore'
 interface Props {
   msalInstance: PublicClientApplication
   account: AccountInfo
+  onBack?: () => void
 }
 
 interface BreadcrumbItem {
@@ -13,7 +14,7 @@ interface BreadcrumbItem {
   name: string
 }
 
-export default function FolderBrowser({ msalInstance, account }: Props) {
+export default function FolderBrowser({ msalInstance, account, onBack }: Props) {
   const [folders, setFolders] = useState<DriveItem[]>([])
   const [breadcrumb, setBreadcrumb] = useState<BreadcrumbItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -76,6 +77,14 @@ export default function FolderBrowser({ msalInstance, account }: Props) {
     <div className="max-w-xl mx-auto px-6 py-8 space-y-5">
       {/* titel + breadcrumb */}
       <div>
+        {onBack && (
+          <button onClick={onBack} className="text-fluent-text-secondary hover:text-fluent-text-primary text-sm mb-3 flex items-center gap-1 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Terug
+          </button>
+        )}
         <h2 className="text-lg font-semibold text-fluent-text-primary">Kies een map om op te schonen</h2>
         <nav className="flex items-center gap-1 flex-wrap mt-1.5">
           <button onClick={handleRootClick} className="text-sm text-fluent-accent hover:underline transition-colors">
