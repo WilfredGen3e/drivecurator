@@ -9,7 +9,8 @@ import UndoToast from './UndoToast'
 import { useIsTouch } from '../hooks/useIsTouch'
 
 const MONTHS = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
-const SWIPE_THRESHOLD = 90
+const SWIPE_HINT = 30
+const SWIPE_COMMIT = 160
 
 function getPhotoDate(photo: DriveItem): Date | null {
   const str = photo.photo?.takenDateTime ?? photo.fileSystemInfo?.createdDateTime
@@ -203,16 +204,41 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
     swipeTouchStart.current = null
 
     if (!wasActive) return
-    if (absX >= SWIPE_THRESHOLD && absX >= absY) {
+    if (absX >= SWIPE_COMMIT && absX >= absY) {
       if (x < 0) handleDelete()
       else handleKeep()
-    } else if (y < 0 && absY >= SWIPE_THRESHOLD && absY > absX) {
+    } else if (y < 0 && absY >= SWIPE_COMMIT && absY > absX) {
       if (lastFolder) handleMoveToLastFolder()
       else setShowFolderSheet(true)
     }
   }
 
   const thumbnail = photo?.thumbnails?.[0]?.large?.url ?? photo?.thumbnails?.[0]?.medium?.url
+
+  // Swipe-berekeningen voor touch layout
+  const swipeAbsX = Math.abs(swipeDelta.x)
+  const swipeAbsY = Math.abs(swipeDelta.y)
+  const swipeHoriz = swipeAbsX >= swipeAbsY
+  const swipeLeftCommitted  = isActivelySwiping && swipeDelta.x <= -SWIPE_COMMIT
+  const swipeRightCommitted = isActivelySwiping && swipeDelta.x >= SWIPE_COMMIT
+  const swipeUpCommitted    = isActivelySwiping && swipeDelta.y <= -SWIPE_COMMIT && !swipeHoriz
+
+  const photoSwipeTransform = (() => {
+    if (!isActivelySwiping) return 'none'
+    if (swipeHoriz) {
+      const sign = swipeDelta.x < 0 ? -1 : 1
+      const tx = swipeAbsX <= SWIPE_COMMIT
+        ? swipeDelta.x * 0.85
+        : sign * (SWIPE_COMMIT * 0.85 + (swipeAbsX - SWIPE_COMMIT) * 0.12)
+      return `translateX(${tx}px) rotate(${tx * 0.015}deg)`
+    } else {
+      const sign = swipeDelta.y < 0 ? -1 : 1
+      const ty = swipeAbsY <= SWIPE_COMMIT
+        ? swipeDelta.y * 0.85
+        : sign * (SWIPE_COMMIT * 0.85 + (swipeAbsY - SWIPE_COMMIT) * 0.12)
+      return `translateY(${ty}px)`
+    }
+  })()
 
   // ── Klaar / leeg scherm ──────────────────────────────────────────────────
   if (done || !photo) {
@@ -312,14 +338,12 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           onTouchMove={handlePhotoTouchMove}
           onTouchEnd={handlePhotoTouchEnd}
         >
-          {/* Foto zelf, beweegt mee met swipe */}
+          {/* Foto zelf, beweegt mee met swipe + rubber-band voorbij drempel */}
           <div
             className="w-full h-full flex items-center justify-center"
             style={{
-              transform: isActivelySwiping
-                ? `translateX(${swipeDelta.x * 0.75}px) rotate(${swipeDelta.x * 0.02}deg)`
-                : 'none',
-              transition: isActivelySwiping ? 'none' : 'transform 0.25s ease-out',
+              transform: photoSwipeTransform,
+              transition: isActivelySwiping ? 'none' : 'transform 0.3s ease-out',
               willChange: 'transform',
             }}
           >
@@ -329,47 +353,53 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             }
           </div>
 
-          {/* Swipe-links overlay: verwijderen */}
-          {isActivelySwiping && swipeDelta.x < -20 && (
+          {/* Swipe-links: verwijderen */}
+          {isActivelySwiping && swipeDelta.x < -SWIPE_HINT && (
             <div
-              className="absolute inset-0 flex items-center justify-end pr-10 pointer-events-none"
+              className="absolute inset-0 flex items-center justify-end pr-10 pointer-events-none transition-colors duration-100"
               style={{
-                opacity: Math.min(1, Math.abs(swipeDelta.x) / SWIPE_THRESHOLD),
-                backgroundColor: 'rgba(209,52,56,0.18)',
+                backgroundColor: swipeLeftCommitted ? 'rgba(209,52,56,0.85)' : `rgba(209,52,56,${Math.min(0.25, swipeAbsX / SWIPE_COMMIT * 0.25)})`,
               }}
             >
-              <div className="bg-fluent-danger text-white rounded-full p-4">
-                <TrashIcon />
+              <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeLeftCommitted ? 'scale-110' : 'scale-100'}`}>
+                <div className={`rounded-full p-4 ${swipeLeftCommitted ? 'bg-white/20' : 'bg-fluent-danger'}`}>
+                  <TrashIcon />
+                </div>
+                {swipeLeftCommitted && <span className="text-sm font-semibold">Loslaten om te verwijderen</span>}
               </div>
             </div>
           )}
 
-          {/* Swipe-rechts overlay: volgende */}
-          {isActivelySwiping && swipeDelta.x > 20 && (
+          {/* Swipe-rechts: volgende */}
+          {isActivelySwiping && swipeDelta.x > SWIPE_HINT && (
             <div
-              className="absolute inset-0 flex items-center justify-start pl-10 pointer-events-none"
+              className="absolute inset-0 flex items-center justify-start pl-10 pointer-events-none transition-colors duration-100"
               style={{
-                opacity: Math.min(1, swipeDelta.x / SWIPE_THRESHOLD),
-                backgroundColor: 'rgba(16,124,16,0.18)',
+                backgroundColor: swipeRightCommitted ? 'rgba(16,124,16,0.85)' : `rgba(16,124,16,${Math.min(0.25, swipeDelta.x / SWIPE_COMMIT * 0.25)})`,
               }}
             >
-              <div className="bg-fluent-success text-white rounded-full p-4">
-                <NextIcon />
+              <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeRightCommitted ? 'scale-110' : 'scale-100'}`}>
+                <div className={`rounded-full p-4 ${swipeRightCommitted ? 'bg-white/20' : 'bg-fluent-success'}`}>
+                  <NextIcon />
+                </div>
+                {swipeRightCommitted && <span className="text-sm font-semibold">Loslaten voor volgende</span>}
               </div>
             </div>
           )}
 
-          {/* Swipe-omhoog overlay: verplaatsen */}
-          {isActivelySwiping && swipeDelta.y < -20 && Math.abs(swipeDelta.y) > Math.abs(swipeDelta.x) && (
+          {/* Swipe-omhoog: verplaatsen */}
+          {isActivelySwiping && swipeDelta.y < -SWIPE_HINT && !swipeHoriz && (
             <div
-              className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none"
+              className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none transition-colors duration-100"
               style={{
-                opacity: Math.min(1, Math.abs(swipeDelta.y) / SWIPE_THRESHOLD),
-                backgroundColor: 'rgba(0,120,212,0.18)',
+                backgroundColor: swipeUpCommitted ? 'rgba(0,120,212,0.85)' : `rgba(0,120,212,${Math.min(0.25, swipeAbsY / SWIPE_COMMIT * 0.25)})`,
               }}
             >
-              <div className="bg-fluent-accent text-white rounded-full p-4">
-                <FolderIcon />
+              <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeUpCommitted ? 'scale-110' : 'scale-100'}`}>
+                <div className={`rounded-full p-4 ${swipeUpCommitted ? 'bg-white/20' : 'bg-fluent-accent'}`}>
+                  <FolderIcon />
+                </div>
+                {swipeUpCommitted && <span className="text-sm font-semibold">Loslaten om te verplaatsen</span>}
               </div>
             </div>
           )}
