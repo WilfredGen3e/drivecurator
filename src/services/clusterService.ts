@@ -169,3 +169,60 @@ export function clusterPhotos(photos: DriveItem[]): PhotoCluster[] {
 
   return result
 }
+
+// Nominatim reverse geocoding: voegt geo-naam toe aan location clusters.
+// Roept Nominatim maximaal 1x per seconde aan (usage policy).
+// Bij een mislukte call blijft het datum-label staan.
+export async function geocodeClusters(
+  clusters: PhotoCluster[],
+  onProgress?: (done: number, total: number) => void,
+): Promise<PhotoCluster[]> {
+  const result = [...clusters]
+  const locationIndices = result
+    .map((c, i) => (c.type === 'location' && c.centroid ? i : -1))
+    .filter((i) => i >= 0)
+
+  let lastCallAt = 0
+
+  for (let n = 0; n < locationIndices.length; n++) {
+    const i = locationIndices[n]
+    const cluster = result[i]
+
+    // Nominatim rate limit: wacht tot er minstens 1100ms verstreken is
+    const wait = 1100 - (Date.now() - lastCallAt)
+    if (lastCallAt > 0 && wait > 0) {
+      await new Promise((r) => setTimeout(r, wait))
+    }
+
+    try {
+      const { latitude, longitude } = cluster.centroid!
+      const url =
+        `https://nominatim.openstreetmap.org/reverse` +
+        `?lat=${latitude}&lon=${longitude}&format=json&accept-language=nl`
+
+      const res = await fetch(url)
+      lastCallAt = Date.now()
+
+      if (res.ok) {
+        const data = await res.json()
+        const addr = data.address ?? {}
+        const place =
+          addr.city ?? addr.town ?? addr.village ?? addr.county ?? addr.state ?? null
+
+        if (place) {
+          const monthYear = cluster.startDate!.toLocaleDateString('nl-NL', {
+            month: 'long',
+            year: 'numeric',
+          })
+          result[i] = { ...cluster, label: `In de buurt van ${place}, ${monthYear}` }
+        }
+      }
+    } catch {
+      // Geocoding mislukt — datumgebaseerd label blijft staan
+    }
+
+    onProgress?.(n + 1, locationIndices.length)
+  }
+
+  return result
+}
