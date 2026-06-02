@@ -4,7 +4,7 @@ import { DriveItem, deleteItem, moveItem } from '../services/graphService'
 import { incrementUsage, FreeLimitReachedError } from '../services/apiService'
 import PaywallModal from './PaywallModal'
 import { useAppStore } from '../store/useAppStore'
-import FolderSidebar from './FolderSidebar'
+import FolderSidebar, { Crumb } from './FolderSidebar'
 import UndoToast from './UndoToast'
 import { useIsTouch } from '../hooks/useIsTouch'
 
@@ -59,6 +59,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   // Touch-specifieke state
   const [showFolderSheet, setShowFolderSheet] = useState(false)
   const [lastFolder, setLastFolder] = useState<DriveItem | null>(null)
+  const [lastFolderBreadcrumb, setLastFolderBreadcrumb] = useState<Crumb[]>([])
   const [showTouchFilter, setShowTouchFilter] = useState(false)
 
   // Swipe gesture state
@@ -140,7 +141,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
     } finally { setBusy(false) }
   }
 
-  const handleMove = async (targetFolder: DriveItem) => {
+  const handleMove = async (targetFolder: DriveItem, breadcrumb?: Crumb[]) => {
     if (!photo || busy) return
     setBusy(true)
     setShowFolderSheet(false)
@@ -150,6 +151,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       pushUndo({ type: 'move', item: photo, previousFolderId: currentFolderId! })
       removePhotoById(photo.id)
       setLastFolder(targetFolder)
+      if (breadcrumb !== undefined) setLastFolderBreadcrumb(breadcrumb)
       showToast(`Verplaatst naar "${targetFolder.name}"`)
     } finally { setBusy(false) }
   }
@@ -427,7 +429,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
                 </button>
               </div>
               <div className="flex-1 overflow-auto">
-                <FolderSidebar msalInstance={msalInstance} account={account} onMove={handleMove} disabled={busy} />
+                <FolderSidebar msalInstance={msalInstance} account={account} onMove={handleMove} disabled={busy} initialBreadcrumb={lastFolderBreadcrumb} />
               </div>
             </div>
           </div>

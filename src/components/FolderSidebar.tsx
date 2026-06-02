@@ -2,18 +2,19 @@ import { useEffect, useState } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, getRootFolders, getSubFolders, createFolder } from '../services/graphService'
 
+export interface Crumb { id: string; name: string }
+
 interface Props {
   msalInstance: PublicClientApplication
   account: AccountInfo
-  onMove: (folder: DriveItem) => void
+  onMove: (folder: DriveItem, breadcrumb: Crumb[]) => void
   disabled: boolean
+  initialBreadcrumb?: Crumb[]
 }
 
-interface Crumb { id: string; name: string }
-
-export default function FolderSidebar({ msalInstance, account, onMove, disabled }: Props) {
+export default function FolderSidebar({ msalInstance, account, onMove, disabled, initialBreadcrumb }: Props) {
   const [folders, setFolders] = useState<DriveItem[]>([])
-  const [breadcrumb, setBreadcrumb] = useState<Crumb[]>([])
+  const [breadcrumb, setBreadcrumb] = useState<Crumb[]>(initialBreadcrumb ?? [])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
@@ -33,7 +34,10 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled 
     }
   }
 
-  useEffect(() => { loadFolders(null) }, [])
+  useEffect(() => {
+    const startId = initialBreadcrumb?.length ? initialBreadcrumb[initialBreadcrumb.length - 1].id : null
+    loadFolders(startId)
+  }, [])
 
   const handleNavigate = async (folder: DriveItem) => {
     setBreadcrumb((prev) => [...prev, { id: folder.id, name: folder.name }])
@@ -108,7 +112,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled 
                 <span className="text-sm text-fluent-text-primary truncate">{folder.name}</span>
               </button>
               <button
-                onClick={() => onMove(folder)}
+                onClick={() => onMove(folder, breadcrumb)}
                 disabled={disabled}
                 title={`Verplaats naar ${folder.name}`}
                 className="flex-shrink-0 p-1.5 text-fluent-text-disabled hover:text-white hover:bg-fluent-accent transition-colors disabled:opacity-30"
