@@ -4,6 +4,7 @@ import { DriveItem, getFolderContents, moveItem } from '../services/graphService
 import { PhotoCluster, clusterPhotos, geocodeClusters } from '../services/clusterService'
 import FolderBrowser from './FolderBrowser'
 import FolderSidebar, { Crumb } from './FolderSidebar'
+import ClusterTriageView from './ClusterTriageView'
 
 interface Props {
   msalInstance: PublicClientApplication
@@ -15,6 +16,7 @@ type Phase =
   | { name: 'browse' }
   | { name: 'analyzing'; photoCount: number; geoStep: number; geoTotal: number }
   | { name: 'clusters'; folder: { id: string; name: string }; clusters: PhotoCluster[] }
+  | { name: 'triage'; folder: { id: string; name: string }; clusters: PhotoCluster[]; clusterId: string }
 
 function formatDateRange(start?: Date, end?: Date): string {
   if (!start || !end) return ''
@@ -160,6 +162,27 @@ export default function SmartSortView({ msalInstance, account, onBack }: Props) 
     )
   }
 
+  // ── Triage subfase ───────────────────────────────────────────────────────────
+  if (phase.name === 'triage') {
+    const cluster = phase.clusters.find(c => c.id === phase.clusterId)!
+    return (
+      <ClusterTriageView
+        msalInstance={msalInstance}
+        account={account}
+        clusterLabel={cluster.label}
+        initialPhotos={cluster.photos}
+        onDone={(remaining) => {
+          const updatedClusters = remaining.length === 0
+            ? phase.clusters.filter(c => c.id !== phase.clusterId)
+            : phase.clusters.map(c =>
+                c.id === phase.clusterId ? { ...c, photos: remaining } : c,
+              )
+          setPhase({ name: 'clusters', folder: phase.folder, clusters: updatedClusters })
+        }}
+      />
+    )
+  }
+
   // ── Clusters fase ────────────────────────────────────────────────────────────
   const { folder, clusters } = phase
 
@@ -237,22 +260,28 @@ export default function SmartSortView({ msalInstance, account, onBack }: Props) 
                 </div>
               </div>
 
-              {/* Thumbnails */}
+              {/* Thumbnails — klikbaar om cluster te triagen */}
               {thumbs.length > 0 && (
-                <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setPhase({ name: 'triage', folder, clusters, clusterId: cluster.id })}
+                  disabled={busy}
+                  className="flex items-center gap-1.5 group/thumbs disabled:pointer-events-none text-left"
+                >
                   {thumbs.map(photo => (
                     <img
                       key={photo.id}
                       src={photo.thumbnails![0].medium!.url}
                       alt=""
-                      className="w-14 h-14 object-cover flex-shrink-0"
+                      className="w-14 h-14 object-cover flex-shrink-0 group-hover/thumbs:opacity-80 transition-opacity"
                       style={{ borderRadius: 2 }}
                     />
                   ))}
                   {extraCount > 0 && (
-                    <span className="text-xs text-fluent-text-secondary pl-1">+{extraCount} meer</span>
+                    <span className="text-xs text-fluent-accent pl-1 underline underline-offset-2">
+                      +{extraCount} meer
+                    </span>
                   )}
-                </div>
+                </button>
               )}
 
               {/* Voortgang tijdens verplaatsen */}
