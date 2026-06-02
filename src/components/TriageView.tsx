@@ -9,6 +9,7 @@ import UndoToast from './UndoToast'
 import { useIsTouch } from '../hooks/useIsTouch'
 
 const MONTHS = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
+const SWIPE_THRESHOLD = 90
 
 function getPhotoDate(photo: DriveItem): Date | null {
   const str = photo.photo?.takenDateTime ?? photo.fileSystemInfo?.createdDateTime
@@ -59,6 +60,11 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   const [showFolderSheet, setShowFolderSheet] = useState(false)
   const [lastFolder, setLastFolder] = useState<DriveItem | null>(null)
   const [showTouchFilter, setShowTouchFilter] = useState(false)
+
+  // Swipe gesture state
+  const [swipeDelta, setSwipeDelta] = useState({ x: 0, y: 0 })
+  const [isActivelySwiping, setIsActivelySwiping] = useState(false)
+  const swipeTouchStart = useRef<{ x: number; y: number } | null>(null)
 
   const availableYears = useMemo(() => {
     const years = new Set<number>()
@@ -167,6 +173,43 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
     } finally { setBusy(false) }
   }
 
+  const handlePhotoTouchStart = (e: React.TouchEvent) => {
+    if (busy) return
+    const t = e.touches[0]
+    swipeTouchStart.current = { x: t.clientX, y: t.clientY }
+  }
+
+  const handlePhotoTouchMove = (e: React.TouchEvent) => {
+    if (!swipeTouchStart.current || busy) return
+    const t = e.touches[0]
+    const dx = t.clientX - swipeTouchStart.current.x
+    const dy = t.clientY - swipeTouchStart.current.y
+    if (!isActivelySwiping && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+      setIsActivelySwiping(true)
+    }
+    setSwipeDelta({ x: dx, y: dy })
+  }
+
+  const handlePhotoTouchEnd = () => {
+    const { x, y } = swipeDelta
+    const absX = Math.abs(x)
+    const absY = Math.abs(y)
+    const wasActive = isActivelySwiping
+
+    setIsActivelySwiping(false)
+    setSwipeDelta({ x: 0, y: 0 })
+    swipeTouchStart.current = null
+
+    if (!wasActive) return
+    if (absX >= SWIPE_THRESHOLD && absX >= absY) {
+      if (x < 0) handleDelete()
+      else handleKeep()
+    } else if (y < 0 && absY >= SWIPE_THRESHOLD && absY > absX) {
+      if (lastFolder) handleMoveToLastFolder()
+      else setShowFolderSheet(true)
+    }
+  }
+
   const thumbnail = photo?.thumbnails?.[0]?.large?.url ?? photo?.thumbnails?.[0]?.medium?.url
 
   // ── Klaar / leeg scherm ──────────────────────────────────────────────────
@@ -260,12 +303,74 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           <div className="h-full bg-fluent-accent transition-all duration-300" style={{ width: `${total > 0 ? (filteredIndex / total) * 100 : 0}%` }} />
         </div>
 
-        {/* Foto */}
-        <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
-          {thumbnail
-            ? <img src={thumbnail} alt={photo.name} className="w-full h-full object-contain" />
-            : <div className="w-full h-full flex items-center justify-center bg-fluent-bg-hover"><span className="text-fluent-text-secondary text-sm px-6 text-center">{photo.name}</span></div>
-          }
+        {/* Foto — swipe-gebied */}
+        <div
+          className="flex-1 min-h-0 relative overflow-hidden select-none touch-none"
+          onTouchStart={handlePhotoTouchStart}
+          onTouchMove={handlePhotoTouchMove}
+          onTouchEnd={handlePhotoTouchEnd}
+        >
+          {/* Foto zelf, beweegt mee met swipe */}
+          <div
+            className="w-full h-full flex items-center justify-center"
+            style={{
+              transform: isActivelySwiping
+                ? `translateX(${swipeDelta.x * 0.75}px) rotate(${swipeDelta.x * 0.02}deg)`
+                : 'none',
+              transition: isActivelySwiping ? 'none' : 'transform 0.25s ease-out',
+              willChange: 'transform',
+            }}
+          >
+            {thumbnail
+              ? <img src={thumbnail} alt={photo.name} className="w-full h-full object-contain" draggable={false} />
+              : <div className="w-full h-full flex items-center justify-center bg-fluent-bg-hover"><span className="text-fluent-text-secondary text-sm px-6 text-center">{photo.name}</span></div>
+            }
+          </div>
+
+          {/* Swipe-links overlay: verwijderen */}
+          {isActivelySwiping && swipeDelta.x < -20 && (
+            <div
+              className="absolute inset-0 flex items-center justify-end pr-10 pointer-events-none"
+              style={{
+                opacity: Math.min(1, Math.abs(swipeDelta.x) / SWIPE_THRESHOLD),
+                backgroundColor: 'rgba(209,52,56,0.18)',
+              }}
+            >
+              <div className="bg-fluent-danger text-white rounded-full p-4">
+                <TrashIcon />
+              </div>
+            </div>
+          )}
+
+          {/* Swipe-rechts overlay: volgende */}
+          {isActivelySwiping && swipeDelta.x > 20 && (
+            <div
+              className="absolute inset-0 flex items-center justify-start pl-10 pointer-events-none"
+              style={{
+                opacity: Math.min(1, swipeDelta.x / SWIPE_THRESHOLD),
+                backgroundColor: 'rgba(16,124,16,0.18)',
+              }}
+            >
+              <div className="bg-fluent-success text-white rounded-full p-4">
+                <NextIcon />
+              </div>
+            </div>
+          )}
+
+          {/* Swipe-omhoog overlay: verplaatsen */}
+          {isActivelySwiping && swipeDelta.y < -20 && Math.abs(swipeDelta.y) > Math.abs(swipeDelta.x) && (
+            <div
+              className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none"
+              style={{
+                opacity: Math.min(1, Math.abs(swipeDelta.y) / SWIPE_THRESHOLD),
+                backgroundColor: 'rgba(0,120,212,0.18)',
+              }}
+            >
+              <div className="bg-fluent-accent text-white rounded-full p-4">
+                <FolderIcon />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Metadata */}
