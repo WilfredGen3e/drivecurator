@@ -9,6 +9,7 @@ import TriageView from './components/TriageView'
 import BlockedScreen from './components/BlockedScreen'
 import AdminPortal from './components/AdminPortal'
 import StepIndicator from './components/StepIndicator'
+import PhotoStackLoader from './components/PhotoStackLoader'
 import { useAppStore } from './store/useAppStore'
 import { registerUser, AccountBlockedError } from './services/apiService'
 import { getFolderContents, DriveItem } from './services/graphService'
@@ -25,6 +26,7 @@ export default function App() {
   const [selectedFolder, setSelectedFolder] = useState<{ id: string; name: string } | null>(null)
   const [loadedPhotos, setLoadedPhotos] = useState<DriveItem[]>([])
   const [photoLoadCount, setPhotoLoadCount] = useState(0)
+  const [currentThumb, setCurrentThumb] = useState<string | null>(null)
 
   const {
     reset, currentFolderId, loading,
@@ -64,6 +66,7 @@ export default function App() {
       setBlocked(false)
       setSelectedFolder(null)
       setLoadedPhotos([])
+      setCurrentThumb(null)
       setScreen('browse')
     })
   }
@@ -73,6 +76,7 @@ export default function App() {
     setSelectedFolder(folder)
     setLoadedPhotos([])
     setPhotoLoadCount(0)
+    setCurrentThumb(null)
     setScreen('loading')
 
     const allPhotos: DriveItem[] = []
@@ -80,8 +84,11 @@ export default function App() {
       await getFolderContents(msalInstance, account, folder.id, (page) => {
         allPhotos.push(...page)
         setPhotoLoadCount(allPhotos.length)
+        const thumb = page.find(p => p.thumbnails?.[0]?.medium?.url)?.thumbnails?.[0]?.medium?.url
+        if (thumb) setCurrentThumb(thumb)
       })
       setLoadedPhotos(allPhotos)
+      setCurrentThumb(null)
       setScreen('organize')
     } catch {
       setScreen('browse')
@@ -163,15 +170,12 @@ export default function App() {
         {showAdmin ? (
           <AdminPortal msalInstance={msalInstance} account={account} onClose={() => setShowAdmin(false)} />
         ) : screen === 'loading' ? (
-          <div className="h-full flex flex-col items-center justify-center gap-5 bg-fluent-bg-secondary">
-            <div className="w-10 h-10 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin" />
-            <div className="text-center space-y-1">
-              <p className="font-semibold text-fluent-text-primary">Foto's ophalen…</p>
-              <p className="text-fluent-text-secondary text-sm">
-                <span className="font-semibold text-fluent-accent">{photoLoadCount.toLocaleString('nl-NL')}</span>
-                {' '}foto's geladen uit "{selectedFolder?.name}"
-              </p>
-            </div>
+          <div className="h-full flex items-center justify-center bg-fluent-bg-secondary">
+            <PhotoStackLoader
+              currentThumb={currentThumb}
+              photoCount={photoLoadCount}
+              folderName={selectedFolder?.name ?? ''}
+            />
           </div>
         ) : loading ? (
           <div className="flex flex-col items-center justify-center h-full gap-4">
