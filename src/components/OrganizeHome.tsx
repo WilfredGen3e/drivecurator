@@ -1,11 +1,12 @@
 interface Props {
   folder: { id: string; name: string }
+  photoCount: number
   onManual: () => void
   onSmartSort: () => void
   onChangeFolder: () => void
 }
 
-export default function OrganizeHome({ folder, onManual, onSmartSort, onChangeFolder }: Props) {
+export default function OrganizeHome({ folder, photoCount, onManual, onSmartSort, onChangeFolder }: Props) {
   return (
     <div className="h-full flex flex-col items-center justify-center px-6 bg-fluent-bg-secondary">
       <div className="w-full max-w-xl">
@@ -21,6 +22,9 @@ export default function OrganizeHome({ folder, onManual, onSmartSort, onChangeFo
           >
             Wijzigen
           </button>
+          <span className="text-xs text-fluent-text-disabled ml-auto flex-shrink-0">
+            {photoCount.toLocaleString('nl-NL')} foto's
+          </span>
         </div>
 
         <h1 className="text-2xl font-semibold text-fluent-text-primary mb-1">Kies aanvalsroute</h1>

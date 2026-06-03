@@ -10,6 +10,7 @@ interface Props {
   msalInstance: PublicClientApplication
   account: AccountInfo
   folder: { id: string; name: string }
+  initialPhotos?: DriveItem[]
   onBack: () => void
 }
 
@@ -85,7 +86,7 @@ function buildClusters(key: string, result: AnalysisResult): PhotoCluster[] {
   }
 }
 
-export default function SmartSortView({ msalInstance, account, folder, onBack }: Props) {
+export default function SmartSortView({ msalInstance, account, folder, initialPhotos, onBack }: Props) {
   const [phase, setPhase] = useState<Phase>({ name: 'initializing', photoCount: 0, geoStep: 0, geoTotal: 0 })
   const [result, setResult] = useState<AnalysisResult | null>(null)
 
@@ -101,17 +102,29 @@ export default function SmartSortView({ msalInstance, account, folder, onBack }:
 
   const startAnalysis = async () => {
     setPhase({ name: 'initializing', photoCount: 0, geoStep: 0, geoTotal: 0 })
-    const allPhotos: DriveItem[] = []
-    try {
-      await getFolderContents(msalInstance, account, folder.id, (page) => {
-        allPhotos.push(...page)
-        setPhase(prev => prev.name === 'initializing' ? { ...prev, photoCount: allPhotos.length } : prev)
-      })
 
+    let allPhotos: DriveItem[]
+    if (initialPhotos && initialPhotos.length > 0) {
+      allPhotos = initialPhotos
+      setPhase(prev => prev.name === 'initializing' ? { ...prev, photoCount: allPhotos.length } : prev)
+    } else {
+      allPhotos = []
+      try {
+        await getFolderContents(msalInstance, account, folder.id, (page) => {
+          allPhotos.push(...page)
+          setPhase(prev => prev.name === 'initializing' ? { ...prev, photoCount: allPhotos.length } : prev)
+        })
+      } catch (err) {
+        console.error("[SmartSort] Foto's ophalen mislukt:", err)
+        setPhase({ name: 'error', message: err instanceof Error ? err.message : String(err) })
+        return
+      }
+    }
+
+    try {
       const analysisResult = await analyzePhotos(allPhotos, (done, total) => {
         setPhase(prev => prev.name === 'initializing' ? { ...prev, geoStep: done, geoTotal: total } : prev)
       })
-
       setResult(analysisResult)
       setPhase({ name: 'dashboard' })
     } catch (err) {

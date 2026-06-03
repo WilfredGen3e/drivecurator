@@ -11,7 +11,7 @@ import AdminPortal from './components/AdminPortal'
 import StepIndicator from './components/StepIndicator'
 import { useAppStore } from './store/useAppStore'
 import { registerUser, AccountBlockedError } from './services/apiService'
-import { getFolderContents } from './services/graphService'
+import { getFolderContents, DriveItem } from './services/graphService'
 
 const msalInstance = new PublicClientApplication(msalConfig)
 
@@ -21,14 +21,15 @@ export default function App() {
   const [showApp, setShowApp] = useState(false)
   const [blocked, setBlocked] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
-  const [screen, setScreen] = useState<'browse' | 'organize' | 'smart-sort'>('browse')
+  const [screen, setScreen] = useState<'browse' | 'loading' | 'organize' | 'smart-sort'>('browse')
   const [selectedFolder, setSelectedFolder] = useState<{ id: string; name: string } | null>(null)
+  const [loadedPhotos, setLoadedPhotos] = useState<DriveItem[]>([])
+  const [photoLoadCount, setPhotoLoadCount] = useState(0)
 
   const {
     reset, currentFolderId, loading,
     setCurrentUser, currentUser,
-    setFolder, setPhotos, appendPhotos,
-    setLoading: setAppLoading, setFullyLoaded, setError,
+    setFolder, setPhotos, setFullyLoaded,
   } = useAppStore()
 
   const handleRegistration = async (acc: AccountInfo) => {
@@ -62,33 +63,36 @@ export default function App() {
       setShowApp(false)
       setBlocked(false)
       setSelectedFolder(null)
+      setLoadedPhotos([])
       setScreen('browse')
     })
   }
 
-  const handleFolderSelected = (folder: { id: string; name: string }) => {
+  const handleFolderSelected = async (folder: { id: string; name: string }) => {
+    if (!account) return
     setSelectedFolder(folder)
-    setScreen('organize')
+    setLoadedPhotos([])
+    setPhotoLoadCount(0)
+    setScreen('loading')
+
+    const allPhotos: DriveItem[] = []
+    try {
+      await getFolderContents(msalInstance, account, folder.id, (page) => {
+        allPhotos.push(...page)
+        setPhotoLoadCount(allPhotos.length)
+      })
+      setLoadedPhotos(allPhotos)
+      setScreen('organize')
+    } catch {
+      setScreen('browse')
+    }
   }
 
-  const handleStartManual = async () => {
-    if (!selectedFolder || !account) return
+  const handleStartManual = () => {
+    if (!selectedFolder || loadedPhotos.length === 0) return
     setFolder(selectedFolder.id, selectedFolder.name)
-    setAppLoading(true)
-    try {
-      await getFolderContents(msalInstance, account, selectedFolder.id, (photos, isFirst) => {
-        if (isFirst) {
-          setPhotos(photos)
-          setAppLoading(false)
-        } else {
-          appendPhotos(photos)
-        }
-      })
-      setFullyLoaded(true)
-    } catch {
-      setError("Kon foto's niet ophalen")
-      setAppLoading(false)
-    }
+    setPhotos(loadedPhotos)
+    setFullyLoaded(true)
   }
 
   if (initializing) {
@@ -117,8 +121,8 @@ export default function App() {
     return <LandingPage onLogin={handleLogin} />
   }
 
-  const currentStep = (loading || currentFolderId || screen === 'smart-sort') ? 3
-                    : screen === 'organize' ? 2
+  const currentStep = (currentFolderId || screen === 'smart-sort') ? 3
+                    : (screen === 'organize' || screen === 'loading') ? 2
                     : 1
 
   return (
@@ -158,6 +162,17 @@ export default function App() {
       <main className="flex-1 min-h-0">
         {showAdmin ? (
           <AdminPortal msalInstance={msalInstance} account={account} onClose={() => setShowAdmin(false)} />
+        ) : screen === 'loading' ? (
+          <div className="h-full flex flex-col items-center justify-center gap-5 bg-fluent-bg-secondary">
+            <div className="w-10 h-10 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin" />
+            <div className="text-center space-y-1">
+              <p className="font-semibold text-fluent-text-primary">Foto's ophalen…</p>
+              <p className="text-fluent-text-secondary text-sm">
+                <span className="font-semibold text-fluent-accent">{photoLoadCount.toLocaleString('nl-NL')}</span>
+                {' '}foto's geladen uit "{selectedFolder?.name}"
+              </p>
+            </div>
+          </div>
         ) : loading ? (
           <div className="flex flex-col items-center justify-center h-full gap-4">
             <div className="w-7 h-7 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin" />
@@ -174,11 +189,13 @@ export default function App() {
             msalInstance={msalInstance}
             account={account}
             folder={selectedFolder}
+            initialPhotos={loadedPhotos}
             onBack={() => setScreen('organize')}
           />
         ) : screen === 'organize' && selectedFolder ? (
           <OrganizeHome
             folder={selectedFolder}
+            photoCount={loadedPhotos.length}
             onManual={handleStartManual}
             onSmartSort={() => setScreen('smart-sort')}
             onChangeFolder={() => setScreen('browse')}
