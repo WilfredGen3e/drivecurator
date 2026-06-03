@@ -1,14 +1,30 @@
 interface Props {
+  folder: { id: string; name: string }
   onManual: () => void
   onSmartSort: () => void
+  onChangeFolder: () => void
 }
 
-export default function OrganizeHome({ onManual, onSmartSort }: Props) {
+export default function OrganizeHome({ folder, onManual, onSmartSort, onChangeFolder }: Props) {
   return (
     <div className="h-full flex flex-col items-center justify-center px-6 bg-fluent-bg-secondary">
       <div className="w-full max-w-xl">
-        <h1 className="text-2xl font-semibold text-fluent-text-primary mb-1">Begin met organiseren</h1>
-        <p className="text-fluent-text-secondary text-sm mb-8">Kies hoe je je OneDrive foto's wilt opschonen.</p>
+        {/* Geselecteerde map */}
+        <div className="flex items-center gap-2 mb-6">
+          <svg className="w-4 h-4 text-fluent-accent flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+          </svg>
+          <span className="text-sm font-semibold text-fluent-text-primary truncate">{folder.name}</span>
+          <button
+            onClick={onChangeFolder}
+            className="text-xs text-fluent-accent hover:underline flex-shrink-0 ml-1"
+          >
+            Wijzigen
+          </button>
+        </div>
+
+        <h1 className="text-2xl font-semibold text-fluent-text-primary mb-1">Kies aanvalsroute</h1>
+        <p className="text-fluent-text-secondary text-sm mb-8">Hoe wil je de foto's in deze map opschonen?</p>
 
         <div className="flex flex-col sm:flex-row gap-4">
 
@@ -28,7 +44,7 @@ export default function OrganizeHome({ onManual, onSmartSort }: Props) {
               Handmatig organiseren
             </p>
             <p className="text-fluent-text-secondary text-sm">
-              Kies een map en beoordeel foto's één voor één. Verwijder, bewaar of verplaats naar een andere map.
+              Beoordeel foto's één voor één. Verwijder, bewaar of verplaats naar een andere map.
             </p>
           </button>
 

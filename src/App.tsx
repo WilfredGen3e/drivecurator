@@ -8,8 +8,10 @@ import FolderBrowser from './components/FolderBrowser'
 import TriageView from './components/TriageView'
 import BlockedScreen from './components/BlockedScreen'
 import AdminPortal from './components/AdminPortal'
+import StepIndicator from './components/StepIndicator'
 import { useAppStore } from './store/useAppStore'
 import { registerUser, AccountBlockedError } from './services/apiService'
+import { getFolderContents } from './services/graphService'
 
 const msalInstance = new PublicClientApplication(msalConfig)
 
@@ -19,8 +21,15 @@ export default function App() {
   const [showApp, setShowApp] = useState(false)
   const [blocked, setBlocked] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
-  const [screen, setScreen] = useState<'home' | 'browse' | 'smart-sort'>('home')
-  const { reset, currentFolderId, loading, setCurrentUser, currentUser } = useAppStore()
+  const [screen, setScreen] = useState<'browse' | 'organize' | 'smart-sort'>('browse')
+  const [selectedFolder, setSelectedFolder] = useState<{ id: string; name: string } | null>(null)
+
+  const {
+    reset, currentFolderId, loading,
+    setCurrentUser, currentUser,
+    setFolder, setPhotos, appendPhotos,
+    setLoading: setAppLoading, setFullyLoaded, setError,
+  } = useAppStore()
 
   const handleRegistration = async (acc: AccountInfo) => {
     try {
@@ -30,7 +39,6 @@ export default function App() {
       if (e instanceof AccountBlockedError) {
         setBlocked(true)
       }
-      // andere fouten: non-fatal
     }
   }
 
@@ -47,7 +55,40 @@ export default function App() {
   }, [])
 
   const handleLogout = () => {
-    msalInstance.logoutPopup().then(() => { setAccount(null); setCurrentUser(null); reset(); setShowApp(false); setBlocked(false) })
+    msalInstance.logoutPopup().then(() => {
+      setAccount(null)
+      setCurrentUser(null)
+      reset()
+      setShowApp(false)
+      setBlocked(false)
+      setSelectedFolder(null)
+      setScreen('browse')
+    })
+  }
+
+  const handleFolderSelected = (folder: { id: string; name: string }) => {
+    setSelectedFolder(folder)
+    setScreen('organize')
+  }
+
+  const handleStartManual = async () => {
+    if (!selectedFolder || !account) return
+    setFolder(selectedFolder.id, selectedFolder.name)
+    setAppLoading(true)
+    try {
+      await getFolderContents(msalInstance, account, selectedFolder.id, (photos, isFirst) => {
+        if (isFirst) {
+          setPhotos(photos)
+          setAppLoading(false)
+        } else {
+          appendPhotos(photos)
+        }
+      })
+      setFullyLoaded(true)
+    } catch {
+      setError("Kon foto's niet ophalen")
+      setAppLoading(false)
+    }
   }
 
   if (initializing) {
@@ -75,6 +116,10 @@ export default function App() {
   if (!showApp || !account) {
     return <LandingPage onLogin={handleLogin} />
   }
+
+  const currentStep = (loading || currentFolderId || screen === 'smart-sort') ? 3
+                    : screen === 'organize' ? 2
+                    : 1
 
   return (
     <div className="h-screen bg-fluent-bg-primary text-fluent-text-primary flex flex-col">
@@ -107,6 +152,9 @@ export default function App() {
           </button>
         </div>
       </header>
+
+      {!showAdmin && <StepIndicator current={currentStep} />}
+
       <main className="flex-1 min-h-0">
         {showAdmin ? (
           <AdminPortal msalInstance={msalInstance} account={account} onClose={() => setShowAdmin(false)} />
@@ -115,13 +163,33 @@ export default function App() {
             <div className="w-7 h-7 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin" />
             <p className="text-fluent-text-secondary text-sm">Eerste foto's laden…</p>
           </div>
-        ) : currentFolderId
-          ? <TriageView msalInstance={msalInstance} account={account} onBack={() => { reset(); setScreen('home') }} />
-          : screen === 'browse'
-            ? <FolderBrowser msalInstance={msalInstance} account={account} onBack={() => setScreen('home')} />
-            : screen === 'smart-sort'
-              ? <SmartSortView msalInstance={msalInstance} account={account} onBack={() => setScreen('home')} />
-              : <OrganizeHome onManual={() => setScreen('browse')} onSmartSort={() => setScreen('smart-sort')} />}
+        ) : currentFolderId ? (
+          <TriageView
+            msalInstance={msalInstance}
+            account={account}
+            onBack={() => { reset(); setScreen('organize') }}
+          />
+        ) : screen === 'smart-sort' && selectedFolder ? (
+          <SmartSortView
+            msalInstance={msalInstance}
+            account={account}
+            folder={selectedFolder}
+            onBack={() => setScreen('organize')}
+          />
+        ) : screen === 'organize' && selectedFolder ? (
+          <OrganizeHome
+            folder={selectedFolder}
+            onManual={handleStartManual}
+            onSmartSort={() => setScreen('smart-sort')}
+            onChangeFolder={() => setScreen('browse')}
+          />
+        ) : (
+          <FolderBrowser
+            msalInstance={msalInstance}
+            account={account}
+            onFolderSelected={handleFolderSelected}
+          />
+        )}
       </main>
     </div>
   )

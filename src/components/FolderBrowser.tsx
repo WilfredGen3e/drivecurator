@@ -116,7 +116,7 @@ export default function FolderBrowser({ msalInstance, account, onBack, onFolderS
           style={{ borderRadius: 2 }}
         >
           <PlayIcon />
-          <span>{onFolderSelected ? `Analyseren in "${currentFolder.name}"` : `Start in "${currentFolder.name}"`}</span>
+          <span>{onFolderSelected ? `Selecteer "${currentFolder.name}"` : `Start in "${currentFolder.name}"`}</span>
         </button>
       )}
 

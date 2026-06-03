@@ -1,22 +1,21 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, getFolderContents, moveItem } from '../services/graphService'
 import { PhotoCluster, ClusterType } from '../services/clusterService'
 import { AnalysisResult, analyzePhotos } from '../services/analysisService'
-import FolderBrowser from './FolderBrowser'
 import FolderSidebar, { Crumb } from './FolderSidebar'
 import ClusterTriageView from './ClusterTriageView'
 
 interface Props {
   msalInstance: PublicClientApplication
   account: AccountInfo
+  folder: { id: string; name: string }
   onBack: () => void
 }
 
 type Phase =
-  | { name: 'browse' }
   | { name: 'initializing'; photoCount: number; geoStep: number; geoTotal: number }
-  | { name: 'error'; message: string; folder: { id: string; name: string } }
+  | { name: 'error'; message: string }
   | { name: 'dashboard' }
   | { name: 'category'; key: string; label: string; clusters: PhotoCluster[] }
   | { name: 'triage'; key: string; label: string; clusters: PhotoCluster[]; clusterId: string }
@@ -86,9 +85,8 @@ function buildClusters(key: string, result: AnalysisResult): PhotoCluster[] {
   }
 }
 
-export default function SmartSortView({ msalInstance, account, onBack }: Props) {
-  const [phase, setPhase] = useState<Phase>({ name: 'browse' })
-  const [folder, setFolder] = useState<{ id: string; name: string } | null>(null)
+export default function SmartSortView({ msalInstance, account, folder, onBack }: Props) {
+  const [phase, setPhase] = useState<Phase>({ name: 'initializing', photoCount: 0, geoStep: 0, geoTotal: 0 })
   const [result, setResult] = useState<AnalysisResult | null>(null)
 
   // Verplaatsen state (voor cluster-kaarten bulk move)
@@ -99,13 +97,13 @@ export default function SmartSortView({ msalInstance, account, onBack }: Props) 
   const busy = moveProgress !== null
 
   // ── Initialisatie ──────────────────────────────────────────────────────────
-  const handleFolderSelected = async (f: { id: string; name: string }) => {
-    setFolder(f)
-    setPhase({ name: 'initializing', photoCount: 0, geoStep: 0, geoTotal: 0 })
+  useEffect(() => { startAnalysis() }, [])
 
+  const startAnalysis = async () => {
+    setPhase({ name: 'initializing', photoCount: 0, geoStep: 0, geoTotal: 0 })
     const allPhotos: DriveItem[] = []
     try {
-      await getFolderContents(msalInstance, account, f.id, (page) => {
+      await getFolderContents(msalInstance, account, folder.id, (page) => {
         allPhotos.push(...page)
         setPhase(prev => prev.name === 'initializing' ? { ...prev, photoCount: allPhotos.length } : prev)
       })
@@ -118,7 +116,7 @@ export default function SmartSortView({ msalInstance, account, onBack }: Props) 
       setPhase({ name: 'dashboard' })
     } catch (err) {
       console.error('[SmartSort] Analyse mislukt:', err)
-      setPhase({ name: 'error', message: err instanceof Error ? err.message : String(err), folder: f })
+      setPhase({ name: 'error', message: err instanceof Error ? err.message : String(err) })
     }
   }
 
@@ -154,18 +152,6 @@ export default function SmartSortView({ msalInstance, account, onBack }: Props) 
     setPhase(prev => prev.name === 'category'
       ? { ...prev, clusters: prev.clusters.filter(c => c.id !== clusterId) }
       : prev,
-    )
-  }
-
-  // ── Browse ─────────────────────────────────────────────────────────────────
-  if (phase.name === 'browse') {
-    return (
-      <FolderBrowser
-        msalInstance={msalInstance}
-        account={account}
-        onBack={onBack}
-        onFolderSelected={handleFolderSelected}
-      />
     )
   }
 
@@ -208,14 +194,14 @@ export default function SmartSortView({ msalInstance, account, onBack }: Props) 
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => handleFolderSelected(phase.folder)}
+            onClick={startAnalysis}
             className="bg-fluent-accent hover:bg-fluent-accent-hover text-white px-5 py-2 text-sm font-semibold transition-colors"
             style={{ borderRadius: 2 }}
           >
             Opnieuw proberen
           </button>
           <button
-            onClick={() => setPhase({ name: 'browse' })}
+            onClick={onBack}
             className="border border-fluent-border-strong text-fluent-text-secondary hover:bg-fluent-bg-hover px-5 py-2 text-sm transition-colors"
             style={{ borderRadius: 2 }}
           >
@@ -316,7 +302,7 @@ export default function SmartSortView({ msalInstance, account, onBack }: Props) 
             Terug
           </button>
           <span className="text-fluent-text-disabled text-sm">·</span>
-          <span className="text-sm text-fluent-text-secondary truncate">"{folder?.name}"</span>
+          <span className="text-sm text-fluent-text-secondary truncate">"{folder.name}"</span>
           <span className="ml-auto text-xs text-fluent-text-disabled flex-shrink-0">{result.totalPhotos} foto's geanalyseerd</span>
         </div>
 
