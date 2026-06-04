@@ -8,11 +8,12 @@ interface Props {
   msalInstance: PublicClientApplication
   account: AccountInfo
   cluster: PhotoCluster
+  eventSuggestion?: string
   onDone: (remaining: DriveItem[]) => void
   onTriage: () => void
 }
 
-export default function ClusterGridView({ msalInstance, account, cluster, onDone, onTriage }: Props) {
+export default function ClusterGridView({ msalInstance, account, cluster, eventSuggestion, onDone, onTriage }: Props) {
   const [photos] = useState<DriveItem[]>(cluster.photos)
   const [showSheet, setShowSheet] = useState(false)
   const [lastBreadcrumb, setLastBreadcrumb] = useState<Crumb[]>([])
@@ -67,6 +68,12 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
         <span className="text-sm font-semibold text-fluent-text-primary truncate flex-1">{cluster.label}</span>
         <span className="text-xs text-fluent-text-disabled flex-shrink-0">{photos.length} foto{photos.length !== 1 ? "'s" : ''}</span>
       </div>
+
+      {eventSuggestion && (
+        <div className="flex-shrink-0 px-4 py-1.5 bg-fluent-accent-light border-b border-fluent-border">
+          <p className="text-xs text-fluent-accent italic">Wellicht tijdens {eventSuggestion}?</p>
+        </div>
+      )}
 
       {/* Voortgangsbalk tijdens verplaatsen */}
       {moveProgress && (
