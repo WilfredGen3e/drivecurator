@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, getFolderContents, moveItem } from '../services/graphService'
 import { PhotoCluster, ClusterType } from '../services/clusterService'
@@ -6,7 +6,7 @@ import { AnalysisResult, analyzePhotos } from '../services/analysisService'
 import FolderSidebar, { Crumb } from './FolderSidebar'
 import ClusterTriageView from './ClusterTriageView'
 import ClusterGridView from './ClusterGridView'
-import { findEventForCluster } from '../services/eventService'
+// import { findEventForCluster } from '../services/eventService'  // IJskast: zie eventService.ts
 
 interface Props {
   msalInstance: PublicClientApplication
@@ -99,37 +99,6 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
   const [lastBreadcrumb, setLastBreadcrumb] = useState<Crumb[]>([])
 
   const busy = moveProgress !== null
-
-  // ── Event-suggesties (Wikidata, lazy per locatiecluster) ──────────────────
-  const [eventSuggestions, setEventSuggestions] = useState<Record<string, string>>({})
-  const fetchedEventIds = useRef<Set<string>>(new Set())
-
-  useEffect(() => {
-    if (phase.name !== 'category') return
-    const pending = phase.clusters.filter(
-      c => c.type === 'location' && c.centroid && !fetchedEventIds.current.has(c.id),
-    )
-    if (pending.length === 0) return
-
-    let cancelled = false
-    ;(async () => {
-      for (let i = 0; i < pending.length; i++) {
-        if (cancelled) break
-        const cluster = pending[i]
-        fetchedEventIds.current.add(cluster.id)
-        const name = await findEventForCluster(cluster)
-        if (!cancelled && name) {
-          setEventSuggestions(prev => ({ ...prev, [cluster.id]: name }))
-        }
-        // Wikidata rate limit: 1 req/sec
-        if (!cancelled && i < pending.length - 1) {
-          await new Promise(r => setTimeout(r, 1100))
-        }
-      }
-    })()
-
-    return () => { cancelled = true }
-  }, [phase])
 
   // ── Initialisatie ──────────────────────────────────────────────────────────
   useEffect(() => { startAnalysis() }, [])
@@ -291,7 +260,6 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
         msalInstance={msalInstance}
         account={account}
         cluster={cluster}
-        eventSuggestion={eventSuggestions[cluster.id]}
         onDone={(remaining) => applyClusterDone(phase.clusters, phase.clusterId, cluster, remaining, phase.key, phase.label)}
         onTriage={() => setPhase({ name: 'triage', key: phase.key, label: phase.label, clusters: phase.clusters, clusterId: phase.clusterId })}
       />
@@ -497,9 +465,6 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                     {cluster.photos.length} foto{cluster.photos.length !== 1 ? "'s" : ''}
                     {cluster.startDate && cluster.endDate && <> · {formatDateRange(cluster.startDate, cluster.endDate)}</>}
                   </p>
-                  {eventSuggestions[cluster.id] && (
-                    <p className="text-xs text-fluent-accent mt-1 italic">Wellicht tijdens {eventSuggestions[cluster.id]}?</p>
-                  )}
                 </div>
               </div>
 
