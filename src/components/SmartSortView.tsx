@@ -235,9 +235,18 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
         clusterLabel={cluster.label}
         initialPhotos={cluster.photos}
         onDone={(remaining) => {
-          const updated = remaining.length === 0
+          const minSize = cluster.type === 'duplicate' || cluster.type === 'burst' ? 2 : 1
+          const updated = remaining.length < minSize
             ? phase.clusters.filter(c => c.id !== phase.clusterId)
-            : phase.clusters.map(c => c.id === phase.clusterId ? { ...c, photos: remaining } : c)
+            : phase.clusters.map(c => {
+                if (c.id !== phase.clusterId) return c
+                const label = cluster.type === 'duplicate'
+                  ? `Duplicaten: ${remaining.length} foto's`
+                  : cluster.type === 'burst'
+                  ? cluster.label.replace(/\d+ foto's/, `${remaining.length} foto's`)
+                  : cluster.label
+                return { ...c, photos: remaining, label }
+              })
           setPhase({ name: 'category', key: phase.key, label: phase.label, clusters: updated })
         }}
       />
