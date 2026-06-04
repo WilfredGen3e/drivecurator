@@ -5,6 +5,7 @@ import { PhotoCluster, ClusterType } from '../services/clusterService'
 import { AnalysisResult, analyzePhotos } from '../services/analysisService'
 import FolderSidebar, { Crumb } from './FolderSidebar'
 import ClusterTriageView from './ClusterTriageView'
+import ClusterGridView from './ClusterGridView'
 
 interface Props {
   msalInstance: PublicClientApplication
@@ -19,6 +20,7 @@ type Phase =
   | { name: 'error'; message: string }
   | { name: 'dashboard' }
   | { name: 'category'; key: string; label: string; clusters: PhotoCluster[] }
+  | { name: 'grid'; key: string; label: string; clusters: PhotoCluster[]; clusterId: string }
   | { name: 'triage'; key: string; label: string; clusters: PhotoCluster[]; clusterId: string }
 
 function formatDateRange(start?: Date, end?: Date): string {
@@ -225,6 +227,44 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
     )
   }
 
+  // ── Gedeelde helper: verwerk resterende foto's na triage/grid ─────────────
+  const applyClusterDone = (
+    clusters: PhotoCluster[],
+    clusterId: string,
+    cluster: PhotoCluster,
+    remaining: DriveItem[],
+    key: string,
+    label: string,
+  ) => {
+    const minSize = cluster.type === 'duplicate' || cluster.type === 'burst' ? 2 : 1
+    const updated = remaining.length < minSize
+      ? clusters.filter(c => c.id !== clusterId)
+      : clusters.map(c => {
+          if (c.id !== clusterId) return c
+          const newLabel = cluster.type === 'duplicate'
+            ? `Duplicaten: ${remaining.length} foto's`
+            : cluster.type === 'burst'
+            ? cluster.label.replace(/\d+ foto's/, `${remaining.length} foto's`)
+            : cluster.label
+          return { ...c, photos: remaining, label: newLabel }
+        })
+    setPhase({ name: 'category', key, label, clusters: updated })
+  }
+
+  // ── Grid ───────────────────────────────────────────────────────────────────
+  if (phase.name === 'grid') {
+    const cluster = phase.clusters.find(c => c.id === phase.clusterId)!
+    return (
+      <ClusterGridView
+        msalInstance={msalInstance}
+        account={account}
+        cluster={cluster}
+        onDone={(remaining) => applyClusterDone(phase.clusters, phase.clusterId, cluster, remaining, phase.key, phase.label)}
+        onTriage={() => setPhase({ name: 'triage', key: phase.key, label: phase.label, clusters: phase.clusters, clusterId: phase.clusterId })}
+      />
+    )
+  }
+
   // ── Triage ─────────────────────────────────────────────────────────────────
   if (phase.name === 'triage') {
     const cluster = phase.clusters.find(c => c.id === phase.clusterId)!
@@ -234,21 +274,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
         account={account}
         clusterLabel={cluster.label}
         initialPhotos={cluster.photos}
-        onDone={(remaining) => {
-          const minSize = cluster.type === 'duplicate' || cluster.type === 'burst' ? 2 : 1
-          const updated = remaining.length < minSize
-            ? phase.clusters.filter(c => c.id !== phase.clusterId)
-            : phase.clusters.map(c => {
-                if (c.id !== phase.clusterId) return c
-                const label = cluster.type === 'duplicate'
-                  ? `Duplicaten: ${remaining.length} foto's`
-                  : cluster.type === 'burst'
-                  ? cluster.label.replace(/\d+ foto's/, `${remaining.length} foto's`)
-                  : cluster.label
-                return { ...c, photos: remaining, label }
-              })
-          setPhase({ name: 'category', key: phase.key, label: phase.label, clusters: updated })
-        }}
+        onDone={(remaining) => applyClusterDone(phase.clusters, phase.clusterId, cluster, remaining, phase.key, phase.label)}
       />
     )
   }
@@ -444,7 +470,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
               {/* Thumbnails */}
               {thumbs.length > 0 && (
                 <button
-                  onClick={() => setPhase({ name: 'triage', key: categoryKey, label: categoryLabel, clusters, clusterId: cluster.id })}
+                  onClick={() => setPhase({ name: 'grid', key: categoryKey, label: categoryLabel, clusters, clusterId: cluster.id })}
                   disabled={busy}
                   className="flex items-center gap-1.5 group/thumbs disabled:pointer-events-none text-left"
                 >
