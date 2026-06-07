@@ -350,7 +350,9 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
       {
         key: 'other-camera',
         label: 'Andere camera\'s',
-        description: 'Foto\'s niet gemaakt met een iPhone, gegroepeerd per merk',
+        description: result.otherCameraGroups.reduce((s, g) => s + g.photos.length, 0) === 0
+          ? 'Alle foto\'s zijn gemaakt met een iPhone'
+          : 'Foto\'s niet gemaakt met een iPhone, gegroepeerd per merk',
         stat: result.otherCameraGroups.length > 0
           ? `${result.otherCameraGroups.length} merk${result.otherCameraGroups.length !== 1 ? 'en' : ''} · ${result.otherCameraGroups.reduce((s, g) => s + g.photos.length, 0)} foto's`
           : '0 foto\'s',
