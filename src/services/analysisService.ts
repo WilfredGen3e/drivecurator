@@ -37,6 +37,7 @@ export interface AnalysisResult {
   burstSets: BurstSet[]
   duplicateSets: DuplicateSet[]
   otherCameraGroups: OtherCameraGroup[]
+  potentialJunk: DriveItem[]
 }
 
 // ── Detectie-helpers ─────────────────────────────────────────────────────────
@@ -152,6 +153,22 @@ function detectOtherCameras(photos: DriveItem[], excludeIds: Set<string>): Other
   return groups.sort((a, b) => b.photos.length - a.photos.length)
 }
 
+// ── Mogelijk rommel-detectie ──────────────────────────────────────────────────
+
+const JUNK_MAX_SIZE = 800_000  // 800 KB
+
+function detectPotentialJunk(photos: DriveItem[], excludeIds: Set<string>): DriveItem[] {
+  return photos
+    .filter(p => {
+      if (excludeIds.has(p.id)) return false
+      if (!p.photo) return false                    // geen foto-facet = geen camera-foto
+      if (p.location) return false                  // heeft GPS = bewuste foto
+      if ((p.size ?? Infinity) >= JUNK_MAX_SIZE) return false
+      return true
+    })
+    .sort((a, b) => (getDate(a)?.getTime() ?? 0) - (getDate(b)?.getTime() ?? 0))
+}
+
 // ── Duplicaten-detectie ───────────────────────────────────────────────────────
 
 function detectDuplicates(photos: DriveItem[]): DuplicateSet[] {
@@ -210,6 +227,9 @@ export async function analyzePhotos(
   const excludeFromOtherCamera = new Set([...screenshotIds, ...whatsappIds])
   const otherCameraGroups = detectOtherCameras(photos, excludeFromOtherCamera)
 
+  // 8. Mogelijk rommel (klein + geen GPS, exclusief screenshots en WhatsApp)
+  const potentialJunk = detectPotentialJunk(photos, excludeFromOtherCamera)
+
   return {
     totalPhotos: photos.length,
     locationClusters: geocodedClusters,
@@ -219,5 +239,6 @@ export async function analyzePhotos(
     burstSets,
     duplicateSets,
     otherCameraGroups,
+    potentialJunk,
   }
 }
