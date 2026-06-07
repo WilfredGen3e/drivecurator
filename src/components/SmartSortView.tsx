@@ -385,7 +385,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                   const clusters = buildClusters(cat.key, result)
                   setPhase({ name: 'category', key: cat.key, label: cat.label, clusters })
                 }}
-                disabled={!cat.available}
+                disabled={!cat.available || cat.count === 0}
                 className={`w-full flex items-center gap-4 px-4 py-3 text-left bg-fluent-bg-primary border transition-colors ${
                   cat.available && cat.count > 0
                     ? 'border-fluent-border hover:border-fluent-accent hover:bg-fluent-accent-light group cursor-pointer'
