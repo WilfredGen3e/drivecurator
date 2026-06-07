@@ -128,12 +128,18 @@ function detectBursts(photos: DriveItem[]): BurstSet[] {
 
 // ── Andere camera's-detectie ──────────────────────────────────────────────────
 
+function isAppleDevice(photo: DriveItem): boolean {
+  const make  = (photo.photo?.cameraMake  ?? '').toLowerCase()
+  const model = (photo.photo?.cameraModel ?? '').toLowerCase()
+  return make.includes('apple') || model.includes('apple') || model.includes('iphone')
+}
+
 function detectOtherCameras(photos: DriveItem[], excludeIds: Set<string>): OtherCameraGroup[] {
   const byMake = new Map<string, DriveItem[]>()
   for (const photo of photos) {
     if (excludeIds.has(photo.id)) continue
     const make = photo.photo?.cameraMake
-    if (!make || make.toLowerCase().includes('apple')) continue
+    if (!make || isAppleDevice(photo)) continue
     if (!byMake.has(make)) byMake.set(make, [])
     byMake.get(make)!.push(photo)
   }
