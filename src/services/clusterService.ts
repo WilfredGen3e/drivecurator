@@ -1,6 +1,6 @@
 import { DriveItem } from './graphService'
 
-export type ClusterType = 'location' | 'screenshots' | 'whatsapp' | 'monthly' | 'other' | 'burst' | 'duplicate'
+export type ClusterType = 'location' | 'screenshots' | 'whatsapp' | 'monthly' | 'other' | 'burst' | 'duplicate' | 'other-camera'
 
 export interface PhotoCluster {
   id: string

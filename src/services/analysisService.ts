@@ -22,6 +22,12 @@ export interface DuplicateSet {
   photos: DriveItem[]
 }
 
+export interface OtherCameraGroup {
+  id: string
+  cameraMake: string
+  photos: DriveItem[]
+}
+
 export interface AnalysisResult {
   totalPhotos: number
   locationClusters: PhotoCluster[]  // geocoded
@@ -30,6 +36,7 @@ export interface AnalysisResult {
   monthlyGroups: MonthGroup[]
   burstSets: BurstSet[]
   duplicateSets: DuplicateSet[]
+  otherCameraGroups: OtherCameraGroup[]
 }
 
 // ── Detectie-helpers ─────────────────────────────────────────────────────────
@@ -119,6 +126,26 @@ function detectBursts(photos: DriveItem[]): BurstSet[] {
   return sets
 }
 
+// ── Andere camera's-detectie ──────────────────────────────────────────────────
+
+function detectOtherCameras(photos: DriveItem[], excludeIds: Set<string>): OtherCameraGroup[] {
+  const byMake = new Map<string, DriveItem[]>()
+  for (const photo of photos) {
+    if (excludeIds.has(photo.id)) continue
+    const make = photo.photo?.cameraMake
+    if (!make || make.toLowerCase().includes('apple')) continue
+    if (!byMake.has(make)) byMake.set(make, [])
+    byMake.get(make)!.push(photo)
+  }
+
+  const groups: OtherCameraGroup[] = []
+  let i = 0
+  for (const [make, groupPhotos] of byMake) {
+    groups.push({ id: `other-camera-${i++}`, cameraMake: make, photos: groupPhotos })
+  }
+  return groups.sort((a, b) => b.photos.length - a.photos.length)
+}
+
 // ── Duplicaten-detectie ───────────────────────────────────────────────────────
 
 function detectDuplicates(photos: DriveItem[]): DuplicateSet[] {
@@ -173,6 +200,10 @@ export async function analyzePhotos(
   // 6. Duplicaten
   const duplicateSets = detectDuplicates(photos)
 
+  // 7. Andere camera's (niet-Apple, exclusief screenshots en WhatsApp)
+  const excludeFromOtherCamera = new Set([...screenshotIds, ...whatsappIds])
+  const otherCameraGroups = detectOtherCameras(photos, excludeFromOtherCamera)
+
   return {
     totalPhotos: photos.length,
     locationClusters: geocodedClusters,
@@ -181,5 +212,6 @@ export async function analyzePhotos(
     monthlyGroups,
     burstSets,
     duplicateSets,
+    otherCameraGroups,
   }
 }
