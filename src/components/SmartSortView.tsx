@@ -35,6 +35,38 @@ function formatDateRange(start?: Date, end?: Date): string {
   return `${start.getDate()} – ${end.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}`
 }
 
+const MONTH_NAMES_NL = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december']
+
+function photoDate(photo: DriveItem): Date | null {
+  const str = photo.photo?.takenDateTime ?? photo.fileSystemInfo?.createdDateTime
+  return str ? new Date(str) : null
+}
+
+function splitByMonth(photos: DriveItem[], type: ClusterType): PhotoCluster[] {
+  const map = new Map<string, DriveItem[]>()
+  for (const photo of photos) {
+    const d = photoDate(photo)
+    const key = d ? `${d.getFullYear()}-${String(d.getMonth()).padStart(2,'0')}` : 'unknown'
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(photo)
+  }
+  return Array.from(map.entries())
+    .map(([key, groupPhotos]) => {
+      if (key === 'unknown') return { id: `${type}-unknown`, type, photos: groupPhotos, label: 'Onbekende datum' }
+      const [year, monthStr] = key.split('-')
+      const monthIndex = parseInt(monthStr)
+      return {
+        id: `${type}-${key}`,
+        type,
+        photos: groupPhotos,
+        label: `${MONTH_NAMES_NL[monthIndex]} ${year}`,
+        startDate: new Date(parseInt(year), monthIndex, 1),
+        endDate: new Date(parseInt(year), monthIndex + 1, 0),
+      }
+    })
+    .sort((a, b) => (b.startDate?.getTime() ?? 0) - (a.startDate?.getTime() ?? 0))
+}
+
 // Zet AnalysisResult-categorieën om naar PhotoCluster[]
 function buildClusters(key: string, result: AnalysisResult): PhotoCluster[] {
   switch (key) {
@@ -92,9 +124,7 @@ function buildClusters(key: string, result: AnalysisResult): PhotoCluster[] {
         label: g.cameraMake,
       }))
     case 'potential-junk':
-      return result.potentialJunk.length > 0
-        ? [{ id: 'potential-junk', type: 'potential-junk' as ClusterType, photos: result.potentialJunk, label: 'Mogelijk rommel' }]
-        : []
+      return splitByMonth(result.potentialJunk, 'potential-junk')
     default:
       return []
   }
@@ -357,7 +387,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
         description: result.potentialJunk.length === 0
           ? 'Geen kleine foto\'s zonder locatie gevonden'
           : 'Kleine foto\'s (< 800 KB) zonder GPS — quick snaps, toevallige foto\'s',
-        stat: `${result.potentialJunk.length} foto's`,
+        stat: result.potentialJunk.length === 0 ? '0 foto\'s' : `${splitByMonth(result.potentialJunk, 'potential-junk').length} maanden · ${result.potentialJunk.length} foto's`,
         count: result.potentialJunk.length,
         available: true,
         icon: <JunkIcon />,
