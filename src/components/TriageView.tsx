@@ -12,6 +12,21 @@ const MONTHS = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', '
 const SWIPE_HINT = 30
 const SWIPE_COMMIT = 160
 
+const PRESETS_KEY = 'drivecurator_presets'
+const MAX_PRESETS = 5
+
+interface FolderPreset { id: string; name: string }
+
+function loadPresets(): FolderPreset[] {
+  try { return JSON.parse(localStorage.getItem(PRESETS_KEY) ?? '[]') }
+  catch { return [] }
+}
+
+function addToPresets(folder: FolderPreset) {
+  const updated = [folder, ...loadPresets().filter(p => p.id !== folder.id)].slice(0, MAX_PRESETS)
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(updated))
+}
+
 function getPhotoDate(photo: DriveItem): Date | null {
   const str = photo.photo?.takenDateTime ?? photo.fileSystemInfo?.createdDateTime
   return str ? new Date(str) : null
@@ -48,6 +63,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   const [busy, setBusy] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showPaywall, setShowPaywall] = useState(false)
+  const [presets, setPresets] = useState<FolderPreset[]>(() => loadPresets())
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Filter state
@@ -153,6 +169,8 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       removePhotoById(photo.id)
       setLastFolder(targetFolder)
       if (breadcrumb !== undefined) setLastFolderBreadcrumb(breadcrumb)
+      addToPresets({ id: targetFolder.id, name: targetFolder.name })
+      setPresets(loadPresets())
       showToast(`Verplaatst naar "${targetFolder.name}"`)
     } finally { setBusy(false) }
   }
@@ -411,6 +429,24 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           <PhotoMeta photo={photo} />
         </div>
 
+        {/* Preset-mappen */}
+        {presets.length > 0 && (
+          <div className="flex-shrink-0 bg-fluent-bg-primary border-t border-fluent-border px-3 py-2 flex gap-2 overflow-x-auto">
+            {presets.map(preset => (
+              <button
+                key={preset.id}
+                onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
+                disabled={busy}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-fluent-accent-light text-fluent-accent text-sm font-medium border border-fluent-accent disabled:opacity-40 active:bg-fluent-accent active:text-white transition-colors"
+                style={{ borderRadius: 2 }}
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
+                <span className="max-w-[100px] truncate">{preset.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Actie-balk */}
         <div className="bg-fluent-bg-primary border-t border-fluent-border flex-shrink-0 flex items-stretch" style={{ height: 72 }}>
           <TouchActionBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} label="Ongedaan" color="secondary">
@@ -537,6 +573,22 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             <ActionBtn onClick={handleDelete} disabled={busy} variant="danger" label="Verwijderen"><TrashIcon /></ActionBtn>
             <ActionBtn onClick={handleKeep} disabled={busy} variant="success" label="Volgende"><NextIcon /></ActionBtn>
           </div>
+          {presets.length > 0 && (
+            <div className="flex flex-wrap gap-2 justify-center pt-1">
+              {presets.map(preset => (
+                <button
+                  key={preset.id}
+                  onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
+                  disabled={busy}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-fluent-accent-light text-fluent-accent text-xs font-medium border border-fluent-accent hover:bg-fluent-accent hover:text-white disabled:opacity-40 transition-colors"
+                  style={{ borderRadius: 2 }}
+                >
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
+                  <span className="max-w-[120px] truncate">{preset.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
