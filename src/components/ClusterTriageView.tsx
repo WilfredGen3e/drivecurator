@@ -18,8 +18,9 @@ function loadPresets(): FolderPreset[] {
 }
 
 function addToPresets(folder: FolderPreset) {
-  const updated = [folder, ...loadPresets().filter(p => p.id !== folder.id)].slice(0, MAX_PRESETS)
-  localStorage.setItem(PRESETS_KEY, JSON.stringify(updated))
+  const current = loadPresets()
+  if (current.some(p => p.id === folder.id)) return
+  localStorage.setItem(PRESETS_KEY, JSON.stringify([folder, ...current].slice(0, MAX_PRESETS)))
 }
 
 interface Props {
