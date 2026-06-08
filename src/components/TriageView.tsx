@@ -1,6 +1,6 @@
 import { useRef, useState, useMemo, useEffect } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
-import { DriveItem, deleteItem, moveItem } from '../services/graphService'
+import { DriveItem, deleteItem, moveItem, getItemThumbnails } from '../services/graphService'
 import { incrementUsage, FreeLimitReachedError } from '../services/apiService'
 import PaywallModal from './PaywallModal'
 import { useAppStore } from '../store/useAppStore'
@@ -64,6 +64,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showPaywall, setShowPaywall] = useState(false)
   const [presets, setPresets] = useState<FolderPreset[]>(() => loadPresets())
+  const [thumbCache, setThumbCache] = useState<Record<string, string>>({})
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Filter state
@@ -231,7 +232,16 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
     }
   }
 
-  const thumbnail = photo?.thumbnails?.[0]?.large?.url ?? photo?.thumbnails?.[0]?.medium?.url
+  const storedThumb = photo?.thumbnails?.[0]?.large?.url ?? photo?.thumbnails?.[0]?.medium?.url
+  const thumbnail = storedThumb ?? (photo ? thumbCache[photo.id] : undefined) ?? null
+
+  useEffect(() => {
+    if (!photo || storedThumb || thumbCache[photo.id]) return
+    getItemThumbnails(msalInstance, account, photo.id).then(t => {
+      const url = t?.large?.url ?? t?.medium?.url
+      if (url) setThumbCache(c => ({ ...c, [photo.id]: url }))
+    })
+  }, [photo?.id])
 
   // Swipe-berekeningen voor touch layout
   const swipeAbsX = Math.abs(swipeDelta.x)

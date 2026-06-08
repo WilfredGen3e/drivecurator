@@ -16,6 +16,41 @@ import { getFolderContents, DriveItem } from './services/graphService'
 
 const msalInstance = new PublicClientApplication(msalConfig)
 
+// ── Session cache ────────────────────────────────────────────────────────────
+const SESSION_KEY = 'drivecurator_session'
+const SESSION_TTL = 6 * 60 * 60 * 1000 // 6 uur
+
+interface SessionData {
+  folder: { id: string; name: string }
+  photos: DriveItem[]
+  ts: number
+}
+
+function saveSession(folder: { id: string; name: string }, photos: DriveItem[]) {
+  const data = { folder, photos, ts: Date.now() }
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(data))
+  } catch {
+    // Quota exceeded — probeer zonder thumbnails
+    try {
+      const slim = { ...data, photos: photos.map(({ thumbnails: _t, ...rest }) => rest) }
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(slim))
+    } catch { /* Te groot, skip */ }
+  }
+}
+
+function loadSession(): SessionData | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY)
+    if (!raw) return null
+    const data: SessionData = JSON.parse(raw)
+    if (Date.now() - data.ts > SESSION_TTL) { sessionStorage.removeItem(SESSION_KEY); return null }
+    return data
+  } catch { return null }
+}
+
+function clearSession() { sessionStorage.removeItem(SESSION_KEY) }
+
 export default function App() {
   const [account, setAccount] = useState<AccountInfo | null>(null)
   const [initializing, setInitializing] = useState(true)
@@ -52,6 +87,13 @@ export default function App() {
         setAccount(accounts[0])
         setShowApp(true)
         await handleRegistration(accounts[0])
+        // Herstel sessie bij page refresh
+        const cached = loadSession()
+        if (cached) {
+          setSelectedFolder(cached.folder)
+          setLoadedPhotos(cached.photos)
+          setScreen('organize')
+        }
       }
       setInitializing(false)
     })
@@ -59,6 +101,7 @@ export default function App() {
 
   const handleLogout = () => {
     msalInstance.logoutPopup().then(() => {
+      clearSession()
       setAccount(null)
       setCurrentUser(null)
       reset()
@@ -89,6 +132,7 @@ export default function App() {
       })
       setLoadedPhotos(allPhotos)
       setCurrentThumb(null)
+      saveSession(folder, allPhotos)
       setScreen('organize')
     } catch {
       setScreen('browse')

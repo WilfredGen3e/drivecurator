@@ -81,6 +81,19 @@ export async function getFolderContents(
   }
 }
 
+export async function getItemThumbnails(
+  msalInstance: PublicClientApplication,
+  account: AccountInfo,
+  itemId: string,
+): Promise<{ large?: { url: string }; medium?: { url: string } } | null> {
+  try {
+    const data = await graphFetch<{ value: { large?: { url: string }; medium?: { url: string } }[] }>(
+      msalInstance, account, `/me/drive/items/${itemId}/thumbnails`
+    )
+    return data.value?.[0] ?? null
+  } catch { return null }
+}
+
 export async function deleteItem(
   msalInstance: PublicClientApplication,
   account: AccountInfo,
