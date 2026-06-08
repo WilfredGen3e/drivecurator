@@ -316,6 +316,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
         account={account}
         clusterLabel={cluster.label}
         initialPhotos={cluster.photos}
+        sourceFolderId={folder.id}
         onDone={(remaining) => applyClusterDone(phase.clusters, phase.clusterId, cluster, remaining, phase.key, phase.label)}
       />
     )

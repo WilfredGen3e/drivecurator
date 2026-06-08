@@ -23,11 +23,14 @@ function addToPresets(folder: FolderPreset) {
   localStorage.setItem(PRESETS_KEY, JSON.stringify([folder, ...current].slice(0, MAX_PRESETS)))
 }
 
+type UndoAction = { type: 'move'; item: DriveItem; previousFolderId: string } | { type: 'delete'; item: DriveItem }
+
 interface Props {
   msalInstance: PublicClientApplication
   account: AccountInfo
   clusterLabel: string
   initialPhotos: DriveItem[]
+  sourceFolderId?: string
   onDone: (remaining: DriveItem[]) => void
 }
 
@@ -48,11 +51,12 @@ function PhotoMeta({ photo }: { photo: DriveItem }) {
   )
 }
 
-export default function ClusterTriageView({ msalInstance, account, clusterLabel, initialPhotos, onDone }: Props) {
+export default function ClusterTriageView({ msalInstance, account, clusterLabel, initialPhotos, sourceFolderId, onDone }: Props) {
   const [photos, setPhotos] = useState<DriveItem[]>(initialPhotos)
   const [index, setIndex] = useState(0)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [undoStack, setUndoStack] = useState<UndoAction[]>([])
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isTouch = useIsTouch()
 
@@ -90,6 +94,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
     setBusy(true)
     try {
       await deleteItem(msalInstance, account, photo.id)
+      setUndoStack(s => [...s, { type: 'delete', item: photo }])
       removeCurrentPhoto(photo.id)
       showToast(`"${photo.name}" verwijderd`)
     } finally { setBusy(false) }
@@ -101,12 +106,29 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
     setShowFolderSheet(false)
     try {
       await moveItem(msalInstance, account, photo.id, targetFolder.id)
+      setUndoStack(s => [...s, { type: 'move', item: photo, previousFolderId: sourceFolderId ?? '' }])
       setLastFolder(targetFolder)
       if (breadcrumb !== undefined) setLastFolderBreadcrumb(breadcrumb)
       addToPresets({ id: targetFolder.id, name: targetFolder.name })
       setPresets(loadPresets())
       removeCurrentPhoto(photo.id)
       showToast(`Verplaatst naar "${targetFolder.name}"`)
+    } finally { setBusy(false) }
+  }
+
+  const handleUndo = async () => {
+    if (undoStack.length === 0 || busy) return
+    const action = undoStack[undoStack.length - 1]
+    setUndoStack(s => s.slice(0, -1))
+    setBusy(true)
+    try {
+      if (action.type === 'move' && action.previousFolderId) {
+        await moveItem(msalInstance, account, action.item.id, action.previousFolderId)
+        setPhotos(p => [...p, action.item])
+        showToast('Verplaatsing ongedaan gemaakt')
+      } else {
+        showToast("Verwijderde foto's staan in de OneDrive prullenbak")
+      }
     } finally { setBusy(false) }
   }
 
@@ -291,6 +313,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
 
         {/* Actiebalk */}
         <div className="bg-fluent-bg-primary border-t border-fluent-border flex-shrink-0 flex items-stretch" style={{ height: 72 }}>
+          <TouchBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} label="Ongedaan" color="secondary"><UndoIcon /></TouchBtn>
           <TouchBtn onClick={handlePrev} disabled={index === 0 || busy} label="Vorige" color="secondary"><PrevIcon /></TouchBtn>
           <TouchBtn onClick={handleDelete} disabled={busy} label="Verwijderen" color="danger"><TrashIcon /></TouchBtn>
           <TouchBtn onClick={lastFolder ? handleMoveToLastFolder : () => setShowFolderSheet(true)} disabled={busy} label={lastFolder ? lastFolder.name : 'Verplaatsen'} color="primary"><FolderIcon /></TouchBtn>
@@ -365,6 +388,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
             <PhotoMeta photo={photo} />
           </div>
           <div className="flex items-center justify-center gap-6">
+            <DesktopBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} variant="secondary" label="Ongedaan"><UndoIcon /></DesktopBtn>
             <DesktopBtn onClick={handlePrev} disabled={index === 0} variant="secondary" label="Vorige"><PrevIcon /></DesktopBtn>
             <DesktopBtn onClick={handleDelete} disabled={busy} variant="danger" label="Verwijderen"><TrashIcon /></DesktopBtn>
             <DesktopBtn onClick={handleNext} disabled={index >= total - 1} variant="secondary" label="Volgende"><NextIcon /></DesktopBtn>
@@ -427,6 +451,7 @@ function DesktopBtn({ onClick, disabled, variant, label, children }: {
 }
 
 function TrashIcon() { return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> }
+function UndoIcon()  { return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h10a5 5 0 015 5v1M3 10l4-4M3 10l4 4" /></svg> }
 function NextIcon() { return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" /></svg> }
 function PrevIcon() { return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" /></svg> }
 function FolderIcon() { return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg> }
