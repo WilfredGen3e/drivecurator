@@ -7,6 +7,21 @@ import FolderSidebar, { Crumb } from './FolderSidebar'
 const SWIPE_HINT = 30
 const SWIPE_COMMIT = 160
 
+const PRESETS_KEY = 'drivecurator_presets'
+const MAX_PRESETS = 5
+
+interface FolderPreset { id: string; name: string }
+
+function loadPresets(): FolderPreset[] {
+  try { return JSON.parse(localStorage.getItem(PRESETS_KEY) ?? '[]') }
+  catch { return [] }
+}
+
+function addToPresets(folder: FolderPreset) {
+  const updated = [folder, ...loadPresets().filter(p => p.id !== folder.id)].slice(0, MAX_PRESETS)
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(updated))
+}
+
 interface Props {
   msalInstance: PublicClientApplication
   account: AccountInfo
@@ -45,6 +60,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
   const [lastFolderBreadcrumb, setLastFolderBreadcrumb] = useState<Crumb[]>([])
   const [showFolderSheet, setShowFolderSheet] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [presets, setPresets] = useState<FolderPreset[]>(() => loadPresets())
 
   // Swipe state
   const [swipeDelta, setSwipeDelta] = useState({ x: 0, y: 0 })
@@ -85,6 +101,8 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
       await moveItem(msalInstance, account, photo.id, targetFolder.id)
       setLastFolder(targetFolder)
       if (breadcrumb !== undefined) setLastFolderBreadcrumb(breadcrumb)
+      addToPresets({ id: targetFolder.id, name: targetFolder.name })
+      setPresets(loadPresets())
       removeCurrentPhoto(photo.id)
       showToast(`Verplaatst naar "${targetFolder.name}"`)
     } finally { setBusy(false) }
@@ -242,6 +260,24 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
           <PhotoMeta photo={photo} />
         </div>
 
+        {/* Preset-mappen */}
+        {presets.length > 0 && (
+          <div className="flex-shrink-0 bg-fluent-bg-primary border-t border-fluent-border px-3 py-2 flex gap-2 overflow-x-auto">
+            {presets.map(preset => (
+              <button
+                key={preset.id}
+                onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
+                disabled={busy}
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-fluent-accent-light text-fluent-accent text-sm font-medium border border-fluent-accent disabled:opacity-40 active:bg-fluent-accent active:text-white transition-colors"
+                style={{ borderRadius: 2 }}
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
+                <span className="max-w-[100px] truncate">{preset.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Actiebalk */}
         <div className="bg-fluent-bg-primary border-t border-fluent-border flex-shrink-0 flex items-stretch" style={{ height: 72 }}>
           <TouchBtn onClick={handlePrev} disabled={index === 0 || busy} label="Vorige" color="secondary"><PrevIcon /></TouchBtn>
@@ -322,6 +358,22 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
             <DesktopBtn onClick={handleDelete} disabled={busy} variant="danger" label="Verwijderen"><TrashIcon /></DesktopBtn>
             <DesktopBtn onClick={handleNext} disabled={index >= total - 1} variant="secondary" label="Volgende"><NextIcon /></DesktopBtn>
           </div>
+          {presets.length > 0 && (
+            <div className="flex flex-wrap gap-2 justify-center pt-1">
+              {presets.map(preset => (
+                <button
+                  key={preset.id}
+                  onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
+                  disabled={busy}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-fluent-accent-light text-fluent-accent text-xs font-medium border border-fluent-accent hover:bg-fluent-accent hover:text-white disabled:opacity-40 transition-colors"
+                  style={{ borderRadius: 2 }}
+                >
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
+                  <span className="max-w-[120px] truncate">{preset.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
