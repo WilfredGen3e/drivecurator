@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, Dispatch, SetStateAction } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, moveItem, deleteItem } from '../services/graphService'
 import { PhotoCluster } from '../services/clusterService'
@@ -13,7 +13,8 @@ interface Props {
 }
 
 export default function ClusterGridView({ msalInstance, account, cluster, onDone, onTriage }: Props) {
-  const [photos] = useState<DriveItem[]>(cluster.photos)
+  const [photos, setPhotos] = useState<DriveItem[]>(cluster.photos)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showSheet, setShowSheet] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [lastBreadcrumb, setLastBreadcrumb] = useState<Crumb[]>([])
@@ -23,6 +24,9 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const busy = moveProgress !== null || deleteProgress !== null
+  const hasSelection = selectedIds.size > 0
+  const allSelected = selectedIds.size === photos.length && photos.length > 0
+  const actionCount = hasSelection ? selectedIds.size : photos.length
 
   const showToast = (msg: string) => {
     if (toastTimer.current) clearTimeout(toastTimer.current)
@@ -30,81 +34,97 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
     toastTimer.current = setTimeout(() => setToast(null), 4000)
   }
 
-  const handleBulkDelete = async () => {
-    setShowDeleteConfirm(false)
-    setDeleteProgress({ done: 0, total: photos.length })
+  const toggleSelect = (id: string) => {
+    if (busy) return
+    setSelectedIds(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
 
-    const queue = [...photos]
+  const toggleSelectAll = () => {
+    setSelectedIds(allSelected ? new Set() : new Set(photos.map(p => p.id)))
+  }
+
+  // ── Gedeelde bulk-worker ───────────────────────────────────────────────────
+
+  const runWorkers = async <T,>(
+    targets: DriveItem[],
+    setProgress: Dispatch<SetStateAction<{ done: number; total: number } | null>>,
+    action: (photo: DriveItem) => Promise<T>,
+  ) => {
+    setProgress({ done: 0, total: targets.length })
+    const queue = [...targets]
     let done = 0
     const worker = async () => {
       while (true) {
         const photo = queue.shift()
         if (!photo) break
-        try { await deleteItem(msalInstance, account, photo.id) } catch { /* skip */ }
+        try { await action(photo) } catch { /* skip */ }
         done++
-        setDeleteProgress(p => p ? { ...p, done } : null)
+        setProgress(prev => prev ? { ...prev, done } : null)
       }
     }
     await Promise.all(Array.from({ length: 5 }, worker))
-    setDeleteProgress(null)
-    showToast(`${photos.length} foto${photos.length !== 1 ? "'s" : ''} naar de prullenbak verplaatst`)
-    setTimeout(() => onDone([]), 1200)
+    setProgress(null)
   }
 
-  const handleBulkMove = async (targetFolder: DriveItem, breadcrumb: Crumb[]) => {
+  // ── Acties ─────────────────────────────────────────────────────────────────
+
+  const handleMove = async (targetFolder: DriveItem, breadcrumb: Crumb[]) => {
     setShowSheet(false)
     setLastBreadcrumb(breadcrumb)
-    setMoveProgress({ done: 0, total: photos.length })
-
-    const queue = [...photos]
-    let done = 0
-    const worker = async () => {
-      while (true) {
-        const photo = queue.shift()
-        if (!photo) break
-        try { await moveItem(msalInstance, account, photo.id, targetFolder.id) } catch { /* skip */ }
-        done++
-        setMoveProgress(p => p ? { ...p, done } : null)
-      }
-    }
-    await Promise.all(Array.from({ length: 5 }, worker))
-    setMoveProgress(null)
-    showToast(`Verplaatst naar "${targetFolder.name}"`)
-    setTimeout(() => onDone([]), 1200)
+    const targets = hasSelection ? photos.filter(p => selectedIds.has(p.id)) : photos
+    await runWorkers(targets, setMoveProgress, photo => moveItem(msalInstance, account, photo.id, targetFolder.id))
+    const movedIds = new Set(targets.map(p => p.id))
+    const remaining = photos.filter(p => !movedIds.has(p.id))
+    showToast(`${targets.length} foto${targets.length !== 1 ? "'s" : ''} verplaatst naar "${targetFolder.name}"`)
+    if (remaining.length === 0) { setTimeout(() => onDone([]), 1200) }
+    else { setPhotos(remaining); setSelectedIds(new Set()) }
   }
+
+  const handleDelete = async () => {
+    setShowDeleteConfirm(false)
+    const targets = hasSelection ? photos.filter(p => selectedIds.has(p.id)) : photos
+    await runWorkers(targets, setDeleteProgress, photo => deleteItem(msalInstance, account, photo.id))
+    const deletedIds = new Set(targets.map(p => p.id))
+    const remaining = photos.filter(p => !deletedIds.has(p.id))
+    showToast(`${targets.length} foto${targets.length !== 1 ? "'s" : ''} naar de prullenbak verplaatst`)
+    if (remaining.length === 0) { setTimeout(() => onDone([]), 1200) }
+    else { setPhotos(remaining); setSelectedIds(new Set()) }
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="h-full flex flex-col bg-fluent-bg-secondary">
+
       {/* Header */}
       <div className="flex items-center gap-2 px-4 h-10 border-b border-fluent-border bg-fluent-bg-primary flex-shrink-0">
-        <button
-          onClick={() => onDone(photos)}
-          className="text-fluent-text-secondary hover:text-fluent-text-primary text-sm flex items-center gap-1 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+        <button onClick={() => onDone(photos)} className="text-fluent-text-secondary hover:text-fluent-text-primary text-sm flex items-center gap-1 transition-colors">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           Terug
         </button>
         <span className="text-fluent-text-disabled text-sm">·</span>
         <span className="text-sm font-semibold text-fluent-text-primary truncate flex-1">{cluster.label}</span>
-        <span className="text-xs text-fluent-text-disabled flex-shrink-0">{photos.length} foto{photos.length !== 1 ? "'s" : ''}</span>
+        {hasSelection
+          ? <button onClick={toggleSelectAll} className="text-xs text-fluent-accent hover:underline flex-shrink-0">{allSelected ? 'Geen' : 'Alles'}</button>
+          : <span className="text-xs text-fluent-text-disabled flex-shrink-0">{photos.length} foto{photos.length !== 1 ? "'s" : ''}</span>
+        }
       </div>
 
+      {/* Selectiebalk */}
+      {hasSelection && (
+        <div className="flex-shrink-0 px-4 py-2 bg-fluent-accent-light border-b border-fluent-accent flex items-center justify-between">
+          <span className="text-sm font-semibold text-fluent-accent">{selectedIds.size} geselecteerd</span>
+          <button onClick={() => setSelectedIds(new Set())} className="text-xs text-fluent-accent hover:underline">Selectie opheffen</button>
+        </div>
+      )}
 
-      {/* Voortgangsbalk tijdens verplaatsen of verwijderen */}
+      {/* Voortgang */}
       {(moveProgress || deleteProgress) && (() => {
         const p = moveProgress ?? deleteProgress!
-        const label = moveProgress ? 'Verplaatsen' : 'Verwijderen'
         return (
           <div className="flex-shrink-0 px-4 py-3 bg-fluent-bg-primary border-b border-fluent-border space-y-1.5">
-            <p className="text-sm text-fluent-text-secondary">{label}… {p.done} / {p.total}</p>
-            <div className="h-1 bg-fluent-border">
-              <div
-                className="h-full bg-fluent-accent transition-all duration-200"
-                style={{ width: `${(p.done / p.total) * 100}%` }}
-              />
-            </div>
+            <p className="text-sm text-fluent-text-secondary">{moveProgress ? 'Verplaatsen' : 'Verwijderen'}… {p.done} / {p.total}</p>
+            <div className="h-1 bg-fluent-border"><div className="h-full bg-fluent-accent transition-all duration-200" style={{ width: `${(p.done / p.total) * 100}%` }} /></div>
           </div>
         )
       })()}
@@ -114,15 +134,27 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1">
           {photos.map(photo => {
             const thumb = photo.thumbnails?.[0]?.medium?.url
+            const selected = selectedIds.has(photo.id)
             return (
-              <div key={photo.id} className="aspect-square bg-fluent-bg-hover overflow-hidden" style={{ borderRadius: 2 }}>
+              <button
+                key={photo.id}
+                onClick={() => toggleSelect(photo.id)}
+                disabled={busy}
+                className="aspect-square bg-fluent-bg-hover overflow-hidden relative disabled:pointer-events-none"
+                style={{ borderRadius: 2, outline: selected ? '2px solid #0078d4' : 'none', outlineOffset: '-2px' }}
+              >
                 {thumb
                   ? <img src={thumb} alt={photo.name} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center p-1">
-                      <span className="text-fluent-text-disabled text-xs text-center leading-tight truncate">{photo.name}</span>
-                    </div>
+                  : <div className="w-full h-full flex items-center justify-center p-1"><span className="text-fluent-text-disabled text-xs text-center leading-tight truncate">{photo.name}</span></div>
                 }
-              </div>
+                {selected && (
+                  <div className="absolute inset-0 bg-fluent-accent/20 flex items-start justify-end p-1 pointer-events-none">
+                    <div className="w-5 h-5 rounded-full bg-fluent-accent flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                  </div>
+                )}
+              </button>
             )
           })}
         </div>
@@ -131,60 +163,34 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       {/* Actiebalk */}
       {!busy && (
         <div className="flex-shrink-0 bg-fluent-bg-primary border-t border-fluent-border px-4 py-3 flex items-center gap-2">
-          <button
-            onClick={() => setShowSheet(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-fluent-accent hover:bg-fluent-accent-hover text-white text-sm font-semibold transition-colors"
-            style={{ borderRadius: 2 }}
-          >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-            </svg>
-            Verplaatsen naar…
+          <button onClick={() => setShowSheet(true)} className="flex items-center gap-1.5 px-4 py-2 bg-fluent-accent hover:bg-fluent-accent-hover text-white text-sm font-semibold transition-colors" style={{ borderRadius: 2 }}>
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
+            {hasSelection ? `Verplaatsen (${selectedIds.size})` : 'Verplaatsen naar…'}
           </button>
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-fluent-danger hover:opacity-90 text-white text-sm font-semibold transition-opacity"
-            style={{ borderRadius: 2 }}
-          >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Alles verwijderen
+          <button onClick={() => setShowDeleteConfirm(true)} className="flex items-center gap-1.5 px-4 py-2 bg-fluent-danger hover:opacity-90 text-white text-sm font-semibold transition-opacity" style={{ borderRadius: 2 }}>
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            {hasSelection ? `Verwijderen (${selectedIds.size})` : 'Alles verwijderen'}
           </button>
-          <button
-            onClick={onTriage}
-            className="px-4 py-2 text-sm text-fluent-text-secondary border border-fluent-border-strong hover:bg-fluent-bg-hover transition-colors"
-            style={{ borderRadius: 2 }}
-          >
-            Foto voor foto
-          </button>
+          {!hasSelection && (
+            <button onClick={onTriage} className="px-4 py-2 text-sm text-fluent-text-secondary border border-fluent-border-strong hover:bg-fluent-bg-hover transition-colors" style={{ borderRadius: 2 }}>
+              Foto voor foto
+            </button>
+          )}
         </div>
       )}
 
-      {/* Bevestigingsdialog verwijderen */}
+      {/* Bevestigingsdialog */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowDeleteConfirm(false)} />
           <div className="relative bg-white w-full max-w-sm p-6 space-y-4" style={{ borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
             <h2 className="font-semibold text-fluent-text-primary text-base">Weet u het zeker?</h2>
             <p className="text-sm text-fluent-text-secondary">
-              {photos.length} foto{photos.length !== 1 ? "'s" : ''} worden naar de <strong>OneDrive-prullenbak</strong> verplaatst. U kunt ze daar nog terugzetten.
+              {actionCount} foto{actionCount !== 1 ? "'s" : ''} worden naar de <strong>OneDrive-prullenbak</strong> verplaatst. U kunt ze daar nog terugzetten.
             </p>
             <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-sm text-fluent-text-secondary border border-fluent-border-strong hover:bg-fluent-bg-hover transition-colors"
-                style={{ borderRadius: 2 }}
-              >
-                Annuleren
-              </button>
-              <button
-                onClick={handleBulkDelete}
-                className="px-4 py-2 text-sm font-semibold text-white bg-fluent-danger hover:opacity-90 transition-opacity"
-                style={{ borderRadius: 2 }}
-              >
-                Ja, verwijderen
-              </button>
+              <button onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2 text-sm text-fluent-text-secondary border border-fluent-border-strong hover:bg-fluent-bg-hover transition-colors" style={{ borderRadius: 2 }}>Annuleren</button>
+              <button onClick={handleDelete} className="px-4 py-2 text-sm font-semibold text-white bg-fluent-danger hover:opacity-90 transition-opacity" style={{ borderRadius: 2 }}>Ja, verwijderen</button>
             </div>
           </div>
         </div>
@@ -198,32 +204,21 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
             <div className="flex items-center justify-between px-4 py-3 border-b border-fluent-border flex-shrink-0">
               <div className="min-w-0">
                 <p className="font-semibold text-fluent-text-primary text-sm">Verplaatsen naar</p>
-                <p className="text-fluent-text-secondary text-xs truncate">{cluster.label} · {photos.length} foto{photos.length !== 1 ? "'s" : ''}</p>
+                <p className="text-fluent-text-secondary text-xs truncate">{cluster.label} · {actionCount} foto{actionCount !== 1 ? "'s" : ''}</p>
               </div>
               <button onClick={() => setShowSheet(false)} className="text-fluent-text-secondary p-1 flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="flex-1 overflow-auto">
-              <FolderSidebar
-                key={lastBreadcrumb.map(c => c.id).join('/')}
-                msalInstance={msalInstance}
-                account={account}
-                onMove={(f, bc) => handleBulkMove(f, bc)}
-                disabled={false}
-                initialBreadcrumb={lastBreadcrumb}
-              />
+              <FolderSidebar key={lastBreadcrumb.map(c => c.id).join('/')} msalInstance={msalInstance} account={account} onMove={(f, bc) => handleMove(f, bc)} disabled={false} initialBreadcrumb={lastBreadcrumb} />
             </div>
           </div>
         </div>
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-fluent-text-primary text-white text-sm px-4 py-2 z-50" style={{ borderRadius: 2 }}>
-          {toast}
-        </div>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-fluent-text-primary text-white text-sm px-4 py-2 z-50" style={{ borderRadius: 2 }}>{toast}</div>
       )}
     </div>
   )
