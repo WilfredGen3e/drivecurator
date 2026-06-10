@@ -23,6 +23,7 @@ async function graphFetch<T>(
   account: AccountInfo,
   url: string,
   options?: RequestInit,
+  attempt = 0,
 ): Promise<T> {
   const token = await getToken(msalInstance, account)
   const fullUrl = url.startsWith('https://') ? url : `https://graph.microsoft.com/v1.0${url}`
@@ -34,6 +35,14 @@ async function graphFetch<T>(
       ...options?.headers,
     },
   })
+
+  if (response.status === 429 && attempt < 3) {
+    const retryAfter = parseInt(response.headers.get('Retry-After') ?? '0', 10)
+    const waitMs = (retryAfter > 0 ? retryAfter : 2 ** attempt) * 1000
+    await new Promise(r => setTimeout(r, waitMs))
+    return graphFetch(msalInstance, account, url, options, attempt + 1)
+  }
+
   if (!response.ok) throw new Error(`Graph API fout: ${response.status}`)
   if (response.status === 204) return undefined as T
   return response.json()
