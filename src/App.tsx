@@ -27,16 +27,12 @@ interface SessionData {
 }
 
 function saveSession(folder: { id: string; name: string }, photos: DriveItem[]) {
-  const data = { folder, photos, ts: Date.now() }
+  // Thumbnails worden bewust niet opgeslagen: Graph-URLs verlopen na ~1 uur,
+  // maar de sessie leeft 6 uur. TriageView haalt thumbnails on-demand opnieuw op.
+  const slim = photos.map(({ thumbnails: _t, ...rest }) => rest)
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(data))
-  } catch {
-    // Quota exceeded — probeer zonder thumbnails
-    try {
-      const slim = { ...data, photos: photos.map(({ thumbnails: _t, ...rest }) => rest) }
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(slim))
-    } catch { /* Te groot, skip */ }
-  }
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ folder, photos: slim, ts: Date.now() }))
+  } catch { /* sessionStorage vol, skip */ }
 }
 
 function loadSession(): SessionData | null {
