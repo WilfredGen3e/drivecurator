@@ -242,16 +242,16 @@ drivecurator/
 │   │   └── msalConfig.ts              — MSAL config + loginRequest scopes
 │   ├── services/
 │   │   ├── graphService.ts            — alle Graph API calls
-│   │   ├── clusterService.ts          — GPS-clustering + Nominatim geocoding
+│   │   ├── clusterService.ts          — GPS-clustering + Nominatim geocoding; exporteert getPhotoDate + isScreenshot
 │   │   ├── analysisService.ts         — foto-analyse: clusters, burst, duplicaten, maandgroepen
-│   │   └── apiService.ts              — calls naar /api/* (register, me, usage)
+│   │   ├── apiService.ts              — calls naar /api/* (register, me, usage)
+│   │   └── eventService.ts            — Wikidata-events per locatiecluster (IJskast: uitgecommentarieerd)
 │   ├── store/
 │   │   └── useAppStore.ts             — Zustand global state
 │   ├── hooks/
 │   │   └── useIsTouch.ts              — detecteert touch-apparaat
 │   ├── components/
-│   │   ├── LandingPage.tsx            — startpagina vóór login
-│   │   ├── LoginScreen.tsx            — inlogpagina met Microsoft knop
+│   │   ├── LandingPage.tsx            — startpagina vóór login (vervangt het oude LoginScreen)
 │   │   ├── BlockedScreen.tsx          — paywall / geblokkeerd scherm
 │   │   ├── PaywallModal.tsx           — upgrade-modal bij limietbereik
 │   │   ├── AdminPortal.tsx            — beheerdersinzicht (alleen admin-account)
@@ -261,7 +261,6 @@ drivecurator/
 │   │   ├── TriageView.tsx             — handmatige triage: foto voor foto
 │   │   ├── SmartSortView.tsx          — slim sorteren: analyse + categorie-dashboard
 │   │   ├── ClusterTriageView.tsx      — triage binnen één cluster (swipe + knoppen)
-│   │   ├── ActionBar.tsx              — (legacy, niet meer actief)
 │   │   └── UndoToast.tsx              — undo-notificatie
 │   ├── App.tsx                        — root component, routing tussen schermen
 │   ├── main.tsx

@@ -33,16 +33,14 @@ function haversineKm(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-// Schermafbeelding-detectie op basis van bestandsnaam en MIME-type
-function isScreenshot(photo: DriveItem): boolean {
+export function isScreenshot(photo: DriveItem): boolean {
   const name = photo.name.toLowerCase()
   if (/screenshot|schermafbeelding|scherm_/.test(name)) return true
-  // PNG zonder cameraMake is vrijwel altijd een screenshot of download
   if (photo.file?.mimeType === 'image/png' && !photo.photo?.cameraMake) return true
   return false
 }
 
-function getPhotoDate(photo: DriveItem): Date | null {
+export function getPhotoDate(photo: DriveItem): Date | null {
   const str = photo.photo?.takenDateTime ?? photo.fileSystemInfo?.createdDateTime
   return str ? new Date(str) : null
 }

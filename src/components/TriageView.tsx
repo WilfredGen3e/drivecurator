@@ -1,6 +1,7 @@
 import { useRef, useState, useMemo, useEffect } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, deleteItem, moveItem, getItemThumbnails } from '../services/graphService'
+import { getPhotoDate } from '../services/clusterService'
 import { incrementUsage, FreeLimitReachedError } from '../services/apiService'
 import PaywallModal from './PaywallModal'
 import { useAppStore } from '../store/useAppStore'
@@ -26,11 +27,6 @@ function addToPresets(folder: FolderPreset) {
   const current = loadPresets()
   if (current.some(p => p.id === folder.id)) return
   localStorage.setItem(PRESETS_KEY, JSON.stringify([folder, ...current].slice(0, MAX_PRESETS)))
-}
-
-function getPhotoDate(photo: DriveItem): Date | null {
-  const str = photo.photo?.takenDateTime ?? photo.fileSystemInfo?.createdDateTime
-  return str ? new Date(str) : null
 }
 
 function PhotoMeta({ photo }: { photo: DriveItem }) {

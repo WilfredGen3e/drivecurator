@@ -6,6 +6,7 @@ import { AnalysisResult, analyzePhotos } from '../services/analysisService'
 import FolderSidebar, { Crumb } from './FolderSidebar'
 import ClusterTriageView from './ClusterTriageView'
 import ClusterGridView from './ClusterGridView'
+import { getPhotoDate } from '../services/clusterService'
 // import { findEventForCluster } from '../services/eventService'  // IJskast: zie eventService.ts
 
 interface Props {
@@ -37,15 +38,10 @@ function formatDateRange(start?: Date, end?: Date): string {
 
 const MONTH_NAMES_NL = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december']
 
-function photoDate(photo: DriveItem): Date | null {
-  const str = photo.photo?.takenDateTime ?? photo.fileSystemInfo?.createdDateTime
-  return str ? new Date(str) : null
-}
-
 function splitByMonth(photos: DriveItem[], type: ClusterType): PhotoCluster[] {
   const map = new Map<string, DriveItem[]>()
   for (const photo of photos) {
-    const d = photoDate(photo)
+    const d = getPhotoDate(photo)
     const key = d ? `${d.getFullYear()}-${String(d.getMonth()).padStart(2,'0')}` : 'unknown'
     if (!map.has(key)) map.set(key, [])
     map.get(key)!.push(photo)

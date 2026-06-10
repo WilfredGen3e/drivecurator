@@ -1,5 +1,5 @@
 import { DriveItem } from './graphService'
-import { PhotoCluster, clusterPhotos, geocodeClusters } from './clusterService'
+import { PhotoCluster, clusterPhotos, geocodeClusters, isScreenshot, getPhotoDate } from './clusterService'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,21 +42,9 @@ export interface AnalysisResult {
 
 // ── Detectie-helpers ─────────────────────────────────────────────────────────
 
-function isScreenshot(photo: DriveItem): boolean {
-  const name = photo.name.toLowerCase()
-  if (/screenshot|schermafbeelding|scherm_/.test(name)) return true
-  if (photo.file?.mimeType === 'image/png' && !photo.photo?.cameraMake) return true
-  return false
-}
-
 function isWhatsApp(photo: DriveItem): boolean {
   const name = photo.name.toLowerCase()
   return /^img-\d{8}-wa\d+|^wa\d{4,}|\bwhatsapp\b|\binstagram\b|\bvsco\b|\bsnapchat\b|\btiktok\b/.test(name)
-}
-
-function getDate(photo: DriveItem): Date | null {
-  const str = photo.photo?.takenDateTime ?? photo.fileSystemInfo?.createdDateTime
-  return str ? new Date(str) : null
 }
 
 // ── Maandelijkse groepen ──────────────────────────────────────────────────────
@@ -69,7 +57,7 @@ const MONTH_NAMES = [
 function buildMonthlyGroups(photos: DriveItem[]): MonthGroup[] {
   const map = new Map<string, DriveItem[]>()
   for (const photo of photos) {
-    const d = getDate(photo)
+    const d = getPhotoDate(photo)
     if (!d) continue
     const key = `${d.getFullYear()}-${d.getMonth()}`
     if (!map.has(key)) map.set(key, [])
@@ -84,7 +72,7 @@ function buildMonthlyGroups(photos: DriveItem[]): MonthGroup[] {
       year,
       month: monthIndex + 1,
       label: `${MONTH_NAMES[monthIndex]} ${year}`,
-      photos: groupPhotos.sort((a, b) => (getDate(a)?.getTime() ?? 0) - (getDate(b)?.getTime() ?? 0)),
+      photos: groupPhotos.sort((a, b) => (getPhotoDate(a)?.getTime() ?? 0) - (getPhotoDate(b)?.getTime() ?? 0)),
     })
   }
 
@@ -97,31 +85,31 @@ const BURST_GAP_MS = 3000  // 3 seconden
 
 function detectBursts(photos: DriveItem[]): BurstSet[] {
   const withCamera = photos
-    .filter(p => p.photo?.cameraMake && getDate(p))
-    .sort((a, b) => (getDate(a)?.getTime() ?? 0) - (getDate(b)?.getTime() ?? 0))
+    .filter(p => p.photo?.cameraMake && getPhotoDate(p))
+    .sort((a, b) => (getPhotoDate(a)?.getTime() ?? 0) - (getPhotoDate(b)?.getTime() ?? 0))
 
   const sets: BurstSet[] = []
   let current: DriveItem[] = []
 
   for (const photo of withCamera) {
-    const date = getDate(photo)!
+    const date = getPhotoDate(photo)!
     if (current.length === 0) {
       current = [photo]
     } else {
-      const lastDate = getDate(current[current.length - 1])!
+      const lastDate = getPhotoDate(current[current.length - 1])!
       const sameCamera = photo.photo?.cameraMake === current[0].photo?.cameraMake
       if (sameCamera && date.getTime() - lastDate.getTime() <= BURST_GAP_MS) {
         current.push(photo)
       } else {
         if (current.length >= 3) {
-          sets.push({ id: `burst-${sets.length}`, photos: [...current], startDate: getDate(current[0]) ?? undefined })
+          sets.push({ id: `burst-${sets.length}`, photos: [...current], startDate: getPhotoDate(current[0]) ?? undefined })
         }
         current = [photo]
       }
     }
   }
   if (current.length >= 3) {
-    sets.push({ id: `burst-${sets.length}`, photos: current, startDate: getDate(current[0]) ?? undefined })
+    sets.push({ id: `burst-${sets.length}`, photos: current, startDate: getPhotoDate(current[0]) ?? undefined })
   }
 
   return sets
@@ -166,7 +154,7 @@ function detectPotentialJunk(photos: DriveItem[], excludeIds: Set<string>): Driv
       if ((p.size ?? Infinity) >= JUNK_MAX_SIZE) return false
       return true
     })
-    .sort((a, b) => (getDate(a)?.getTime() ?? 0) - (getDate(b)?.getTime() ?? 0))
+    .sort((a, b) => (getPhotoDate(a)?.getTime() ?? 0) - (getPhotoDate(b)?.getTime() ?? 0))
 }
 
 // ── Duplicaten-detectie ───────────────────────────────────────────────────────
