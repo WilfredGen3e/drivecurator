@@ -13,6 +13,7 @@ import PhotoStackLoader from './components/PhotoStackLoader'
 import { useAppStore } from './store/useAppStore'
 import { registerUser, AccountBlockedError } from './services/apiService'
 import { getFolderContents, DriveItem } from './services/graphService'
+import { AnalysisResult } from './services/analysisService'
 
 const msalInstance = new PublicClientApplication(msalConfig)
 
@@ -67,6 +68,10 @@ export default function App() {
   // Voorkomt dat pagina's van een oude mapkeuze binnenkomen terwijl de gebruiker
   // al een andere map heeft geselecteerd (race condition bij snelle navigatie).
   const folderRequestId = useRef(0)
+
+  // Analyseresultaat cachen zodat "Terug → OrganizeHome → Slim sorteren" de
+  // analyse niet opnieuw uitvoert voor dezelfde map.
+  const smartSortCache = useRef<{ folderId: string; result: AnalysisResult } | null>(null)
 
   const {
     reset, currentFolderId, loading,
@@ -248,6 +253,8 @@ export default function App() {
             account={account}
             folder={selectedFolder}
             initialPhotos={loadedPhotos}
+            cachedResult={smartSortCache.current?.folderId === selectedFolder.id ? smartSortCache.current.result : null}
+            onResult={(r) => { smartSortCache.current = { folderId: selectedFolder.id, result: r } }}
             onBack={() => setScreen('organize')}
           />
         ) : screen === 'organize' && selectedFolder ? (

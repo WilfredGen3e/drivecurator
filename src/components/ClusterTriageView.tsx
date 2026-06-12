@@ -67,6 +67,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [presets, setPresets] = useState<FolderPreset[]>(() => loadPresets())
   const [thumbCache, setThumbCache] = useState<Record<string, string>>({})
+  const [brokenThumbs, setBrokenThumbs] = useState<Set<string>>(new Set())
 
   // Swipe state
   const [swipeDelta, setSwipeDelta] = useState({ x: 0, y: 0 })
@@ -199,6 +200,12 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
   const storedThumb = photo?.thumbnails?.[0]?.large?.url ?? photo?.thumbnails?.[0]?.medium?.url
   const thumbnail = storedThumb ?? (photo ? thumbCache[photo.id] : undefined) ?? null
 
+  const handleThumbError = () => {
+    if (!photo) return
+    setBrokenThumbs(s => new Set(s).add(photo.id))
+    setThumbCache(c => { const n = { ...c }; delete n[photo.id]; return n })
+  }
+
   useEffect(() => {
     if (!photo || storedThumb || thumbCache[photo.id]) return
     getItemThumbnails(msalInstance, account, photo.id).then(t => {
@@ -255,8 +262,8 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
           onTouchEnd={handleTouchEnd}
         >
           <div className="w-full h-full flex items-center justify-center" style={{ transform: photoSwipeTransform, transition: isActivelySwiping ? 'none' : 'transform 0.3s ease-out', willChange: 'transform' }}>
-            {thumbnail
-              ? <img src={thumbnail} alt={photo.name} className="w-full h-full object-contain" draggable={false} />
+            {thumbnail && !brokenThumbs.has(photo.id)
+              ? <img src={thumbnail} alt={photo.name} onError={handleThumbError} className="w-full h-full object-contain" draggable={false} />
               : <div className="w-full h-full flex items-center justify-center bg-fluent-bg-hover"><span className="text-fluent-text-secondary text-sm px-6 text-center">{photo.name}</span></div>
             }
           </div>
@@ -375,8 +382,8 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
 
         {/* Foto */}
         <div className="flex-1 min-h-0 px-4 pt-3 bg-fluent-bg-secondary">
-          {thumbnail
-            ? <img src={thumbnail} alt={photo.name} className="w-full h-full object-contain" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} />
+          {thumbnail && !brokenThumbs.has(photo.id)
+            ? <img src={thumbnail} alt={photo.name} onError={handleThumbError} className="w-full h-full object-contain" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} />
             : <div className="w-full h-full bg-fluent-bg-hover border border-fluent-border flex items-center justify-center"><span className="text-fluent-text-secondary text-xs px-4">{photo.name}</span></div>
           }
         </div>

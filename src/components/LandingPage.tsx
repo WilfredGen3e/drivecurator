@@ -49,10 +49,10 @@ const steps = [
 
 export default function LandingPage({ onLogin }: Props) {
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen bg-fluent-bg-primary font-sans">
 
       {/* Navbar */}
-      <nav className="border-b border-fluent-border bg-white sticky top-0 z-10">
+      <nav className="border-b border-fluent-border bg-fluent-bg-primary sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <svg className="w-5 h-5 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
@@ -129,7 +129,7 @@ export default function LandingPage({ onLogin }: Props) {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {features.map((f) => (
-              <div key={f.title} className="bg-white p-6 border border-fluent-border rounded-sm">
+              <div key={f.title} className="bg-fluent-bg-primary p-6 border border-fluent-border rounded-sm">
                 <div className="w-10 h-10 bg-fluent-accent-light rounded-sm flex items-center justify-center mb-4">
                   {f.icon}
                 </div>
@@ -182,7 +182,7 @@ export default function LandingPage({ onLogin }: Props) {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-fluent-border py-6 bg-white">
+      <footer className="border-t border-fluent-border py-6 bg-fluent-bg-primary">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">

@@ -14,6 +14,8 @@ interface Props {
   account: AccountInfo
   folder: { id: string; name: string }
   initialPhotos?: DriveItem[]
+  cachedResult?: AnalysisResult | null
+  onResult?: (result: AnalysisResult) => void
   onBack: () => void
 }
 
@@ -126,7 +128,7 @@ function buildClusters(key: string, result: AnalysisResult): PhotoCluster[] {
   }
 }
 
-export default function SmartSortView({ msalInstance, account, folder, initialPhotos, onBack }: Props) {
+export default function SmartSortView({ msalInstance, account, folder, initialPhotos, cachedResult, onResult, onBack }: Props) {
   const [phase, setPhase] = useState<Phase>({ name: 'initializing', photoCount: 0, geoStep: 0, geoTotal: 0 })
   const [result, setResult] = useState<AnalysisResult | null>(null)
 
@@ -141,6 +143,11 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
   useEffect(() => { startAnalysis() }, [])
 
   const startAnalysis = async () => {
+    if (cachedResult) {
+      setResult(cachedResult)
+      setPhase({ name: 'dashboard' })
+      return
+    }
     setPhase({ name: 'initializing', photoCount: 0, geoStep: 0, geoTotal: 0 })
 
     let allPhotos: DriveItem[]
@@ -166,6 +173,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
         setPhase(prev => prev.name === 'initializing' ? { ...prev, geoStep: done, geoTotal: total } : prev)
       })
       setResult(analysisResult)
+      onResult?.(analysisResult)
       setPhase({ name: 'dashboard' })
     } catch (err) {
       console.error('[SmartSort] Analyse mislukt:', err)
