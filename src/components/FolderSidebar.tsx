@@ -40,7 +40,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
   }, [])
 
   const handleNavigate = async (folder: DriveItem) => {
-    setBreadcrumb((prev) => [...prev, { id: folder.id, name: folder.name }])
+    setBreadcrumb(prev => [...prev, { id: folder.id, name: folder.name }])
     await loadFolders(folder.id)
   }
 
@@ -61,7 +61,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
     setCreating(true)
     try {
       const folder = await createFolder(msalInstance, account, currentId, name)
-      setFolders((prev) => [...prev, folder])
+      setFolders(prev => [...prev, folder])
       setNewFolderName('')
       setShowInput(false)
     } finally {
@@ -70,19 +70,34 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
   }
 
   return (
-    <div className="flex flex-col h-full bg-fluent-bg-secondary border-r border-fluent-border">
-      {/* breadcrumb */}
-      <div className="px-3 py-2 border-b border-fluent-border min-h-[40px] flex items-center">
-        <div className="flex items-center gap-1 flex-wrap text-xs min-w-0">
-          <button onClick={handleRoot} className="text-fluent-accent hover:underline truncate max-w-[60px] transition-colors">
+    <div
+      className="flex flex-col h-full"
+      style={{ background: 'var(--color-bg-secondary)', borderRight: '1px solid var(--color-border)' }}
+    >
+      {/* Breadcrumb */}
+      <div
+        className="px-3 py-2 flex items-center min-h-[38px]"
+        style={{ borderBottom: '1px solid var(--color-border)' }}
+      >
+        <div className="flex items-center gap-0.5 flex-wrap text-xs min-w-0">
+          <button
+            onClick={handleRoot}
+            className="text-fluent-accent hover:text-fluent-accent-hover transition-colors truncate max-w-[60px]"
+          >
             OneDrive
           </button>
           {breadcrumb.map((crumb, i) => (
-            <span key={crumb.id} className="flex items-center gap-1 min-w-0">
-              <span className="text-fluent-text-disabled">/</span>
+            <span key={crumb.id} className="flex items-center gap-0.5 min-w-0">
+              <svg className="w-3 h-3 text-fluent-text-disabled flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
               <button
                 onClick={() => handleBreadcrumbClick(i)}
-                className={`transition-colors truncate max-w-[72px] ${i === breadcrumb.length - 1 ? 'text-fluent-text-primary font-medium' : 'text-fluent-accent hover:underline'}`}
+                className={`transition-colors truncate max-w-[68px] ${
+                  i === breadcrumb.length - 1
+                    ? 'text-fluent-text-primary font-medium'
+                    : 'text-fluent-accent hover:text-fluent-accent-hover'
+                }`}
                 title={crumb.name}
               >
                 {crumb.name}
@@ -92,7 +107,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
         </div>
       </div>
 
-      {/* mappenlijst */}
+      {/* Mappenlijst */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex justify-center py-6">
@@ -101,23 +116,30 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
         ) : folders.length === 0 ? (
           <p className="text-fluent-text-disabled text-xs text-center py-6 px-3">Geen mappen</p>
         ) : (
-          folders.map((folder) => (
-            <div key={folder.id} className="px-2 py-1.5 hover:bg-fluent-bg-hover border-b border-fluent-border last:border-0 leading-snug">
+          folders.map(folder => (
+            <div
+              key={folder.id}
+              className="flex items-center gap-1 px-2 py-0.5 hover:bg-fluent-bg-hover transition-colors"
+              style={{ borderBottom: '1px solid var(--color-border)' }}
+            >
+              {/* Navigeer in map */}
               <button
                 onClick={() => handleNavigate(folder)}
-                className="inline text-left text-sm text-fluent-text-primary"
+                className="flex items-center gap-1.5 flex-1 min-w-0 text-left py-1.5"
                 title={folder.name}
               >
-                <svg className="inline-block align-middle mr-1 w-4 h-4 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-4 h-4 flex-shrink-0 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                 </svg>
-                <span className="align-middle">{folder.name}</span>
+                <span className="text-sm text-fluent-text-primary truncate">{folder.name}</span>
               </button>
+
+              {/* Verplaats naar deze map */}
               <button
                 onClick={() => onMove(folder, breadcrumb)}
                 disabled={disabled}
                 title={`Verplaats naar ${folder.name}`}
-                className="inline-flex items-center align-middle ml-1.5 p-1 text-fluent-text-disabled hover:text-white hover:bg-fluent-accent transition-colors disabled:opacity-30"
+                className="flex-shrink-0 p-1.5 text-fluent-text-disabled hover:text-white hover:bg-fluent-accent transition-colors disabled:opacity-30"
                 style={{ borderRadius: 2 }}
               >
                 <MoveArrowIcon />
@@ -127,16 +149,19 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
         )}
       </div>
 
-      {/* nieuwe map */}
-      <div className="border-t border-fluent-border p-2">
+      {/* Nieuwe map */}
+      <div className="p-2" style={{ borderTop: '1px solid var(--color-border)' }}>
         {showInput ? (
           <div className="flex gap-1">
             <input
               autoFocus
               type="text"
               value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleCreateFolder(); if (e.key === 'Escape') setShowInput(false) }}
+              onChange={e => setNewFolderName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleCreateFolder()
+                if (e.key === 'Escape') setShowInput(false)
+              }}
               placeholder="Mapnaam..."
               className="flex-1 bg-fluent-bg-primary text-fluent-text-primary text-sm px-2 py-1 border border-fluent-border-strong focus:outline-none focus:border-fluent-accent min-w-0"
               style={{ borderRadius: 2 }}
@@ -172,13 +197,10 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
   )
 }
 
-
 function MoveArrowIcon() {
   return (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      {/* folder body */}
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-      {/* arrow pointing down into folder */}
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 11v4m0 0l-2-2m2 2l2-2" />
     </svg>
   )

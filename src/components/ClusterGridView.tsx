@@ -122,9 +122,14 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       {(moveProgress || deleteProgress) && (() => {
         const p = moveProgress ?? deleteProgress!
         return (
-          <div className="flex-shrink-0 px-4 py-3 bg-fluent-bg-primary border-b border-fluent-border space-y-1.5">
-            <p className="text-sm text-fluent-text-secondary">{moveProgress ? 'Verplaatsen' : 'Verwijderen'}… {p.done} / {p.total}</p>
-            <div className="h-1 bg-fluent-border"><div className="h-full bg-fluent-accent transition-all duration-200" style={{ width: `${(p.done / p.total) * 100}%` }} /></div>
+          <div className="flex-shrink-0" style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}>
+            <div className="px-4 pt-2.5 pb-1 flex items-center justify-between">
+              <p className="text-xs text-fluent-text-secondary">{moveProgress ? 'Verplaatsen' : 'Verwijderen'}…</p>
+              <p className="text-xs text-fluent-text-disabled tabular-nums">{p.done} / {p.total}</p>
+            </div>
+            <div className="h-[3px]" style={{ background: 'rgba(255,255,255,0.06)' }}>
+              <div className="h-full transition-all duration-200" style={{ width: `${(p.done / p.total) * 100}%`, background: 'var(--color-accent)' }} />
+            </div>
           </div>
         )
       })()}
@@ -183,7 +188,7 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowDeleteConfirm(false)} />
-          <div className="relative bg-white w-full max-w-sm p-6 space-y-4" style={{ borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+          <div className="relative w-full max-w-sm p-6 space-y-4" style={{ background: 'var(--color-bg-primary)', borderRadius: 4, border: '1px solid var(--color-border)', boxShadow: '0 8px 32px rgba(0,0,0,0.32)' }}>
             <h2 className="font-semibold text-fluent-text-primary text-base">Weet u het zeker?</h2>
             <p className="text-sm text-fluent-text-secondary">
               {actionCount} foto{actionCount !== 1 ? "'s" : ''} worden naar de <strong>OneDrive-prullenbak</strong> verplaatst. U kunt ze daar nog terugzetten.
@@ -200,8 +205,8 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       {showSheet && (
         <div className="fixed inset-0 z-40 flex flex-col justify-end">
           <div className="flex-1 bg-black/40" onClick={() => setShowSheet(false)} />
-          <div className="bg-white flex flex-col" style={{ height: '60vh', borderRadius: '12px 12px 0 0' }}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-fluent-border flex-shrink-0">
+          <div className="flex flex-col" style={{ height: '60vh', borderRadius: '12px 12px 0 0', background: 'var(--color-bg-primary)' }}>
+            <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
               <div className="min-w-0">
                 <p className="font-semibold text-fluent-text-primary text-sm">Verplaatsen naar</p>
                 <p className="text-fluent-text-secondary text-xs truncate">{cluster.label} · {actionCount} foto{actionCount !== 1 ? "'s" : ''}</p>

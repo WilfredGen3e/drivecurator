@@ -60,7 +60,6 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isTouch = useIsTouch()
 
-  // Verplaatsen state
   const [lastFolder, setLastFolder] = useState<DriveItem | null>(null)
   const [lastFolderBreadcrumb, setLastFolderBreadcrumb] = useState<Crumb[]>([])
   const [showFolderSheet, setShowFolderSheet] = useState(false)
@@ -69,7 +68,6 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
   const [thumbCache, setThumbCache] = useState<Record<string, string>>({})
   const [brokenThumbs, setBrokenThumbs] = useState<Set<string>>(new Set())
 
-  // Swipe state
   const [swipeDelta, setSwipeDelta] = useState({ x: 0, y: 0 })
   const [isActivelySwiping, setIsActivelySwiping] = useState(false)
   const swipeTouchStart = useRef<{ x: number; y: number } | null>(null)
@@ -134,11 +132,9 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
   }
 
   const handleMoveToLastFolder = () => { if (lastFolder) handleMove(lastFolder) }
-
   const handleNext = () => { if (index < total - 1) setIndex(i => i + 1) }
   const handlePrev = () => { if (index > 0) setIndex(i => i - 1) }
 
-  // Swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     if (busy) return
     const t = e.touches[0]
@@ -172,7 +168,6 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
     }
   }
 
-  // Swipe visual
   const swipeAbsX = Math.abs(swipeDelta.x)
   const swipeAbsY = Math.abs(swipeDelta.y)
   const swipeHoriz = swipeAbsX >= swipeAbsY
@@ -214,44 +209,60 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
     })
   }, [photo?.id])
 
-  // ── Klaar ────────────────────────────────────────────────────────────────
+  const progressPct = total > 0 ? (index / total) * 100 : 0
+
+  // ── Klaar ─────────────────────────────────────────────────────────────────
   if (!photo) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-4 text-center px-6 bg-fluent-bg-secondary">
-        <svg className="w-10 h-10 text-fluent-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center"
+          style={{ background: 'rgba(16,124,16,0.1)', border: '1px solid rgba(16,124,16,0.25)' }}
+        >
+          <svg className="w-7 h-7 text-fluent-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
         <div>
           <p className="font-semibold text-fluent-text-primary">Klaar met doorlopen</p>
           {removedCount > 0 && (
-            <p className="text-fluent-text-secondary text-sm mt-1">{removedCount} foto{removedCount !== 1 ? "'s" : ''} verwijderd of verplaatst</p>
+            <p className="text-fluent-text-secondary text-sm mt-1">
+              {removedCount} foto{removedCount !== 1 ? "'s" : ''} verwijderd of verplaatst
+            </p>
           )}
         </div>
-        <button onClick={() => onDone(photos)} className="bg-fluent-accent hover:bg-fluent-accent-hover text-white px-5 py-2 text-sm font-semibold transition-colors" style={{ borderRadius: 2 }}>
+        <button
+          onClick={() => onDone(photos)}
+          className="bg-fluent-accent hover:bg-fluent-accent-hover text-white px-5 py-2 text-sm font-semibold transition-colors"
+          style={{ borderRadius: 2 }}
+        >
           Terug naar overzicht
         </button>
       </div>
     )
   }
 
-  // ── Touch layout ─────────────────────────────────────────────────────────
+  // ── Touch layout ──────────────────────────────────────────────────────────
   if (isTouch) {
     return (
-      <div className="flex flex-col h-full bg-fluent-bg-secondary">
+      <div className="flex flex-col h-full" style={{ background: '#080809' }}>
         {/* Topbalk */}
-        <div className="flex items-center gap-2 px-3 bg-fluent-bg-primary border-b border-fluent-border flex-shrink-0 h-12">
+        <div
+          className="flex items-center gap-2 px-3 flex-shrink-0 h-12"
+          style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}
+        >
           <button onClick={() => onDone(photos)} className="text-fluent-text-secondary p-2 -ml-1">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <span className="flex-1 text-sm font-semibold text-fluent-text-primary truncate text-center">{clusterLabel}</span>
-          <span className="text-fluent-text-secondary text-sm flex-shrink-0">{index + 1}/{total}</span>
+          <span className="text-fluent-text-secondary text-sm flex-shrink-0 tabular-nums">{index + 1}/{total}</span>
         </div>
 
         {/* Voortgangsbalk */}
-        <div className="h-1 bg-fluent-border flex-shrink-0">
-          <div className="h-full bg-fluent-accent transition-all duration-300" style={{ width: `${total > 0 ? (index / total) * 100 : 0}%` }} />
+        <div className="h-[3px] flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <div className="h-full transition-all duration-300" style={{ width: `${progressPct}%`, background: 'var(--color-accent)' }} />
         </div>
 
         {/* Foto — swipe-gebied */}
@@ -261,15 +272,18 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="w-full h-full flex items-center justify-center" style={{ transform: photoSwipeTransform, transition: isActivelySwiping ? 'none' : 'transform 0.3s ease-out', willChange: 'transform' }}>
+          <div
+            className="w-full h-full flex items-center justify-center"
+            style={{ transform: photoSwipeTransform, transition: isActivelySwiping ? 'none' : 'transform 0.3s ease-out', willChange: 'transform' }}
+          >
             {thumbnail && !brokenThumbs.has(photo.id)
               ? <img src={thumbnail} alt={photo.name} onError={handleThumbError} className="w-full h-full object-contain" draggable={false} />
-              : <div className="w-full h-full flex items-center justify-center bg-fluent-bg-hover"><span className="text-fluent-text-secondary text-sm px-6 text-center">{photo.name}</span></div>
+              : <div className="w-full h-full flex items-center justify-center" style={{ background: '#111114' }}><span className="text-fluent-text-secondary text-sm px-6 text-center">{photo.name}</span></div>
             }
           </div>
 
           {isActivelySwiping && swipeDelta.x < -SWIPE_HINT && (
-            <div className="absolute inset-0 flex items-center justify-end pr-10 pointer-events-none transition-colors duration-100" style={{ backgroundColor: swipeLeftCommitted ? 'rgba(209,52,56,0.85)' : `rgba(209,52,56,${Math.min(0.25, swipeAbsX / SWIPE_COMMIT * 0.25)})` }}>
+            <div className="absolute inset-0 flex items-center justify-end pr-10 pointer-events-none" style={{ backgroundColor: swipeLeftCommitted ? 'rgba(209,52,56,0.85)' : `rgba(209,52,56,${Math.min(0.25, swipeAbsX / SWIPE_COMMIT * 0.25)})` }}>
               <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeLeftCommitted ? 'scale-110' : 'scale-100'}`}>
                 <div className={`rounded-full p-4 ${swipeLeftCommitted ? 'bg-white/20' : 'bg-fluent-danger'}`}><TrashIcon /></div>
                 {swipeLeftCommitted && <span className="text-sm font-semibold">Loslaten om te verwijderen</span>}
@@ -277,7 +291,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
             </div>
           )}
           {isActivelySwiping && swipeDelta.x > SWIPE_HINT && (
-            <div className="absolute inset-0 flex items-center justify-start pl-10 pointer-events-none transition-colors duration-100" style={{ backgroundColor: swipeRightCommitted ? 'rgba(16,124,16,0.85)' : `rgba(16,124,16,${Math.min(0.25, swipeDelta.x / SWIPE_COMMIT * 0.25)})` }}>
+            <div className="absolute inset-0 flex items-center justify-start pl-10 pointer-events-none" style={{ backgroundColor: swipeRightCommitted ? 'rgba(16,124,16,0.85)' : `rgba(16,124,16,${Math.min(0.25, swipeDelta.x / SWIPE_COMMIT * 0.25)})` }}>
               <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeRightCommitted ? 'scale-110' : 'scale-100'}`}>
                 <div className={`rounded-full p-4 ${swipeRightCommitted ? 'bg-white/20' : 'bg-fluent-success'}`}><NextIcon /></div>
                 {swipeRightCommitted && <span className="text-sm font-semibold">Loslaten voor volgende</span>}
@@ -285,7 +299,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
             </div>
           )}
           {isActivelySwiping && swipeDelta.y < -SWIPE_HINT && !swipeHoriz && (
-            <div className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none transition-colors duration-100" style={{ backgroundColor: swipeUpCommitted ? 'rgba(0,120,212,0.85)' : `rgba(0,120,212,${Math.min(0.25, swipeAbsY / SWIPE_COMMIT * 0.25)})` }}>
+            <div className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none" style={{ backgroundColor: swipeUpCommitted ? 'rgba(0,120,212,0.85)' : `rgba(0,120,212,${Math.min(0.25, swipeAbsY / SWIPE_COMMIT * 0.25)})` }}>
               <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeUpCommitted ? 'scale-110' : 'scale-100'}`}>
                 <div className={`rounded-full p-4 ${swipeUpCommitted ? 'bg-white/20' : 'bg-fluent-accent'}`}><FolderIcon /></div>
                 {swipeUpCommitted && <span className="text-sm font-semibold">Loslaten om te verplaatsen</span>}
@@ -295,14 +309,14 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         </div>
 
         {/* Metadata */}
-        <div className="bg-fluent-bg-primary px-4 py-2 text-center flex-shrink-0">
+        <div className="px-4 py-2 text-center flex-shrink-0" style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}>
           <p className="text-fluent-text-secondary text-xs truncate">{photo.name}</p>
           <PhotoMeta photo={photo} />
         </div>
 
         {/* Preset-mappen */}
         {presets.length > 0 && (
-          <div className="flex-shrink-0 bg-fluent-bg-primary border-t border-fluent-border px-3 py-2 flex gap-2 overflow-x-auto">
+          <div className="flex-shrink-0 px-3 py-2 flex gap-2 overflow-x-auto" style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}>
             {presets.map(preset => (
               <button
                 key={preset.id}
@@ -319,7 +333,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         )}
 
         {/* Actiebalk */}
-        <div className="bg-fluent-bg-primary border-t border-fluent-border flex-shrink-0 flex items-stretch" style={{ height: 72 }}>
+        <div className="flex-shrink-0 flex items-stretch" style={{ height: 72, background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}>
           <TouchBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} label="Ongedaan" color="secondary"><UndoIcon /></TouchBtn>
           <TouchBtn onClick={handlePrev} disabled={index === 0 || busy} label="Vorige" color="secondary"><PrevIcon /></TouchBtn>
           <TouchBtn onClick={handleDelete} disabled={busy} label="Verwijderen" color="danger"><TrashIcon /></TouchBtn>
@@ -328,7 +342,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         </div>
 
         {lastFolder && (
-          <button onClick={() => setShowFolderSheet(true)} className="bg-fluent-bg-secondary border-t border-fluent-border text-fluent-text-secondary text-xs py-2 text-center flex-shrink-0 hover:bg-fluent-bg-hover transition-colors">
+          <button onClick={() => setShowFolderSheet(true)} className="flex-shrink-0 text-fluent-text-secondary text-xs py-2 text-center hover:bg-fluent-bg-hover transition-colors" style={{ background: 'var(--color-bg-secondary)', borderTop: '1px solid var(--color-border)' }}>
             Andere map kiezen
           </button>
         )}
@@ -337,8 +351,8 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         {showFolderSheet && (
           <div className="fixed inset-0 z-40 flex flex-col justify-end">
             <div className="flex-1 bg-black/40" onClick={() => setShowFolderSheet(false)} />
-            <div className="bg-white flex flex-col" style={{ height: '60vh', borderRadius: '12px 12px 0 0' }}>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-fluent-border flex-shrink-0">
+            <div className="flex flex-col" style={{ height: '60vh', borderRadius: '12px 12px 0 0', background: 'var(--color-bg-primary)' }}>
+              <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
                 <span className="font-semibold text-fluent-text-primary">Verplaatsen naar</span>
                 <button onClick={() => setShowFolderSheet(false)} className="text-fluent-text-secondary p-1">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -351,75 +365,109 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
           </div>
         )}
 
-        {toast && <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-fluent-text-primary text-white text-sm px-4 py-2 z-50" style={{ borderRadius: 2 }}>{toast}</div>}
+        {toast && <ToastBar message={toast} />}
       </div>
     )
   }
 
   // ── Desktop layout ────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full">
+    <div className="flex h-full" style={{ background: '#080809' }}>
       {/* Sidebar */}
       <div className={`flex-shrink-0 transition-all duration-200 ${sidebarOpen ? 'w-56' : 'w-0 overflow-hidden'}`}>
-        <FolderSidebar key={lastFolderBreadcrumb.map(c => c.id).join('/')} msalInstance={msalInstance} account={account} onMove={handleMove} disabled={busy} initialBreadcrumb={lastFolderBreadcrumb} />
+        <FolderSidebar
+          key={lastFolderBreadcrumb.map(c => c.id).join('/')}
+          msalInstance={msalInstance}
+          account={account}
+          onMove={handleMove}
+          disabled={busy}
+          initialBreadcrumb={lastFolderBreadcrumb}
+        />
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0 bg-fluent-bg-primary">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Topbalk */}
-        <div className="flex items-center gap-2 px-3 border-b border-fluent-border flex-shrink-0 h-10">
+        <div
+          className="flex items-center gap-2 px-3 flex-shrink-0 h-10"
+          style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}
+        >
           <button onClick={() => setSidebarOpen(v => !v)} className="p-1.5 text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover transition-colors" style={{ borderRadius: 2 }}>
             <SidebarIcon />
           </button>
-          <button onClick={() => onDone(photos)} className="text-fluent-text-secondary hover:text-fluent-text-primary text-sm transition-colors">← Terug</button>
+          <button onClick={() => onDone(photos)} className="flex items-center gap-1 text-fluent-text-secondary hover:text-fluent-text-primary text-sm transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            Terug
+          </button>
           <span className="text-fluent-text-primary text-sm font-medium truncate flex-1 text-center">{clusterLabel}</span>
-          <span className="text-fluent-text-secondary text-sm flex-shrink-0">{index + 1} / {total}</span>
+          <span className="text-fluent-text-secondary text-sm flex-shrink-0 tabular-nums">{index + 1} / {total}</span>
         </div>
 
         {/* Voortgangsbalk */}
-        <div className="h-0.5 bg-fluent-border flex-shrink-0">
-          <div className="h-full bg-fluent-accent transition-all duration-300" style={{ width: `${total > 0 ? (index / total) * 100 : 0}%` }} />
+        <div className="h-[3px] flex-shrink-0" style={{ background: 'rgba(255,255,255,0.05)' }}>
+          <div className="h-full transition-all duration-300" style={{ width: `${progressPct}%`, background: 'var(--color-accent)' }} />
         </div>
 
-        {/* Foto */}
-        <div className="flex-1 min-h-0 px-4 pt-3 bg-fluent-bg-secondary">
-          {thumbnail && !brokenThumbs.has(photo.id)
-            ? <img src={thumbnail} alt={photo.name} onError={handleThumbError} className="w-full h-full object-contain" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} />
-            : <div className="w-full h-full bg-fluent-bg-hover border border-fluent-border flex items-center justify-center"><span className="text-fluent-text-secondary text-xs px-4">{photo.name}</span></div>
-          }
+        {/* Foto — altijd donker */}
+        <div className="flex-1 min-h-0 flex items-center justify-center" style={{ background: '#06060a' }}>
+          {thumbnail && !brokenThumbs.has(photo.id) ? (
+            <img src={thumbnail} alt={photo.name} onError={handleThumbError} className="w-full h-full object-contain" style={{ boxShadow: '0 2px 32px rgba(0,0,0,0.6)' }} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center" style={{ background: '#111116' }}>
+              <div className="flex flex-col items-center gap-3">
+                <svg className="w-10 h-10 text-fluent-text-disabled" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-fluent-text-secondary text-xs text-center px-4">{photo.name}</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Metadata + knoppen */}
-        <div className="flex-shrink-0 bg-fluent-bg-primary border-t border-fluent-border px-4 py-3 space-y-3">
-          <div className="text-center space-y-0.5">
+        {/* Bottom action bar */}
+        <div className="flex-shrink-0 px-5 py-3" style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}>
+          <div className="text-center mb-2.5 space-y-0.5">
             <p className="text-fluent-text-secondary text-xs truncate">{photo.name}</p>
             <PhotoMeta photo={photo} />
           </div>
-          <div className="flex items-center justify-center gap-6">
-            <DesktopBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} variant="secondary" label="Ongedaan"><UndoIcon /></DesktopBtn>
-            <DesktopBtn onClick={handlePrev} disabled={index === 0} variant="secondary" label="Vorige"><PrevIcon /></DesktopBtn>
-            <DesktopBtn onClick={handleDelete} disabled={busy} variant="danger" label="Verwijderen"><TrashIcon /></DesktopBtn>
-            <DesktopBtn onClick={handleNext} disabled={index >= total - 1} variant="secondary" label="Volgende"><NextIcon /></DesktopBtn>
-          </div>
           {presets.length > 0 && (
-            <div className="flex flex-wrap gap-2 justify-center pt-1">
+            <div className="flex flex-wrap gap-1.5 justify-center mb-2.5">
               {presets.map(preset => (
                 <button
                   key={preset.id}
                   onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
                   disabled={busy}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-fluent-accent-light text-fluent-accent text-xs font-medium border border-fluent-accent hover:bg-fluent-accent hover:text-white disabled:opacity-40 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1 bg-fluent-accent-light text-fluent-accent text-xs font-medium border border-fluent-accent hover:bg-fluent-accent hover:text-white disabled:opacity-40 transition-colors"
                   style={{ borderRadius: 2 }}
                 >
-                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
+                  <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
                   <span className="max-w-[120px] truncate">{preset.name}</span>
                 </button>
               ))}
             </div>
           )}
+          <div className="flex items-end justify-center gap-2">
+            <DesktopBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} variant="secondary" label="Ongedaan"><UndoIcon /></DesktopBtn>
+            <DesktopBtn onClick={handlePrev} disabled={index === 0 || busy} variant="secondary" label="Vorige"><PrevIcon /></DesktopBtn>
+            <DesktopBtn onClick={handleDelete} disabled={busy} variant="danger" label="Verwijderen"><TrashIcon /></DesktopBtn>
+            <DesktopBtn onClick={handleNext} disabled={index >= total - 1 || busy} variant="success" label="Volgende"><NextIcon /></DesktopBtn>
+          </div>
         </div>
       </div>
 
-      {toast && <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-fluent-text-primary text-white text-sm px-4 py-2 z-50" style={{ borderRadius: 2 }}>{toast}</div>}
+      {toast && <ToastBar message={toast} />}
+    </div>
+  )
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function ToastBar({ message }: { message: string }) {
+  return (
+    <div
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 text-white text-sm px-4 py-2 z-50"
+      style={{ background: 'var(--color-text-primary)', borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.3)', whiteSpace: 'nowrap' }}
+    >
+      {message}
     </div>
   )
 }
@@ -443,23 +491,29 @@ function TouchBtn({ onClick, disabled, label, color, children }: {
 }
 
 function DesktopBtn({ onClick, disabled, variant, label, children }: {
-  onClick: () => void; disabled: boolean; variant: 'danger' | 'secondary'; label: string; children: React.ReactNode
+  onClick: () => void; disabled: boolean; variant: 'danger' | 'success' | 'secondary'; label: string; children: React.ReactNode
 }) {
-  const styles = {
-    danger: 'bg-fluent-danger-light text-fluent-danger hover:bg-fluent-danger hover:text-white border border-fluent-danger',
-    secondary: 'bg-fluent-bg-secondary text-fluent-text-secondary hover:bg-fluent-bg-hover border border-fluent-border-strong',
-  }
+  const isPrimary = variant === 'danger' || variant === 'success'
+  const btnClass = isPrimary
+    ? variant === 'danger'
+      ? 'flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-fluent-danger hover:bg-red-700 disabled:opacity-30 transition-colors'
+      : 'flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-fluent-accent hover:bg-fluent-accent-hover disabled:opacity-30 transition-colors'
+    : 'flex items-center gap-1.5 px-4 py-2.5 text-sm text-fluent-text-secondary bg-fluent-bg-secondary border border-fluent-border-strong hover:bg-fluent-bg-hover hover:text-fluent-text-primary disabled:opacity-30 transition-colors'
+
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <button onClick={onClick} disabled={disabled} className={`w-12 h-12 flex items-center justify-center transition-colors disabled:opacity-30 ${styles[variant]}`} style={{ borderRadius: 2 }}>{children}</button>
-      <span className="text-xs text-fluent-text-secondary">{label}</span>
+    <div className="flex flex-col items-center gap-1">
+      <button onClick={onClick} disabled={disabled} className={btnClass} style={{ borderRadius: 2 }}>
+        {children}
+        {isPrimary && <span>{label}</span>}
+      </button>
+      <span className="text-xs text-fluent-text-secondary">{isPrimary ? '' : label}</span>
     </div>
   )
 }
 
-function TrashIcon() { return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> }
-function UndoIcon()  { return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h10a5 5 0 015 5v1M3 10l4-4M3 10l4 4" /></svg> }
-function NextIcon() { return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" /></svg> }
-function PrevIcon() { return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" /></svg> }
-function FolderIcon() { return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg> }
+function TrashIcon()   { return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> }
+function UndoIcon()    { return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h10a5 5 0 015 5v1M3 10l4-4M3 10l4 4" /></svg> }
+function NextIcon()    { return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" /></svg> }
+function PrevIcon()    { return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" /></svg> }
+function FolderIcon()  { return <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg> }
 function SidebarIcon() { return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" /></svg> }
