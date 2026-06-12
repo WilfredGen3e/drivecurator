@@ -82,6 +82,10 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   const [isActivelySwiping, setIsActivelySwiping] = useState(false)
   const swipeTouchStart = useRef<{ x: number; y: number } | null>(null)
 
+  // Stable ref zodat de keydown listener maar één keer geregistreerd hoeft te worden
+  // maar altijd de meest recente versie van de handlers aanroept.
+  const keyHandlers = useRef({ handleDelete: () => {}, handleKeep: () => {}, handleUndo: () => {} })
+
   const availableYears = useMemo(() => {
     const years = new Set<number>()
     photos.forEach(p => { const d = getPhotoDate(p); if (d) years.add(d.getFullYear()) })
@@ -239,6 +243,46 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       if (url) setThumbCache(c => ({ ...c, [photo.id]: url }))
     })
   }, [photo?.id])
+
+  // Houd de ref synchroon met de meest recente handlers (geen stale closures in listener).
+  useEffect(() => {
+    keyHandlers.current = { handleDelete, handleKeep, handleUndo }
+  })
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // Geen shortcuts als de gebruiker in een invoerveld zit (datum-filter dropdowns etc.)
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) return
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault()
+          setFilteredIndex(i => Math.max(0, i - 1))
+          break
+        case 'ArrowRight':
+          e.preventDefault()
+          keyHandlers.current.handleKeep()
+          break
+        case 'Delete':
+          e.preventDefault()
+          keyHandlers.current.handleDelete()
+          break
+        case 'z':
+        case 'Z':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault()
+            keyHandlers.current.handleUndo()
+          }
+          break
+        case 'm':
+        case 'M':
+          e.preventDefault()
+          setSidebarOpen(true)
+          break
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // Swipe-berekeningen voor touch layout
   const swipeAbsX = Math.abs(swipeDelta.x)
@@ -575,10 +619,10 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             <PhotoMeta photo={photo} />
           </div>
           <div className="flex items-center justify-center gap-6">
-            <ActionBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} variant="secondary" label="Ongedaan"><UndoIcon /></ActionBtn>
-            <ActionBtn onClick={() => setFilteredIndex(i => Math.max(0, i - 1))} disabled={filteredIndex === 0} variant="secondary" label="Vorige"><PrevIcon /></ActionBtn>
-            <ActionBtn onClick={handleDelete} disabled={busy} variant="danger" label="Verwijderen"><TrashIcon /></ActionBtn>
-            <ActionBtn onClick={handleKeep} disabled={busy} variant="success" label="Volgende"><NextIcon /></ActionBtn>
+            <ActionBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} variant="secondary" label="Ongedaan" hint="Ctrl+Z"><UndoIcon /></ActionBtn>
+            <ActionBtn onClick={() => setFilteredIndex(i => Math.max(0, i - 1))} disabled={filteredIndex === 0} variant="secondary" label="Vorige" hint="←"><PrevIcon /></ActionBtn>
+            <ActionBtn onClick={handleDelete} disabled={busy} variant="danger" label="Verwijderen" hint="Del"><TrashIcon /></ActionBtn>
+            <ActionBtn onClick={handleKeep} disabled={busy} variant="success" label="Volgende" hint="→"><NextIcon /></ActionBtn>
           </div>
           {presets.length > 0 && (
             <div className="flex flex-wrap gap-2 justify-center pt-1">
@@ -630,14 +674,15 @@ function TouchActionBtn({ onClick, disabled, label, color, children }: {
   )
 }
 
-function ActionBtn({ onClick, disabled, variant, label, children }: {
-  onClick: () => void; disabled: boolean; variant: 'danger' | 'success' | 'secondary'; label: string; children: React.ReactNode
+function ActionBtn({ onClick, disabled, variant, label, hint, children }: {
+  onClick: () => void; disabled: boolean; variant: 'danger' | 'success' | 'secondary'; label: string; hint?: string; children: React.ReactNode
 }) {
   const styles = { danger: 'bg-fluent-danger-light text-fluent-danger hover:bg-fluent-danger hover:text-white border border-fluent-danger', success: 'bg-fluent-success-light text-fluent-success hover:bg-fluent-success hover:text-white border border-fluent-success', secondary: 'bg-fluent-bg-secondary text-fluent-text-secondary hover:bg-fluent-bg-hover border border-fluent-border-strong' }
   return (
     <div className="flex flex-col items-center gap-1.5">
       <button onClick={onClick} disabled={disabled} className={`w-12 h-12 flex items-center justify-center transition-colors disabled:opacity-30 ${styles[variant]}`} style={{ borderRadius: 2 }}>{children}</button>
       <span className="text-xs text-fluent-text-secondary">{label}</span>
+      {hint && <span className="text-[10px] text-fluent-text-disabled font-mono">{hint}</span>}
     </div>
   )
 }

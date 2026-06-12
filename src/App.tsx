@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { msalConfig } from './auth/msalConfig'
 import LandingPage from './components/LandingPage'
@@ -59,6 +59,10 @@ export default function App() {
   const [photoLoadCount, setPhotoLoadCount] = useState(0)
   const [currentThumb, setCurrentThumb] = useState<string | null>(null)
 
+  // Voorkomt dat pagina's van een oude mapkeuze binnenkomen terwijl de gebruiker
+  // al een andere map heeft geselecteerd (race condition bij snelle navigatie).
+  const folderRequestId = useRef(0)
+
   const {
     reset, currentFolderId, loading,
     setCurrentUser, currentUser,
@@ -112,6 +116,7 @@ export default function App() {
 
   const handleFolderSelected = async (folder: { id: string; name: string }) => {
     if (!account) return
+    const requestId = ++folderRequestId.current
     setSelectedFolder(folder)
     setLoadedPhotos([])
     setPhotoLoadCount(0)
@@ -121,16 +126,19 @@ export default function App() {
     const allPhotos: DriveItem[] = []
     try {
       await getFolderContents(msalInstance, account, folder.id, (page) => {
+        if (folderRequestId.current !== requestId) return
         allPhotos.push(...page)
         setPhotoLoadCount(allPhotos.length)
         const thumb = page.find(p => p.thumbnails?.[0]?.medium?.url)?.thumbnails?.[0]?.medium?.url
         if (thumb) setCurrentThumb(thumb)
       })
+      if (folderRequestId.current !== requestId) return
       setLoadedPhotos(allPhotos)
       setCurrentThumb(null)
       saveSession(folder, allPhotos)
       setScreen('organize')
     } catch {
+      if (folderRequestId.current !== requestId) return
       setScreen('browse')
     }
   }
