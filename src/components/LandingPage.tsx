@@ -1,196 +1,530 @@
+import { useState } from 'react'
+
 interface Props {
   onLogin: () => Promise<void>
 }
 
-const features = [
+// ── App preview voor hero ─────────────────────────────────────────────────────
+
+function TriagePreview() {
+  return (
+    <div className="relative w-full max-w-[340px] select-none mx-auto lg:mx-0">
+      {/* Gestapelde kaarten achtergrond */}
+      <div
+        className="absolute inset-0 rounded-2xl"
+        style={{ background: '#1a1a28', transform: 'rotate(4deg) scale(0.94) translateY(6px)', opacity: 0.5 }}
+      />
+      <div
+        className="absolute inset-0 rounded-2xl"
+        style={{ background: '#1e1e30', transform: 'rotate(2deg) scale(0.97) translateY(3px)', opacity: 0.7 }}
+      />
+
+      {/* Hoofdkaart */}
+      <div
+        className="relative rounded-2xl overflow-hidden"
+        style={{
+          background: '#16161e',
+          border: '1px solid #2c2c3c',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)',
+        }}
+      >
+        {/* Topbalk */}
+        <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #24243a' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            <span className="text-xs font-medium" style={{ color: '#7070a0' }}>Vakantiefoto's</span>
+          </div>
+          <span className="text-xs tabular-nums" style={{ color: '#50507a' }}>34 / 847</span>
+        </div>
+
+        {/* Voortgangsbalk */}
+        <div className="h-[2px]" style={{ background: '#24243a' }}>
+          <div className="h-full" style={{ width: '4%', background: '#3b82f6' }} />
+        </div>
+
+        {/* Foto-area */}
+        <div
+          className="relative h-48 flex items-center justify-center overflow-hidden"
+          style={{ background: 'linear-gradient(155deg, #1a2535 0%, #10141e 60%, #0c0e14 100%)' }}
+        >
+          {/* Landschapssilhouet */}
+          <svg className="absolute bottom-0 left-0 right-0 w-full" height="64" viewBox="0 0 340 64" preserveAspectRatio="none">
+            <path d="M0 64 L55 24 L110 44 L170 10 L230 38 L285 18 L340 32 L340 64 Z" fill="#162040" opacity="0.8" />
+            <path d="M0 64 L70 40 L150 52 L210 28 L270 48 L340 36 L340 64 Z" fill="#101828" opacity="0.9" />
+          </svg>
+
+          {/* Swipe-links: verwijderen */}
+          <div
+            className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
+            style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}
+          >
+            <svg className="w-3.5 h-3.5" style={{ color: '#f87171' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span className="text-[10px] font-semibold" style={{ color: '#f87171' }}>Weg</span>
+          </div>
+
+          {/* Swipe-rechts: bewaren */}
+          <div
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
+            style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}
+          >
+            <span className="text-[10px] font-semibold" style={{ color: '#4ade80' }}>Bewaren</span>
+            <svg className="w-3.5 h-3.5" style={{ color: '#4ade80' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Metadata + knoppen */}
+        <div className="px-4 py-3 space-y-2.5" style={{ borderTop: '1px solid #24243a' }}>
+          <p className="text-[11px]" style={{ color: '#50507a' }}>
+            IMG_4821.jpg · 14 augustus 2023 · 4.2 MB
+          </p>
+          <div className="flex gap-2">
+            <div
+              className="flex-1 py-2 rounded-lg text-center text-xs font-semibold"
+              style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)', color: '#f87171' }}
+            >
+              Verwijderen
+            </div>
+            <div
+              className="flex-1 py-2 rounded-lg text-center text-xs font-semibold"
+              style={{ background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.18)', color: '#4ade80' }}
+            >
+              Volgende →
+            </div>
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            {['Vakantie 2024', 'Camera roll', 'Familie'].map(name => (
+              <span
+                key={name}
+                className="text-[10px] font-medium px-2 py-1 rounded-md"
+                style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#60a5fa' }}
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Floating badge */}
+      <div
+        className="absolute -top-3 -right-3 text-xs font-bold px-3 py-1.5 rounded-full"
+        style={{
+          background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+          boxShadow: '0 4px 20px rgba(59,130,246,0.45)',
+          color: '#fff',
+        }}
+      >
+        ✓ 613 foto's opgeslagen
+      </div>
+    </div>
+  )
+}
+
+// ── Quotes ────────────────────────────────────────────────────────────────────
+
+const userQuotes = [
   {
-    title: 'Loop in je eigen tempo',
-    description: 'Één foto groot op het scherm, jij beslist wat ermee gebeurt. Sluit af waar je wilt en pak later gewoon verder op.',
-    icon: (
-      <svg className="w-5 h-5 text-fluent-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
+    text: '"How do I delete all OneDrive Photos? I have MANY duplicates."',
+    source: 'Microsoft Q&A, 2024',
   },
   {
-    title: 'Filter het kaf van het koren',
-    description: 'Wazige foto\'s, screenshots, dubbele kiekjes — weg ermee. De bewaarders gaan direct naar de map die jij kiest.',
-    icon: (
-      <svg className="w-5 h-5 text-fluent-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-      </svg>
-    ),
+    text: '"I have 30K+ photos and recently paid for additional OneDrive space for this exact reason."',
+    source: 'Microsoft Q&A gebruiker',
   },
   {
-    title: 'Veilig verwijderen',
-    description: 'Foto\'s die je weggooit gaan naar de OneDrive prullenbak, niet voorgoed weg. Terugzetten kan altijd nog.',
-    icon: (
-      <svg className="w-5 h-5 text-fluent-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-      </svg>
-    ),
+    text: '"Manually reviewing thousands of files can take hours, especially when duplicates are scattered across multiple folders."',
+    source: 'Microsoft support forum',
   },
 ]
+
+// ── Features ──────────────────────────────────────────────────────────────────
+
+const features = [
+  {
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    ),
+    title: 'Triage in je eigen tempo',
+    body: 'Eén foto groot op het scherm. Links verwijderen, rechts bewaren. Geen checkboxjes, geen gedoe. Ga door zo lang je wilt en stop waar je wilt — de app onthoudt waar je was.',
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+      </svg>
+    ),
+    title: 'Slim sorteren op rommel',
+    body: 'Screenshots, burst-reeksen, WhatsApp-foto\'s en duplicaten worden automatisch herkend en gegroepeerd. Verplaats een hele categorie in één keer — zonder alles handmatig te doorzoeken.',
+  },
+  {
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+    ),
+    title: 'Veilig verwijderen',
+    body: 'Verwijderde foto\'s gaan naar de OneDrive prullenbak — niet voorgoed weg. Je kunt altijd terugzetten. Geen stress, geen mis-clicks waar je niet van terugkomt.',
+  },
+]
+
+// ── Stappen ───────────────────────────────────────────────────────────────────
 
 const steps = [
   {
     title: 'Log in met Microsoft',
-    description: 'Verbind DriveCurator met je bestaande Microsoft account. Geen nieuw wachtwoord, geen extra account nodig.',
+    body: 'Verbind met je bestaande Microsoft account. Geen nieuw wachtwoord, geen extra account — dezelfde login als je al gebruikt voor OneDrive.',
   },
   {
     title: 'Kies de map met je backup',
-    description: 'Selecteer de map waar OneDrive je camerarol in heeft gezet — per maand gesorteerd of één grote vergaarbak.',
+    body: 'Selecteer de map waar OneDrive je camerarol in heeft gezet. Of laat de app automatisch analyseren welke categorieën er in zitten.',
   },
   {
-    title: 'Loop foto voor foto door je backup',
-    description: 'Per foto beslissen: bewaren en naar een map, of weg. In je eigen tempo, zo lang als je wilt.',
+    title: 'Loop door je foto\'s',
+    body: 'Per foto beslissen: bewaren en naar een map, of weg. De rommel wordt automatisch voor je gegroepeerd. In je eigen tempo, zo lang als je wilt.',
   },
 ]
 
-export default function LandingPage({ onLogin }: Props) {
-  return (
-    <div className="min-h-screen bg-fluent-bg-primary font-sans">
+// ── Microsoft login knop ──────────────────────────────────────────────────────
 
-      {/* Navbar */}
-      <nav className="border-b border-fluent-border bg-fluent-bg-primary sticky top-0 z-10">
+function MsftButton({ onClick, loading }: { onClick: () => void; loading: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={loading}
+      className="group flex items-center gap-3 px-6 py-3 font-semibold text-sm transition-all duration-200 disabled:opacity-60"
+      style={{
+        background: loading ? '#1d4ed8' : '#2563eb',
+        color: '#fff',
+        borderRadius: 6,
+        boxShadow: '0 0 0 0 rgba(59,130,246,0)',
+        transition: 'background 0.2s, box-shadow 0.2s',
+      }}
+      onMouseEnter={e => {
+        if (!loading) (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 0 4px rgba(59,130,246,0.25)'
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 0 0 rgba(59,130,246,0)'
+      }}
+    >
+      {loading ? (
+        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      ) : (
+        <svg width="20" height="20" viewBox="0 0 21 21" fill="none" style={{ flexShrink: 0 }}>
+          <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
+          <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
+          <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
+          <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
+        </svg>
+      )}
+      {loading ? 'Aanmelden…' : 'Beginnen met Microsoft'}
+    </button>
+  )
+}
+
+// ── Landing Page ──────────────────────────────────────────────────────────────
+
+export default function LandingPage({ onLogin }: Props) {
+  const [loggingIn, setLoggingIn] = useState(false)
+
+  const handleLogin = async () => {
+    setLoggingIn(true)
+    try { await onLogin() } finally { setLoggingIn(false) }
+  }
+
+  return (
+    <div style={{ background: '#08080b', color: '#f0f0f5', fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif" }}>
+
+      {/* ── Nav ──────────────────────────────────────────────────────────── */}
+      <nav
+        className="sticky top-0 z-50"
+        style={{
+          background: 'rgba(8,8,11,0.85)',
+          backdropFilter: 'blur(16px)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
+          <div className="flex items-center gap-2.5">
+            <svg className="w-5 h-5" style={{ color: '#3b82f6' }} fill="currentColor" viewBox="0 0 20 20">
               <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
             </svg>
-            <span className="font-semibold text-fluent-text-primary">DriveCurator</span>
+            <span className="font-semibold text-sm tracking-tight" style={{ color: '#f0f0f5' }}>DriveCurator</span>
           </div>
           <button
-            onClick={onLogin}
-            className="text-sm px-4 py-1.5 bg-fluent-accent text-white hover:bg-fluent-accent-hover transition-colors rounded-sm font-semibold"
+            onClick={handleLogin}
+            disabled={loggingIn}
+            className="text-sm font-semibold px-4 py-1.5 rounded-md transition-colors"
+            style={{ background: '#1e293b', color: '#cbd5e1', border: '1px solid #334155' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#263548' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#1e293b' }}
           >
-            Aanmelden
+            {loggingIn ? 'Aanmelden…' : 'Aanmelden'}
           </button>
         </div>
       </nav>
 
-      {/* Hero — gecentreerd */}
-      <section className="max-w-2xl mx-auto px-6 pt-24 pb-16 text-center">
-        <p className="text-sm font-semibold text-fluent-accent uppercase tracking-wide mb-4">
-          OneDrive foto beheer
-        </p>
-        <h1 className="text-4xl font-semibold text-fluent-text-primary leading-tight mb-5">
-          Breng orde in je<br />OneDrive fotobak.
-        </h1>
-        <p className="text-lg text-fluent-text-secondary mb-10 leading-relaxed">
-          OneDrive maakt automatisch een backup van je camerarol. Foto's stapelen zich op.
-          DriveCurator laat je er rustig doorheen lopen en alles opruimen — foto voor foto.
-        </p>
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden">
+        {/* Achtergrond-grid */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
+        {/* Glow achter tekst */}
+        <div
+          className="absolute top-1/3 left-1/4 w-[600px] h-[400px] opacity-10 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, #3b82f6 0%, transparent 70%)', transform: 'translate(-50%, -50%)' }}
+        />
 
-        {/* Free plan callout */}
-        <div className="border border-fluent-border bg-fluent-bg-secondary rounded-sm p-6 mb-8 text-left">
-          <p className="text-xs font-semibold text-fluent-accent uppercase tracking-wide mb-3">Gratis plan</p>
-          <ul className="space-y-2 mb-4">
-            {[
-              '200 foto\'s cureren — bewaren of verwijderen',
-              'Foto\'s gaan naar de OneDrive prullenbak, niet voorgoed weg',
-              'Mappen aanmaken en foto\'s direct verplaatsen',
-              'Geen installatie — werkt in de browser',
-            ].map(item => (
-              <li key={item} className="flex items-start gap-2 text-sm text-fluent-text-primary">
-                <svg className="w-4 h-4 text-fluent-success flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-                {item}
-              </li>
-            ))}
-          </ul>
-          <p className="text-xs text-fluent-text-secondary">Meer nodig? Neem contact op voor een uitgebreid plan.</p>
+        <div className="relative max-w-6xl mx-auto px-6 pt-28 pb-24">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
+
+            {/* Linker kolom: tekst */}
+            <div className="flex-1 max-w-xl">
+              <p
+                className="text-xs font-semibold uppercase tracking-widest mb-5"
+                style={{ color: '#3b82f6' }}
+              >
+                OneDrive foto beheer
+              </p>
+              <h1
+                className="text-4xl sm:text-5xl font-bold leading-[1.1] mb-6"
+                style={{ color: '#f0f0f5', letterSpacing: '-0.025em' }}
+              >
+                Je OneDrive staat vol.
+                <br />
+                <span style={{ color: '#8888a8' }}>En je weet precies hoe dat is gekomen.</span>
+              </h1>
+              <p className="text-base mb-8 leading-relaxed" style={{ color: '#8888a8' }}>
+                OneDrive heeft jarenlang automatisch je camerarol opgeslagen. Nu heb je duizenden foto's —
+                screenshots, dubbelingen, WhatsApp-rotzooi — en geen fatsoenlijk gereedschap om er doorheen te komen.
+              </p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <MsftButton onClick={handleLogin} loading={loggingIn} />
+                <p className="text-sm" style={{ color: '#50507a' }}>
+                  Gratis · 200 foto's · Geen installatie
+                </p>
+              </div>
+            </div>
+
+            {/* Rechter kolom: app preview */}
+            <div className="flex-1 flex justify-center lg:justify-end w-full">
+              <TriagePreview />
+            </div>
+          </div>
         </div>
-
-        {/* CTA */}
-        <button
-          onClick={onLogin}
-          className="flex items-center gap-3 mx-auto bg-fluent-accent text-white px-7 py-3 text-base font-semibold hover:bg-fluent-accent-hover transition-colors rounded-sm"
-        >
-          <svg width="20" height="20" viewBox="0 0 21 21" fill="none" style={{ flexShrink: 0 }}>
-            <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
-            <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
-            <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
-            <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
-          </svg>
-          Aanmelden met Microsoft
-        </button>
-        <p className="text-xs text-fluent-text-secondary mt-3">
-          Je bestaande Microsoft account — geen nieuw wachtwoord nodig.
-        </p>
       </section>
 
-      {/* Features */}
-      <section className="bg-fluent-bg-secondary border-t border-fluent-border py-16">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-2xl font-semibold text-fluent-text-primary mb-10 text-center">
-            Waarom DriveCurator?
+      {/* ── Quote strip ──────────────────────────────────────────────────── */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#0d0d10' }}>
+        <div className="max-w-6xl mx-auto px-6 py-10">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-6 text-center" style={{ color: '#40405a' }}>
+            Wat gebruikers zeggen op Microsoft forums
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {userQuotes.map((q, i) => (
+              <div
+                key={i}
+                className="p-4 rounded-xl"
+                style={{ background: '#111116', border: '1px solid #1e1e28', borderLeft: '3px solid #1e3a6a' }}
+              >
+                <p className="text-sm leading-relaxed mb-3" style={{ color: '#a0a0c0' }}>{q.text}</p>
+                <p className="text-xs" style={{ color: '#40405a' }}>— {q.source}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Verhaal ───────────────────────────────────────────────────────── */}
+      <section className="max-w-3xl mx-auto px-6 py-24">
+        <div className="space-y-6 text-base leading-relaxed" style={{ color: '#9090b0' }}>
+          <h2 className="text-2xl font-bold mb-8" style={{ color: '#f0f0f5', letterSpacing: '-0.02em' }}>
+            Het probleem is niet de backup.<br />Het is wat daarna komt.
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          <p>
+            Microsoft's automatische camera-backup doet zijn werk stilletjes, jaar na jaar.
+            Totdat je merkt dat je 11.000 foto's hebt staan en je opslaglimiet vol zit.
+            Je koopt meer opslag — voor foto's die je eigenlijk helemaal niet wilt bewaren.
+          </p>
+
+          <p>
+            Microsoft's eigen fotobeheer vraagt je om foto's te selecteren via kleine checkboxjes.
+            Eén voor één, of met Ctrl+A als je geluk hebt. Het is frustrerend, het duurt uren,
+            en de meeste mensen haken na de eerste honderd foto's al af. De berg groeit.
+          </p>
+
+          {/* Inline pull quote */}
+          <blockquote
+            className="my-8 pl-5 py-1"
+            style={{ borderLeft: '3px solid #3b82f6', color: '#c0c0e0', fontSize: '1.1rem', fontStyle: 'italic' }}
+          >
+            "OneDrive camera backup puts all photos together with no option to change this."
+            <footer className="mt-2 text-sm not-italic" style={{ color: '#50507a' }}>— Microsoft Q&A, Android gebruiker</footer>
+          </blockquote>
+
+          <p>
+            Ondertussen staan je <em style={{ color: '#c0c0e0', fontStyle: 'normal', fontWeight: 600 }}>échte foto's</em> er ook bij.
+            Ergens tussen de 47 bijna-identieke foto's van hetzelfde uitzicht, de screenshot van een
+            parkeerbon uit 2021 en de WhatsApp-video die iemand in de groepsapp gooide — zitten de
+            foto's die je wél wilt bewaren. Maar je kunt er niet bij.
+          </p>
+
+          <p>
+            DriveCurator lost dit op met één simpel principe: één foto groot op het scherm,
+            jij beslist wat ermee gebeurt. De app herkent automatisch je screenshots, burst-reeksen
+            en WhatsApp-foto's — zodat je die categorie in één keer kunt wegzetten zonder alles te
+            hoeven bekijken.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Features ─────────────────────────────────────────────────────── */}
+      <section style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
+        <div className="max-w-6xl mx-auto px-6 py-24">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-center" style={{ color: '#40405a' }}>
+            Hoe het werkt
+          </p>
+          <h2 className="text-2xl font-bold text-center mb-12" style={{ color: '#f0f0f5', letterSpacing: '-0.02em' }}>
+            Waarom DriveCurator anders is
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {features.map((f) => (
-              <div key={f.title} className="bg-fluent-bg-primary p-6 border border-fluent-border rounded-sm">
-                <div className="w-10 h-10 bg-fluent-accent-light rounded-sm flex items-center justify-center mb-4">
+              <div
+                key={f.title}
+                className="p-6 rounded-xl transition-all duration-200"
+                style={{ background: '#111116', border: '1px solid #1e1e28' }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLDivElement
+                  el.style.border = '1px solid #2e2e48'
+                  el.style.background = '#141420'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLDivElement
+                  el.style.border = '1px solid #1e1e28'
+                  el.style.background = '#111116'
+                }}
+              >
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center mb-5"
+                  style={{ background: 'rgba(59,130,246,0.12)', color: '#60a5fa' }}
+                >
                   {f.icon}
                 </div>
-                <h3 className="font-semibold text-fluent-text-primary mb-2">{f.title}</h3>
-                <p className="text-sm text-fluent-text-secondary leading-relaxed">{f.description}</p>
+                <h3 className="font-semibold text-base mb-2" style={{ color: '#f0f0f5' }}>{f.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#7070a0' }}>{f.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="py-16 border-t border-fluent-border">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-2xl font-semibold text-fluent-text-primary mb-10 text-center">
-            Hoe het werkt
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {steps.map((step, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="w-8 h-8 bg-fluent-accent text-white rounded-sm flex items-center justify-center font-semibold text-sm flex-shrink-0 mt-0.5">
-                  {i + 1}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-fluent-text-primary mb-1">{step.title}</h3>
-                  <p className="text-sm text-fluent-text-secondary leading-relaxed">{step.description}</p>
-                </div>
+      {/* ── Stappen ──────────────────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-6 py-24">
+        <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-center" style={{ color: '#40405a' }}>
+          Aan de slag
+        </p>
+        <h2 className="text-2xl font-bold text-center mb-12" style={{ color: '#f0f0f5', letterSpacing: '-0.02em' }}>
+          In drie stappen je fotobak op orde
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {steps.map((step, i) => (
+            <div key={i} className="flex gap-4">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5"
+                style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)' }}
+              >
+                {i + 1}
               </div>
-            ))}
-          </div>
+              <div>
+                <h3 className="font-semibold mb-1.5" style={{ color: '#e0e0f0' }}>{step.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#7070a0' }}>{step.body}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="bg-fluent-accent-light border-t border-fluent-border py-16">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <h2 className="text-2xl font-semibold text-fluent-text-primary mb-3">
-            Klaar om je fotobak op te ruimen?
+      {/* ── Gratis plan callout ───────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-6 pb-24">
+        <div
+          className="rounded-2xl p-8"
+          style={{ background: '#0e1020', border: '1px solid #1e2438' }}
+        >
+          <div className="flex flex-col md:flex-row md:items-center gap-8">
+            <div className="flex-1">
+              <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#3b82f6' }}>Gratis plan</p>
+              <ul className="space-y-2.5">
+                {[
+                  '200 foto\'s cureren — bewaren of verwijderen',
+                  'Slim sorteren: screenshots, duplicaten en WhatsApp automatisch herkend',
+                  'Foto\'s gaan naar de OneDrive prullenbak — niet voorgoed weg',
+                  'Geen installatie — werkt direct in de browser',
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm" style={{ color: '#9090b0' }}>
+                    <svg className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#22c55e' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs mt-4" style={{ color: '#40405a' }}>Meer nodig? Neem contact op voor een uitgebreid plan.</p>
+            </div>
+            <div className="flex-shrink-0">
+              <MsftButton onClick={handleLogin} loading={loggingIn} />
+              <p className="text-xs mt-3 text-center" style={{ color: '#40405a' }}>
+                Werkt met elk Microsoft account
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── CTA ──────────────────────────────────────────────────────────── */}
+      <section
+        className="relative overflow-hidden"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}
+      >
+        <div
+          className="absolute inset-0 opacity-5 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse at center, #3b82f6 0%, transparent 70%)' }}
+        />
+        <div className="relative max-w-6xl mx-auto px-6 py-24 text-center">
+          <h2 className="text-3xl font-bold mb-4" style={{ color: '#f0f0f5', letterSpacing: '-0.025em' }}>
+            Hoeveel foto's staan er bij jou al jaren onbekeken?
           </h2>
-          <p className="text-fluent-text-secondary mb-8">
-            Log in met je Microsoft account en begin meteen. Gratis, geen installatie nodig.
+          <p className="text-base mb-10 max-w-xl mx-auto" style={{ color: '#7070a0' }}>
+            Log in met je Microsoft account en kijk het na. Gratis, direct, geen nieuw wachtwoord nodig.
           </p>
-          <button
-            onClick={onLogin}
-            className="bg-fluent-accent text-white px-6 py-2.5 text-sm font-semibold hover:bg-fluent-accent-hover transition-colors rounded-sm"
-          >
-            Beginnen met Microsoft
-          </button>
+          <div className="flex justify-center">
+            <MsftButton onClick={handleLogin} loading={loggingIn} />
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-fluent-border py-6 bg-fluent-bg-primary">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+      {/* ── Footer ───────────────────────────────────────────────────────── */}
+      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: '#08080b' }}>
+        <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-4 h-4" style={{ color: '#3b82f6' }} fill="currentColor" viewBox="0 0 20 20">
               <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
             </svg>
-            <span className="text-sm text-fluent-text-secondary">DriveCurator</span>
+            <span className="text-sm font-medium" style={{ color: '#50507a' }}>DriveCurator</span>
           </div>
-          <span className="text-sm text-fluent-text-disabled">Werkt met Microsoft OneDrive via de Graph API</span>
+          <span className="text-sm" style={{ color: '#30303a' }}>
+            Werkt met Microsoft OneDrive via de Graph API
+          </span>
         </div>
       </footer>
     </div>
