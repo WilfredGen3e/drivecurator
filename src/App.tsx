@@ -20,6 +20,11 @@ const msalInstance = new PublicClientApplication(msalConfig)
 const SESSION_KEY = 'drivecurator_session'
 const SESSION_TTL = 6 * 60 * 60 * 1000 // 6 uur
 
+const LAST_FOLDER_KEY = 'drivecurator_last_folder'
+function saveLastFolder(folder: { id: string; name: string }) {
+  try { localStorage.setItem(LAST_FOLDER_KEY, JSON.stringify(folder)) } catch { /* vol */ }
+}
+
 interface SessionData {
   folder: { id: string; name: string }
   photos: DriveItem[]
@@ -136,6 +141,7 @@ export default function App() {
       setLoadedPhotos(allPhotos)
       setCurrentThumb(null)
       saveSession(folder, allPhotos)
+      saveLastFolder(folder)
       setScreen('organize')
     } catch {
       if (folderRequestId.current !== requestId) return
