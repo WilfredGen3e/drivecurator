@@ -16,7 +16,12 @@ import {
   isSimilar,
   THRESHOLD_HASH_DEFAULT,
   THRESHOLD_COLOR_DEFAULT,
+  type PhotoFingerprint,
 } from '../services/perceptualHashService'
+
+// Aantal gelijktijdige thumbnail-fetches tijdens een scan. Hoger = sneller,
+// maar te hoog lokt OneDrive-throttling (429) uit. 8 is een veilige balans.
+const SCAN_CONCURRENCY = 8
 
 const MONTHS = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
 const SWIPE_HINT = 30
@@ -101,6 +106,9 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   const [thresholdColor, setThresholdColor] = useState(THRESHOLD_COLOR_DEFAULT)
   const [scanToken, setScanToken] = useState('')
   const abortRef = useRef(false)
+  // Hergebruik berekende fingerprints binnen de sessie: elke thumbnail wordt
+  // maar één keer opgehaald + berekend, ook over meerdere zoekacties heen.
+  const fingerprintCache = useRef<Map<string, PhotoFingerprint>>(new Map())
 
   // Stable ref zodat de keydown listener maar één keer geregistreerd hoeft te worden
   // maar altijd de meest recente versie van de handlers aanroept.
@@ -236,9 +244,20 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
     }
     setScanToken(token)
 
+    // Haal een fingerprint uit de cache of bereken hem één keer.
+    const getFingerprint = async (item: DriveItem): Promise<PhotoFingerprint | null> => {
+      const cached = fingerprintCache.current.get(item.id)
+      if (cached) return cached
+      const url = item.thumbnails?.[0]?.medium?.url
+      if (!url) return null
+      const blob = await fetchThumbnailAsBlob(url, token)
+      const fp = blob ? await calculateFingerprint(blob, item.id) : null
+      if (fp) fingerprintCache.current.set(item.id, fp)
+      return fp
+    }
+
     // Referentie-fingerprint van de huidige foto.
-    const refBlob = await fetchThumbnailAsBlob(refUrl, token)
-    const refFp = refBlob ? await calculateFingerprint(refBlob, photo.id) : null
+    const refFp = await getFingerprint(photo)
     if (!refFp) {
       setIsScanning(false)
       showToast('Kon huidige foto niet analyseren')
@@ -255,18 +274,14 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         if (abortRef.current) break
         const p = queue.shift()
         if (!p) break
-        const url = p.thumbnails?.[0]?.medium?.url
-        if (url) {
-          const blob = await fetchThumbnailAsBlob(url, token)
-          const fp = blob ? await calculateFingerprint(blob, p.id) : null
-          if (fp && isSimilar(refFp, fp, thresholdHash, thresholdColor)) matches.push(p)
-        }
+        const fp = await getFingerprint(p)
+        if (fp && isSimilar(refFp, fp, thresholdHash, thresholdColor)) matches.push(p)
         processed++
         setScanProgress(Math.round((processed / others.length) * 100))
         if (abortRef.current) break
       }
     }
-    await Promise.all(Array.from({ length: 3 }, worker))
+    await Promise.all(Array.from({ length: SCAN_CONCURRENCY }, worker))
 
     setIsScanning(false)
     if (abortRef.current) return
