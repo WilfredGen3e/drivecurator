@@ -7,7 +7,16 @@ import PaywallModal from './PaywallModal'
 import { useAppStore } from '../store/useAppStore'
 import FolderSidebar, { Crumb } from './FolderSidebar'
 import UndoToast from './UndoToast'
+import SimilarPhotosSheet from './SimilarPhotosSheet'
 import { useIsTouch } from '../hooks/useIsTouch'
+import { loginRequest } from '../auth/msalConfig'
+import {
+  fetchThumbnailAsBlob,
+  calculateFingerprint,
+  isSimilar,
+  THRESHOLD_HASH_DEFAULT,
+  THRESHOLD_COLOR_DEFAULT,
+} from '../services/perceptualHashService'
 
 const MONTHS = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
 const SWIPE_HINT = 30
@@ -82,6 +91,16 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   const [swipeDelta, setSwipeDelta] = useState({ x: 0, y: 0 })
   const [isActivelySwiping, setIsActivelySwiping] = useState(false)
   const swipeTouchStart = useRef<{ x: number; y: number } | null>(null)
+
+  // "Vind vergelijkbare" state
+  const [isScanning, setIsScanning] = useState(false)
+  const [scanProgress, setScanProgress] = useState(0)
+  const [similarPhotos, setSimilarPhotos] = useState<DriveItem[]>([])
+  const [showSimilarSheet, setShowSimilarSheet] = useState(false)
+  const [thresholdHash, setThresholdHash] = useState(THRESHOLD_HASH_DEFAULT)
+  const [thresholdColor, setThresholdColor] = useState(THRESHOLD_COLOR_DEFAULT)
+  const [scanToken, setScanToken] = useState('')
+  const abortRef = useRef(false)
 
   // Stable ref zodat de keydown listener maar één keer geregistreerd hoeft te worden
   // maar altijd de meest recente versie van de handlers aanroept.
@@ -195,6 +214,88 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         showToast("Verwijderde foto's staan in de OneDrive prullenbak")
       }
     } finally { setBusy(false) }
+  }
+
+  const handleFindSimilar = async () => {
+    if (!photo || isScanning) return
+    const refUrl = photo.thumbnails?.[0]?.medium?.url
+    if (!refUrl) return
+
+    abortRef.current = false
+    setIsScanning(true)
+    setScanProgress(0)
+
+    let token: string
+    try {
+      const res = await msalInstance.acquireTokenSilent({ ...loginRequest, account })
+      token = res.accessToken
+    } catch {
+      setIsScanning(false)
+      showToast('Kon huidige foto niet analyseren')
+      return
+    }
+    setScanToken(token)
+
+    // Referentie-fingerprint van de huidige foto.
+    const refBlob = await fetchThumbnailAsBlob(refUrl, token)
+    const refFp = refBlob ? await calculateFingerprint(refBlob, photo.id) : null
+    if (!refFp) {
+      setIsScanning(false)
+      showToast('Kon huidige foto niet analyseren')
+      return
+    }
+
+    const others = photos.filter(p => p.id !== photo.id)
+    const queue = [...others]
+    const matches: DriveItem[] = []
+    let processed = 0
+
+    const worker = async () => {
+      while (true) {
+        if (abortRef.current) break
+        const p = queue.shift()
+        if (!p) break
+        const url = p.thumbnails?.[0]?.medium?.url
+        if (url) {
+          const blob = await fetchThumbnailAsBlob(url, token)
+          const fp = blob ? await calculateFingerprint(blob, p.id) : null
+          if (fp && isSimilar(refFp, fp, thresholdHash, thresholdColor)) matches.push(p)
+        }
+        processed++
+        setScanProgress(Math.round((processed / others.length) * 100))
+        if (abortRef.current) break
+      }
+    }
+    await Promise.all(Array.from({ length: 3 }, worker))
+
+    setIsScanning(false)
+    if (abortRef.current) return
+
+    const result = [photo, ...matches]
+    if (result.length <= 1) {
+      showToast("Geen vergelijkbare foto's gevonden")
+      return
+    }
+    setSimilarPhotos(result)
+    setShowSimilarSheet(true)
+  }
+
+  const cancelScan = () => {
+    abortRef.current = true
+    setIsScanning(false)
+  }
+
+  const handleSimilarDone = (processedIds: string[]) => {
+    const processedSet = new Set(processedIds)
+    // Bepaal vóór verwijderen waar we daarna verder moeten: de eerstvolgende
+    // foto die nog in de lijst zit op of na de huidige positie.
+    const survivorsBefore = filteredPhotos
+      .slice(0, filteredIndex)
+      .filter(p => !processedSet.has(p.id)).length
+    processedIds.forEach(id => removePhotoById(id))
+    setShowSimilarSheet(false)
+    setSimilarPhotos([])
+    setFilteredIndex(survivorsBefore)
   }
 
   const handlePhotoTouchStart = (e: React.TouchEvent) => {
@@ -469,6 +570,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           onTouchMove={handlePhotoTouchMove}
           onTouchEnd={handlePhotoTouchEnd}
         >
+          {isScanning && <ScanOverlay progress={scanProgress} onCancel={cancelScan} />}
           <div
             className="w-full h-full flex items-center justify-center"
             style={{
@@ -604,6 +706,22 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           </TouchActionBtn>
         </div>
 
+        {/* Vind vergelijkbare */}
+        <div
+          className="flex-shrink-0 px-3 py-2"
+          style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}
+        >
+          <SimilarControls
+            onFind={handleFindSimilar}
+            disabled={busy || isScanning || !photo.thumbnails?.[0]?.medium?.url}
+            showSliders={!showSimilarSheet}
+            thresholdHash={thresholdHash}
+            setThresholdHash={setThresholdHash}
+            thresholdColor={thresholdColor}
+            setThresholdColor={setThresholdColor}
+          />
+        </div>
+
         {lastFolder && (
           <button
             onClick={() => setShowFolderSheet(true)}
@@ -648,6 +766,16 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 
         {toast && <UndoToast message={toast.message} onUndo={handleUndo} />}
         {showPaywall && <PaywallModal photosTriaged={currentUser?.photosTriaged ?? 200} onBack={onBack} />}
+        {showSimilarSheet && (
+          <SimilarPhotosSheet
+            photos={similarPhotos}
+            accessToken={scanToken}
+            msalInstance={msalInstance}
+            account={account}
+            onClose={() => { setShowSimilarSheet(false); setSimilarPhotos([]) }}
+            onDone={handleSimilarDone}
+          />
+        )}
       </div>
     )
   }
@@ -767,7 +895,8 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         </div>
 
         {/* Foto-area — altijd donker */}
-        <div className="flex-1 min-h-0 flex items-center justify-center" style={{ background: '#06060a' }}>
+        <div className="flex-1 min-h-0 flex items-center justify-center relative" style={{ background: '#06060a' }}>
+          {isScanning && <ScanOverlay progress={scanProgress} onCancel={cancelScan} />}
           {thumbnail && !brokenThumbs.has(photo.id) ? (
             <img
               src={thumbnail}
@@ -861,11 +990,32 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               <NextIcon />
             </ActionBtn>
           </div>
+
+          {/* Vind vergelijkbare */}
+          <SimilarControls
+            onFind={handleFindSimilar}
+            disabled={busy || isScanning || !photo.thumbnails?.[0]?.medium?.url}
+            showSliders={!showSimilarSheet}
+            thresholdHash={thresholdHash}
+            setThresholdHash={setThresholdHash}
+            thresholdColor={thresholdColor}
+            setThresholdColor={setThresholdColor}
+          />
         </div>
       </div>
 
       {toast && <UndoToast message={toast.message} onUndo={handleUndo} />}
       {showPaywall && <PaywallModal photosTriaged={currentUser?.photosTriaged ?? 200} onBack={onBack} />}
+      {showSimilarSheet && (
+        <SimilarPhotosSheet
+          photos={similarPhotos}
+          accessToken={scanToken}
+          msalInstance={msalInstance}
+          account={account}
+          onClose={() => { setShowSimilarSheet(false); setSimilarPhotos([]) }}
+          onDone={handleSimilarDone}
+        />
+      )}
     </div>
   )
 }
@@ -925,6 +1075,82 @@ function ActionBtn({ onClick, disabled, variant, label, hint, children }: {
       </button>
       <span className="text-xs text-fluent-text-secondary">{isPrimary ? '' : label}</span>
       {hint && <span className="text-[10px] text-fluent-text-disabled font-mono">{hint}</span>}
+    </div>
+  )
+}
+
+// Scan-overlay over de huidige foto tijdens "Vind vergelijkbare".
+function ScanOverlay({ progress, onCancel }: { progress: number; onCancel: () => void }) {
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 px-8" style={{ background: 'rgba(0,0,0,0.72)' }}>
+      <span className="text-white text-sm font-semibold">Vergelijkbare foto's zoeken…</span>
+      <div className="w-full max-w-xs">
+        <div className="h-[4px]" style={{ background: 'rgba(255,255,255,0.2)' }}>
+          <div className="h-full transition-all duration-200" style={{ width: `${progress}%`, background: 'var(--color-accent)' }} />
+        </div>
+        <div className="text-center text-white/70 text-xs mt-1 tabular-nums">{progress}%</div>
+      </div>
+      <button
+        onClick={onCancel}
+        className="px-5 py-2 text-sm font-semibold text-white border border-white/40 hover:bg-white/10 transition-colors"
+        style={{ borderRadius: 2 }}
+      >
+        Annuleren
+      </button>
+    </div>
+  )
+}
+
+// "Vind vergelijkbare"-knop + de twee gevoeligheidsschuiven.
+function SimilarControls({
+  onFind, disabled, showSliders,
+  thresholdHash, setThresholdHash, thresholdColor, setThresholdColor,
+}: {
+  onFind: () => void
+  disabled: boolean
+  showSliders: boolean
+  thresholdHash: number
+  setThresholdHash: (v: number) => void
+  thresholdColor: number
+  setThresholdColor: (v: number) => void
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2 mt-2.5">
+      <button
+        onClick={onFind}
+        disabled={disabled}
+        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-fluent-accent bg-fluent-accent-light border border-fluent-accent hover:bg-fluent-accent hover:text-white disabled:opacity-40 transition-colors"
+        style={{ borderRadius: 2 }}
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+        </svg>
+        Vind vergelijkbare
+      </button>
+      {showSliders && (
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs text-fluent-text-secondary">
+          <label className="flex items-center gap-2">
+            <span className="w-10 text-right">Vorm</span>
+            <span className="text-fluent-text-disabled">Strikt</span>
+            <input
+              type="range" min={2} max={20} step={1} value={thresholdHash}
+              onChange={e => setThresholdHash(+e.target.value)}
+              className="accent-fluent-accent"
+            />
+            <span className="text-fluent-text-disabled">Ruim</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <span className="w-10 text-right">Kleur</span>
+            <span className="text-fluent-text-disabled">Ruim</span>
+            <input
+              type="range" min={0.7} max={0.99} step={0.01} value={thresholdColor}
+              onChange={e => setThresholdColor(+e.target.value)}
+              className="accent-fluent-accent"
+            />
+            <span className="text-fluent-text-disabled">Strikt</span>
+          </label>
+        </div>
+      )}
     </div>
   )
 }
