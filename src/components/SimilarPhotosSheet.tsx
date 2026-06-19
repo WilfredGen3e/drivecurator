@@ -4,17 +4,20 @@ import { DriveItem, deleteItem, moveItem } from '../services/graphService'
 import FolderSidebar from './FolderSidebar'
 
 interface Props {
+  // photos[0] is altijd de referentiefoto; de rest zijn de gevonden matches.
   photos: DriveItem[]
-  accessToken: string
-  // Nodig voor de Graph-calls (deleteItem/moveItem) en FolderSidebar — de spec
-  // noemt alleen accessToken, maar die functies werken via msalInstance/account.
+  // Aantal foto's dat de scan heeft doorzocht — getoond in de lege-staat.
+  scannedCount: number
   msalInstance: PublicClientApplication
   account: AccountInfo
   onClose: () => void
   onDone: (processedIds: string[]) => void
 }
 
-export default function SimilarPhotosSheet({ photos, msalInstance, account, onClose, onDone }: Props) {
+export default function SimilarPhotosSheet({ photos, scannedCount, msalInstance, account, onClose, onDone }: Props) {
+  // photos bevat de referentiefoto zelf; het aantal échte matches is dus één minder.
+  const matchCount = Math.max(0, photos.length - 1)
+  const isEmpty = matchCount === 0
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [showFolderPicker, setShowFolderPicker] = useState(false)
   const busy = progress !== null
@@ -62,7 +65,9 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
           style={{ borderBottom: '1px solid var(--color-border)' }}
         >
           <span className="font-semibold text-fluent-text-primary">
-            {photos.length} vergelijkbare foto{photos.length !== 1 ? "'s" : ''} gevonden
+            {isEmpty
+              ? 'Geen vergelijkbare gevonden'
+              : `${matchCount} vergelijkbare foto${matchCount !== 1 ? "'s" : ''} gevonden`}
           </span>
           <button
             onClick={onClose}
@@ -100,6 +105,17 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
               onMove={(folder) => handleMoveAll(folder)}
               disabled={busy}
             />
+          </div>
+        ) : isEmpty ? (
+          /* Lege-staat — scan klaar, maar niets gevonden */
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 px-8 text-center">
+            <svg className="w-10 h-10 text-fluent-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+            <p className="font-semibold text-fluent-text-primary">Geen vergelijkbare foto's gevonden</p>
+            <p className="text-sm text-fluent-text-secondary">
+              {scannedCount} foto{scannedCount !== 1 ? "'s" : ''} doorzocht. Zet de gevoeligheid hoger en zoek opnieuw voor meer resultaten.
+            </p>
           </div>
         ) : (
           /* Grid van thumbnails */
@@ -143,8 +159,8 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
           </div>
         )}
 
-        {/* Actieknoppen */}
-        {!showFolderPicker && (
+        {/* Actieknoppen — verborgen in de lege-staat */}
+        {!showFolderPicker && !isEmpty && (
           <div
             className="flex-shrink-0 flex gap-2 px-4 py-3"
             style={{ borderTop: '1px solid var(--color-border)' }}

@@ -15,8 +15,15 @@ export type PhotoFingerprint = {
  * Haalt een thumbnail op als Blob.
  * Bij 429: één keer opnieuw na 2 seconden. Bij elke andere fout: null.
  */
-export async function fetchThumbnailAsBlob(url: string, accessToken: string): Promise<Blob | null> {
-  const doFetch = () => fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } })
+export async function fetchThumbnailAsBlob(url: string, timeoutMs = 8000): Promise<Blob | null> {
+  // Thumbnail-URL's van Graph zijn al pre-authenticated (ze worden elders ook
+  // direct in <img src> gebruikt). Een extra Authorization-header triggert een
+  // CORS-preflight die de CDN kan weigeren of vertragen — dus die sturen we
+  // bewust niet mee. Een timeout zorgt dat één trage/dode URL nooit een hele
+  // scan kan laten hangen.
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  const doFetch = () => fetch(url, { signal: controller.signal })
   try {
     let response = await doFetch()
     if (response.status === 429) {
@@ -27,6 +34,8 @@ export async function fetchThumbnailAsBlob(url: string, accessToken: string): Pr
     return await response.blob()
   } catch {
     return null
+  } finally {
+    clearTimeout(timer)
   }
 }
 

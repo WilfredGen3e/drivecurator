@@ -9,7 +9,6 @@ import FolderSidebar, { Crumb } from './FolderSidebar'
 import UndoToast from './UndoToast'
 import SimilarPhotosSheet from './SimilarPhotosSheet'
 import { useIsTouch } from '../hooks/useIsTouch'
-import { loginRequest } from '../auth/msalConfig'
 import {
   fetchThumbnailAsBlob,
   calculateFingerprint,
@@ -104,7 +103,9 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   const [showSimilarSheet, setShowSimilarSheet] = useState(false)
   const [thresholdHash, setThresholdHash] = useState(THRESHOLD_HASH_DEFAULT)
   const [thresholdColor, setThresholdColor] = useState(THRESHOLD_COLOR_DEFAULT)
-  const [scanToken, setScanToken] = useState('')
+  // Aantal foto's dat de laatste scan doorzocht — gebruikt voor de lege-staat
+  // ("X foto's doorzocht, niets gevonden") in de resultaten-sheet.
+  const [scannedCount, setScannedCount] = useState(0)
   const abortRef = useRef(false)
   // Hergebruik berekende fingerprints binnen de sessie: elke thumbnail wordt
   // maar één keer opgehaald + berekend, ook over meerdere zoekacties heen.
@@ -233,66 +234,57 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
     setIsScanning(true)
     setScanProgress(0)
 
-    let token: string
-    try {
-      const res = await msalInstance.acquireTokenSilent({ ...loginRequest, account })
-      token = res.accessToken
-    } catch {
-      setIsScanning(false)
-      showToast('Kon huidige foto niet analyseren')
-      return
-    }
-    setScanToken(token)
-
     // Haal een fingerprint uit de cache of bereken hem één keer.
     const getFingerprint = async (item: DriveItem): Promise<PhotoFingerprint | null> => {
       const cached = fingerprintCache.current.get(item.id)
       if (cached) return cached
       const url = item.thumbnails?.[0]?.medium?.url
       if (!url) return null
-      const blob = await fetchThumbnailAsBlob(url, token)
+      const blob = await fetchThumbnailAsBlob(url)
       const fp = blob ? await calculateFingerprint(blob, item.id) : null
       if (fp) fingerprintCache.current.set(item.id, fp)
       return fp
     }
 
-    // Referentie-fingerprint van de huidige foto.
-    const refFp = await getFingerprint(photo)
-    if (!refFp) {
-      setIsScanning(false)
-      showToast('Kon huidige foto niet analyseren')
-      return
-    }
-
-    const others = photos.filter(p => p.id !== photo.id)
-    const queue = [...others]
-    const matches: DriveItem[] = []
-    let processed = 0
-
-    const worker = async () => {
-      while (true) {
-        if (abortRef.current) break
-        const p = queue.shift()
-        if (!p) break
-        const fp = await getFingerprint(p)
-        if (fp && isSimilar(refFp, fp, thresholdHash, thresholdColor)) matches.push(p)
-        processed++
-        setScanProgress(Math.round((processed / others.length) * 100))
-        if (abortRef.current) break
+    try {
+      // Referentie-fingerprint van de huidige foto.
+      const refFp = await getFingerprint(photo)
+      if (!refFp) {
+        showToast('Kon huidige foto niet analyseren')
+        return
       }
-    }
-    await Promise.all(Array.from({ length: SCAN_CONCURRENCY }, worker))
 
-    setIsScanning(false)
-    if (abortRef.current) return
+      // Scan alleen binnen de actieve periodefilter. Zet je een van/tot-bereik,
+      // dan doorzoekt "Vind vergelijkbare" alleen die foto's — veel sneller dan
+      // de hele map.
+      const others = filteredPhotos.filter(p => p.id !== photo.id)
+      const queue = [...others]
+      const matches: DriveItem[] = []
+      let processed = 0
 
-    const result = [photo, ...matches]
-    if (result.length <= 1) {
-      showToast("Geen vergelijkbare foto's gevonden")
-      return
+      const worker = async () => {
+        while (true) {
+          if (abortRef.current) break
+          const p = queue.shift()
+          if (!p) break
+          const fp = await getFingerprint(p)
+          if (fp && isSimilar(refFp, fp, thresholdHash, thresholdColor)) matches.push(p)
+          processed++
+          setScanProgress(others.length ? Math.round((processed / others.length) * 100) : 100)
+        }
+      }
+      await Promise.all(Array.from({ length: SCAN_CONCURRENCY }, worker))
+
+      if (abortRef.current) return
+
+      // Toon altijd het resultatenscherm — ook bij 0 matches, zodat duidelijk is
+      // dat de scan klaar is en wat hij heeft doorzocht.
+      setScannedCount(others.length)
+      setSimilarPhotos([photo, ...matches])
+      setShowSimilarSheet(true)
+    } finally {
+      setIsScanning(false)
     }
-    setSimilarPhotos(result)
-    setShowSimilarSheet(true)
   }
 
   const cancelScan = () => {
@@ -784,7 +776,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         {showSimilarSheet && (
           <SimilarPhotosSheet
             photos={similarPhotos}
-            accessToken={scanToken}
+            scannedCount={scannedCount}
             msalInstance={msalInstance}
             account={account}
             onClose={() => { setShowSimilarSheet(false); setSimilarPhotos([]) }}
@@ -1024,7 +1016,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       {showSimilarSheet && (
         <SimilarPhotosSheet
           photos={similarPhotos}
-          accessToken={scanToken}
+          scannedCount={scannedCount}
           msalInstance={msalInstance}
           account={account}
           onClose={() => { setShowSimilarSheet(false); setSimilarPhotos([]) }}
