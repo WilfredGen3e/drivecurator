@@ -58,12 +58,16 @@ Een React-webapp (Azure Static Web App) die via **Microsoft Graph API** verbindi
 | T8 | Als gebruiker wil ik de bestandsnaam, datum en bestandsgrootte zien | Should |
 | T9 | Als gebruiker wil ik video's ook kunnen triagen (thumbnail + play) | Should |
 
-### 4.4 Grid-modus
-| ID | User Story | Prioriteit |
-|----|-----------|-----------|
-| G1 | Als gebruiker wil ik een grid-overzicht zien van alle foto's in een map | Must |
-| G2 | Als gebruiker wil ik vanuit het grid een foto openen in triage-modus | Must |
-| G3 | Als gebruiker wil ik in het grid meerdere foto's selecteren en bulk-verwijderen of bulk-verplaatsen | Should |
+### 4.4 Grid-modus — ❌ DESCOPED (2026-06-19)
+> **Bewust niet gebouwd.** De triage- en Slim-sorteren-flow dekken de behoefte
+> voldoende; een aparte grid-modus per map voegt op dit moment te weinig toe.
+> Niet gepland tenzij hier expliciet op teruggekomen wordt.
+
+| ID | User Story | Prioriteit | Status |
+|----|-----------|-----------|--------|
+| G1 | Als gebruiker wil ik een grid-overzicht zien van alle foto's in een map | ~~Must~~ | ❌ descoped |
+| G2 | Als gebruiker wil ik vanuit het grid een foto openen in triage-modus | ~~Must~~ | ❌ descoped |
+| G3 | Als gebruiker wil ik in het grid meerdere foto's selecteren en bulk-verwijderen of bulk-verplaatsen | ~~Should~~ | ❌ descoped |
 
 ### 4.5 Prullenbak & veiligheid
 | ID | User Story | Prioriteit |
@@ -226,8 +230,8 @@ photo-manager/
 | UI4 | Toets `Delete` → verwijdert huidige foto | Zelfde als swipe-links | ☐ |
 | UI5 | Toets `M` → map-picker opent | Mappenlijst zichtbaar | ☐ |
 | UI6 | Undo-knop na verwijderen → foto terug in lijst | Toast "Ongedaan gemaakt" | ☐ |
-| UI7 | Grid → foto aanklikken → triage opent op die foto | Juiste foto als startpunt | ☐ |
-| UI8 | Bulk selectie in grid → verwijderen → bevestigingsdialoog | Dialoog toont aantal geselecteerde foto's | ☐ |
+| ~~UI7~~ | ~~Grid → foto aanklikken → triage opent op die foto~~ | n.v.t. — grid descoped (§4.4) | ➖ |
+| ~~UI8~~ | ~~Bulk selectie in grid → verwijderen → bevestigingsdialoog~~ | n.v.t. — grid descoped (§4.4) | ➖ |
 
 ### 8.4 Responsiveness & Device Tests
 
@@ -273,7 +277,7 @@ Een feature is klaar wanneer:
 - Azure deploy werkend
 
 ### Fase 2 — Uitbreiding
-- G1, G2, G3 — Grid-modus + bulk
+- ~~G1, G2, G3 — Grid-modus + bulk~~ → ❌ DESCOPED (2026-06-19), zie §4.4
 - T5 — Toetsenbordshortcuts
 - T8 — Metadata weergave
 - P2 — Bevestigingsdialoog bulk

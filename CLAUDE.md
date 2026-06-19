@@ -433,9 +433,12 @@ npm run dev
 - [x] Paywall — gratis limiet van 200 foto's, admin/premium onbeperkt
 - [x] AdminPortal — beheerdersoverzicht
 
+### ❌ Bewust niet bouwen (descoped)
+- **Grid-modus per map + bulk-selectie (G1-G3)** — descoped 2026-06-19. Triage +
+  Slim sorteren dekken de behoefte; zie PRD §4.4. Niet oppakken tenzij expliciet gevraagd.
+
 ### 🔒 Fase 3 — Nog niet bouwen
-- Grid-modus, bulk selectie, toetsenbordshortcuts, video support
-- Persistente sessie, favoriete startmap
+- Video support (T9)
 - Google Photos integratie, AI-suggesties
 
 ---
