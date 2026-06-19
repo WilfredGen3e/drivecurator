@@ -29,3 +29,9 @@ Thumbs.db
 # Azure
 .azure/
 api/local.settings.json
+
+# Playwright — test-artefacten (de screenshots in e2e/screenshots/ committen we wél)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
