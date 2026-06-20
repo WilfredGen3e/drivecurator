@@ -3,6 +3,7 @@ import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, deleteItem, moveItem, getItemThumbnails } from '../services/graphService'
 import { getPhotoDate } from '../services/clusterService'
 import { incrementUsage, FreeLimitReachedError } from '../services/apiService'
+import { logInfo, logError } from '../services/logService'
 import PaywallModal from './PaywallModal'
 import { useAppStore } from '../store/useAppStore'
 import FolderSidebar, { Crumb } from './FolderSidebar'
@@ -256,6 +257,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       // Referentie-fingerprint van de huidige foto.
       const refFp = await getFingerprint(photo)
       if (!refFp) {
+        logError('Vind vergelijkbare: referentiefoto kon niet geanalyseerd worden', { naam: photo.name })
         showToast('Kon huidige foto niet analyseren')
         return
       }
@@ -267,6 +269,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       const queue = [...others]
       const matches: DriveItem[] = []
       let processed = 0
+      let usable = 0
       // Dichtstbijzijnde waarden bijhouden om de gebruiker te helpen bijstellen.
       let bestHam = 64
       let bestHist = 0
@@ -278,6 +281,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           if (!p) break
           const fp = await getFingerprint(p)
           if (fp) {
+            usable++
             const ham = hammingDistance(refFp.dHash, fp.dHash)
             const hist = histogramSimilarity(refFp.colorHistogram, fp.colorHistogram)
             if (ham < bestHam) bestHam = ham
@@ -292,6 +296,11 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 
       if (abortRef.current) return
 
+      logInfo(
+        `Vind vergelijkbare: ${matches.length} match(es) in ${others.length} foto's`,
+        { bruikbaar: usable, besteVorm: bestHam, besteKleur: +bestHist.toFixed(3), drempelVorm: thresholdHash, drempelKleur: thresholdColor },
+      )
+
       if (matches.length === 0) {
         // Geen matches → klein bannertje met de dichtstbijzijnde waarden, geen modal.
         setNoMatch({ scanned: others.length, bestHam, bestHist })
@@ -299,6 +308,8 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         setSimilarPhotos([photo, ...matches])
         setShowSimilarSheet(true)
       }
+    } catch (e) {
+      logError('Vind vergelijkbare: scan mislukt', e)
     } finally {
       setIsScanning(false)
     }

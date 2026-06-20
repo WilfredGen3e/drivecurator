@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { UserProfile, adminListUsers, adminUpdateUser, adminDeleteUser } from '../services/apiService'
+import LogView from './LogView'
 
 interface Props {
   msalInstance: PublicClientApplication
@@ -87,6 +88,7 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [busy, setBusy] = useState<Set<string>>(new Set())
+  const [tab, setTab] = useState<'users' | 'logs'>('users')
 
   const load = async () => {
     setLoading(true)
@@ -94,7 +96,9 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
     try {
       setUsers(await adminListUsers(msalInstance, account))
     } catch {
-      setError('Kon gebruikers niet ophalen.')
+      setError(import.meta.env.DEV
+        ? 'Gebruikersbeheer vereist de API-backend (Azure Functions op poort 7071). Die draait lokaal niet — test dit op productie, of start de backend met `func start`. Het Logboek werkt wél lokaal.'
+        : 'Kon gebruikers niet ophalen.')
     } finally {
       setLoading(false)
     }
@@ -140,21 +144,39 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
             Terug
           </button>
           <h1 className="text-sm font-semibold text-fluent-text-primary">Beheerportal</h1>
+          <div className="flex items-center gap-1 ml-2">
+            {(['users', 'logs'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`text-xs px-3 py-1 rounded-sm transition-colors ${
+                  tab === t
+                    ? 'bg-fluent-accent text-white'
+                    : 'text-fluent-text-secondary hover:bg-fluent-bg-hover'
+                }`}
+              >
+                {t === 'users' ? 'Gebruikers' : 'Logboek'}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-6 text-xs text-fluent-text-secondary">
-          <span><strong className="text-fluent-text-primary">{total}</strong> gebruikers</span>
-          <span><strong className="text-fluent-text-primary">{premium}</strong> premium</span>
-          <span><strong className="text-fluent-danger">{blocked}</strong> geblokkeerd</span>
-          <button onClick={load} className="text-fluent-accent hover:text-fluent-accent-hover transition-colors" title="Verversen">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-        </div>
+        {tab === 'users' && (
+          <div className="flex items-center gap-6 text-xs text-fluent-text-secondary">
+            <span><strong className="text-fluent-text-primary">{total}</strong> gebruikers</span>
+            <span><strong className="text-fluent-text-primary">{premium}</strong> premium</span>
+            <span><strong className="text-fluent-danger">{blocked}</strong> geblokkeerd</span>
+            <button onClick={load} className="text-fluent-accent hover:text-fluent-accent-hover transition-colors" title="Verversen">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
+      {tab === 'logs' ? <LogView /> : (
+        /* Gebruikerstabel */
+        <div className="flex-1 overflow-auto">
         {loading && (
           <div className="flex items-center justify-center h-48">
             <div className="w-6 h-6 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin" />
@@ -294,6 +316,7 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
           <p className="text-center text-fluent-text-secondary text-sm py-16">Geen gebruikers gevonden.</p>
         )}
       </div>
+      )}
     </div>
   )
 }

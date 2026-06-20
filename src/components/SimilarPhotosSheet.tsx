@@ -18,13 +18,28 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
   const matchCount = Math.max(0, photos.length - 1)
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [showFolderPicker, setShowFolderPicker] = useState(false)
+  // Standaard zijn alle matches aangevinkt (niet de referentie), zodat je gericht
+  // kunt deselecteren wat je wilt houden.
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(photos.slice(1).map(p => p.id)))
   const busy = progress !== null
 
-  // Verwerk alle foto's met maximaal 5 parallelle workers (zelfde patroon als
-  // de bulk move in SmartSortView).
+  const selectedCount = selected.size
+  const allSelected = selectedCount === photos.length
+
+  const toggle = (id: string) => setSelected(prev => {
+    const s = new Set(prev)
+    if (s.has(id)) s.delete(id); else s.add(id)
+    return s
+  })
+
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(photos.map(p => p.id)))
+
+  // Verwerk de geselecteerde foto's met maximaal 5 parallelle workers.
   const runBulk = async (action: (photo: DriveItem) => Promise<void>) => {
-    setProgress({ done: 0, total: photos.length })
-    const queue = [...photos]
+    const targets = photos.filter(p => selected.has(p.id))
+    if (targets.length === 0) return
+    setProgress({ done: 0, total: targets.length })
+    const queue = [...targets]
     let done = 0
     const worker = async () => {
       while (true) {
@@ -37,12 +52,12 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
     }
     await Promise.all(Array.from({ length: 5 }, worker))
     setProgress(null)
-    onDone(photos.map(p => p.id))
+    onDone(targets.map(p => p.id))
   }
 
-  const handleDeleteAll = () => runBulk(photo => deleteItem(msalInstance, account, photo.id))
+  const handleDeleteSelected = () => runBulk(photo => deleteItem(msalInstance, account, photo.id))
 
-  const handleMoveAll = (targetFolder: DriveItem) => {
+  const handleMoveSelected = (targetFolder: DriveItem) => {
     setShowFolderPicker(false)
     return runBulk(photo => moveItem(msalInstance, account, photo.id, targetFolder.id))
   }
@@ -62,9 +77,19 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
           className="flex items-center justify-between px-4 py-3 flex-shrink-0"
           style={{ borderBottom: '1px solid var(--color-border)' }}
         >
-          <span className="font-semibold text-fluent-text-primary">
-            {matchCount} vergelijkbare foto{matchCount !== 1 ? "'s" : ''} gevonden
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="font-semibold text-fluent-text-primary">
+              {matchCount} vergelijkbare foto{matchCount !== 1 ? "'s" : ''}
+            </span>
+            <span className="text-xs text-fluent-text-secondary">· {selectedCount} geselecteerd</span>
+            <button
+              onClick={toggleAll}
+              disabled={busy}
+              className="text-xs text-fluent-accent hover:text-fluent-accent-hover disabled:opacity-40"
+            >
+              {allSelected ? 'Niets' : 'Alles'}
+            </button>
+          </div>
           <button
             onClick={onClose}
             disabled={busy}
@@ -98,7 +123,7 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
             <FolderSidebar
               msalInstance={msalInstance}
               account={account}
-              onMove={(folder) => handleMoveAll(folder)}
+              onMove={(folder) => handleMoveSelected(folder)}
               disabled={busy}
             />
           </div>
@@ -109,22 +134,46 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
               {photos.map((photo, i) => {
                 const thumb = photo.thumbnails?.[0]?.medium?.url
                 const isReference = i === 0
+                const isSelected = selected.has(photo.id)
                 return (
-                  <div
+                  <button
                     key={photo.id}
-                    className="aspect-square overflow-hidden flex items-center justify-center"
+                    onClick={() => !busy && toggle(photo.id)}
+                    disabled={busy}
+                    className="relative aspect-square overflow-hidden flex items-center justify-center"
                     style={{
                       background: '#111116',
                       borderRadius: 2,
-                      border: isReference ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                      border: isSelected
+                        ? '2px solid var(--color-danger)'
+                        : isReference ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
                     }}
                     title={isReference ? `${photo.name} (referentie)` : photo.name}
                   >
                     {thumb
-                      ? <img src={thumb} alt={photo.name} className="w-full h-full object-cover" draggable={false} />
+                      ? <img src={thumb} alt={photo.name} className={`w-full h-full object-cover transition-opacity ${isSelected ? '' : 'opacity-60'}`} draggable={false} />
                       : <span className="text-fluent-text-secondary text-[10px] px-1 text-center truncate">{photo.name}</span>
                     }
-                  </div>
+                    {/* Selectievinkje */}
+                    <span
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center"
+                      style={{
+                        background: isSelected ? 'var(--color-danger)' : 'rgba(0,0,0,0.45)',
+                        border: '1.5px solid white',
+                      }}
+                    >
+                      {isSelected && (
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
+                    {isReference && (
+                      <span className="absolute bottom-1 left-1 text-[9px] font-semibold text-white px-1 rounded-sm" style={{ background: 'var(--color-accent)' }}>
+                        referentie
+                      </span>
+                    )}
+                  </button>
                 )
               })}
             </div>
@@ -151,26 +200,26 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
             style={{ borderTop: '1px solid var(--color-border)' }}
           >
             <button
-              onClick={handleDeleteAll}
-              disabled={busy}
+              onClick={handleDeleteSelected}
+              disabled={busy || selectedCount === 0}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-fluent-danger hover:bg-red-700 disabled:opacity-40 transition-colors"
               style={{ borderRadius: 2 }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
-              Verwijder alles
+              Verwijder ({selectedCount})
             </button>
             <button
               onClick={() => setShowFolderPicker(true)}
-              disabled={busy}
+              disabled={busy || selectedCount === 0}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-fluent-accent hover:bg-fluent-accent-hover disabled:opacity-40 transition-colors"
               style={{ borderRadius: 2 }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
               </svg>
-              Verplaats alles naar…
+              Verplaats ({selectedCount}) naar…
             </button>
           </div>
         )}

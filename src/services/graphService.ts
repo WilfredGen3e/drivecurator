@@ -1,5 +1,6 @@
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { loginRequest } from '../auth/msalConfig'
+import { logWarn, logError } from './logService'
 
 export interface DriveItem {
   id: string
@@ -14,8 +15,13 @@ export interface DriveItem {
 }
 
 async function getToken(msalInstance: PublicClientApplication, account: AccountInfo): Promise<string> {
-  const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account })
-  return response.accessToken
+  try {
+    const response = await msalInstance.acquireTokenSilent({ ...loginRequest, account })
+    return response.accessToken
+  } catch (e) {
+    logError('Token vernieuwen mislukt (acquireTokenSilent)', e)
+    throw e
+  }
 }
 
 async function graphFetch<T>(
@@ -36,14 +42,20 @@ async function graphFetch<T>(
     },
   })
 
+  const path = (options?.method ?? 'GET') + ' ' + fullUrl.replace('https://graph.microsoft.com/v1.0', '').split('?')[0]
+
   if (response.status === 429 && attempt < 3) {
     const retryAfter = parseInt(response.headers.get('Retry-After') ?? '0', 10)
     const waitMs = (retryAfter > 0 ? retryAfter : 2 ** attempt) * 1000
+    logWarn(`Graph 429 (rate limit) — poging ${attempt + 1}, wacht ${waitMs}ms`, path)
     await new Promise(r => setTimeout(r, waitMs))
     return graphFetch(msalInstance, account, url, options, attempt + 1)
   }
 
-  if (!response.ok) throw new Error(`Graph API fout: ${response.status}`)
+  if (!response.ok) {
+    logError(`Graph API ${response.status}`, path)
+    throw new Error(`Graph API fout: ${response.status}`)
+  }
   if (response.status === 204) return undefined as T
   return response.json()
 }

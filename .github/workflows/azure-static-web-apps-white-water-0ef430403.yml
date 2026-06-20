@@ -22,6 +22,9 @@ jobs:
         with:
           submodules: true
           lfs: false
+          # Volledige historie nodig zodat het buildnummer (0.<aantal commits>)
+          # klopt; standaard doet checkout een ondiepe clone (alleen HEAD).
+          fetch-depth: 0
       - name: Install OIDC Client from Core Package
         run: npm install @actions/core@1.6.0 @actions/http-client
       - name: Get Id Token

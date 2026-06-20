@@ -14,6 +14,7 @@ import { useAppStore } from './store/useAppStore'
 import { registerUser, AccountBlockedError } from './services/apiService'
 import { getFolderContents, DriveItem } from './services/graphService'
 import { AnalysisResult } from './services/analysisService'
+import { installGlobalErrorLogging, logInfo, logWarn, logError } from './services/logService'
 
 const msalInstance = new PublicClientApplication(msalConfig)
 
@@ -91,6 +92,7 @@ export default function App() {
   }
 
   useEffect(() => {
+    installGlobalErrorLogging()
     msalInstance.initialize().then(async () => {
       const accounts = msalInstance.getAllAccounts()
       if (accounts.length > 0) {
@@ -133,23 +135,34 @@ export default function App() {
     setCurrentThumb(null)
     setScreen('loading')
 
+    logInfo(`Map laden gestart: "${folder.name}"`, { id: folder.id })
     const allPhotos: DriveItem[] = []
+    let nextLogAt = 2000
     try {
       await getFolderContents(msalInstance, account, folder.id, (page) => {
         if (folderRequestId.current !== requestId) return
         allPhotos.push(...page)
         setPhotoLoadCount(allPhotos.length)
+        if (allPhotos.length >= nextLogAt) {
+          logInfo(`Map laden: ${allPhotos.length} foto's tot nu toe…`)
+          nextLogAt += 2000
+        }
         const thumb = page.find(p => p.thumbnails?.[0]?.medium?.url)?.thumbnails?.[0]?.medium?.url
         if (thumb) setCurrentThumb(thumb)
       })
-      if (folderRequestId.current !== requestId) return
+      if (folderRequestId.current !== requestId) {
+        logWarn(`Map laden afgebroken bij ${allPhotos.length} foto's (andere map gekozen): "${folder.name}"`)
+        return
+      }
       setLoadedPhotos(allPhotos)
       setCurrentThumb(null)
       saveSession(folder, allPhotos)
       saveLastFolder(folder)
       setScreen('organize')
-    } catch {
+      logInfo(`Map geladen: "${folder.name}" — ${allPhotos.length} foto's`)
+    } catch (e) {
       if (folderRequestId.current !== requestId) return
+      logError(`Map laden mislukt: "${folder.name}" na ${allPhotos.length} foto's`, e)
       setScreen('browse')
     }
   }
@@ -199,10 +212,13 @@ export default function App() {
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
           </svg>
           <span className="font-semibold text-sm">DriveCurator</span>
+          <span className="text-[10px] text-fluent-text-secondary font-mono" title="Buildnummer">{__BUILD_ID__}</span>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-fluent-text-secondary text-sm">{account.name}</span>
-          {currentUser?.isAdmin && (
+          {/* In dev-modus draait de API-backend meestal niet (currentUser blijft
+              leeg), maar het Logboek is client-side — dus toon de knop dan altijd. */}
+          {(currentUser?.isAdmin || import.meta.env.DEV) && (
             <button
               onClick={() => setShowAdmin(v => !v)}
               className={`text-sm px-3 py-1 border rounded-sm transition-colors ${
