@@ -5,30 +5,17 @@ import FolderSidebar from './FolderSidebar'
 
 interface Props {
   // photos[0] is altijd de referentiefoto; de rest zijn de gevonden matches.
+  // Deze sheet wordt alleen geopend als er minstens één match is.
   photos: DriveItem[]
-  // Aantal foto's dat de scan heeft doorzocht — getoond in de lege-staat.
-  scannedCount: number
-  // Gevoeligheidsdrempels + "opnieuw zoeken", zodat de gebruiker vanuit dit
-  // scherm kan bijstellen en herzoeken zonder het eerst te sluiten.
-  thresholdHash: number
-  setThresholdHash: (v: number) => void
-  thresholdColor: number
-  setThresholdColor: (v: number) => void
-  onResearch: () => void
   msalInstance: PublicClientApplication
   account: AccountInfo
   onClose: () => void
   onDone: (processedIds: string[]) => void
 }
 
-export default function SimilarPhotosSheet({
-  photos, scannedCount,
-  thresholdHash, setThresholdHash, thresholdColor, setThresholdColor, onResearch,
-  msalInstance, account, onClose, onDone,
-}: Props) {
+export default function SimilarPhotosSheet({ photos, msalInstance, account, onClose, onDone }: Props) {
   // photos bevat de referentiefoto zelf; het aantal échte matches is dus één minder.
   const matchCount = Math.max(0, photos.length - 1)
-  const isEmpty = matchCount === 0
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [showFolderPicker, setShowFolderPicker] = useState(false)
   const busy = progress !== null
@@ -76,9 +63,7 @@ export default function SimilarPhotosSheet({
           style={{ borderBottom: '1px solid var(--color-border)' }}
         >
           <span className="font-semibold text-fluent-text-primary">
-            {isEmpty
-              ? 'Geen vergelijkbare gevonden'
-              : `${matchCount} vergelijkbare foto${matchCount !== 1 ? "'s" : ''} gevonden`}
+            {matchCount} vergelijkbare foto{matchCount !== 1 ? "'s" : ''} gevonden
           </span>
           <button
             onClick={onClose}
@@ -116,51 +101,6 @@ export default function SimilarPhotosSheet({
               onMove={(folder) => handleMoveAll(folder)}
               disabled={busy}
             />
-          </div>
-        ) : isEmpty ? (
-          /* Lege-staat — scan klaar, maar niets gevonden */
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 px-8 text-center">
-            <svg className="w-10 h-10 text-fluent-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-            </svg>
-            <p className="font-semibold text-fluent-text-primary">Geen vergelijkbare foto's gevonden</p>
-            <p className="text-sm text-fluent-text-secondary">
-              {scannedCount} foto{scannedCount !== 1 ? "'s" : ''} doorzocht. Stel de gevoeligheid ruimer in en zoek opnieuw.
-            </p>
-
-            {/* Gevoeligheid bijstellen + direct opnieuw zoeken */}
-            <div className="w-full max-w-sm mt-2 flex flex-col gap-3">
-              <label className="flex items-center gap-2 text-xs text-fluent-text-secondary">
-                <span className="w-10 text-right">Vorm</span>
-                <span className="text-fluent-text-disabled">Strikt</span>
-                <input
-                  type="range" min={2} max={24} step={1} value={thresholdHash}
-                  onChange={e => setThresholdHash(+e.target.value)}
-                  className="flex-1 accent-fluent-accent"
-                />
-                <span className="text-fluent-text-disabled">Ruim</span>
-              </label>
-              <label className="flex items-center gap-2 text-xs text-fluent-text-secondary">
-                <span className="w-10 text-right">Kleur</span>
-                <span className="text-fluent-text-disabled">Ruim</span>
-                <input
-                  type="range" min={0.5} max={0.99} step={0.01} value={thresholdColor}
-                  onChange={e => setThresholdColor(+e.target.value)}
-                  className="flex-1 accent-fluent-accent"
-                />
-                <span className="text-fluent-text-disabled">Strikt</span>
-              </label>
-              <button
-                onClick={onResearch}
-                className="mt-1 self-center flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-fluent-accent hover:bg-fluent-accent-hover transition-colors"
-                style={{ borderRadius: 2 }}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-                </svg>
-                Opnieuw zoeken
-              </button>
-            </div>
           </div>
         ) : (
           /* Grid van thumbnails */
@@ -204,8 +144,8 @@ export default function SimilarPhotosSheet({
           </div>
         )}
 
-        {/* Actieknoppen — verborgen in de lege-staat */}
-        {!showFolderPicker && !isEmpty && (
+        {/* Actieknoppen */}
+        {!showFolderPicker && (
           <div
             className="flex-shrink-0 flex gap-2 px-4 py-3"
             style={{ borderTop: '1px solid var(--color-border)' }}

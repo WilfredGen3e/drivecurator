@@ -12,7 +12,8 @@ import { useIsTouch } from '../hooks/useIsTouch'
 import {
   fetchThumbnailAsBlob,
   calculateFingerprint,
-  isSimilar,
+  hammingDistance,
+  histogramSimilarity,
   THRESHOLD_HASH_DEFAULT,
   THRESHOLD_COLOR_DEFAULT,
   type PhotoFingerprint,
@@ -103,9 +104,9 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   const [showSimilarSheet, setShowSimilarSheet] = useState(false)
   const [thresholdHash, setThresholdHash] = useState(THRESHOLD_HASH_DEFAULT)
   const [thresholdColor, setThresholdColor] = useState(THRESHOLD_COLOR_DEFAULT)
-  // Aantal foto's dat de laatste scan doorzocht — gebruikt voor de lege-staat
-  // ("X foto's doorzocht, niets gevonden") in de resultaten-sheet.
-  const [scannedCount, setScannedCount] = useState(0)
+  // Klein "niets gevonden"-bannertje na een scan zonder matches. Toont meteen de
+  // dichtstbijzijnde waarden, zodat de gebruiker weet hoe ver de schuif moet.
+  const [noMatch, setNoMatch] = useState<{ scanned: number; bestHam: number; bestHist: number } | null>(null)
   const abortRef = useRef(false)
   // Hergebruik berekende fingerprints binnen de sessie: elke thumbnail wordt
   // maar één keer opgehaald + berekend, ook over meerdere zoekacties heen.
@@ -229,6 +230,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
     if (!photo || isScanning) return
 
     abortRef.current = false
+    setNoMatch(null)
     setIsScanning(true)
     setScanProgress(0)
 
@@ -265,6 +267,9 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       const queue = [...others]
       const matches: DriveItem[] = []
       let processed = 0
+      // Dichtstbijzijnde waarden bijhouden om de gebruiker te helpen bijstellen.
+      let bestHam = 64
+      let bestHist = 0
 
       const worker = async () => {
         while (true) {
@@ -272,7 +277,13 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           const p = queue.shift()
           if (!p) break
           const fp = await getFingerprint(p)
-          if (fp && isSimilar(refFp, fp, thresholdHash, thresholdColor)) matches.push(p)
+          if (fp) {
+            const ham = hammingDistance(refFp.dHash, fp.dHash)
+            const hist = histogramSimilarity(refFp.colorHistogram, fp.colorHistogram)
+            if (ham < bestHam) bestHam = ham
+            if (hist > bestHist) bestHist = hist
+            if (ham <= thresholdHash || hist >= thresholdColor) matches.push(p)
+          }
           processed++
           setScanProgress(others.length ? Math.round((processed / others.length) * 100) : 100)
         }
@@ -281,11 +292,13 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 
       if (abortRef.current) return
 
-      // Toon altijd het resultatenscherm — ook bij 0 matches, zodat duidelijk is
-      // dat de scan klaar is en wat hij heeft doorzocht.
-      setScannedCount(others.length)
-      setSimilarPhotos([photo, ...matches])
-      setShowSimilarSheet(true)
+      if (matches.length === 0) {
+        // Geen matches → klein bannertje met de dichtstbijzijnde waarden, geen modal.
+        setNoMatch({ scanned: others.length, bestHam, bestHist })
+      } else {
+        setSimilarPhotos([photo, ...matches])
+        setShowSimilarSheet(true)
+      }
     } finally {
       setIsScanning(false)
     }
@@ -294,13 +307,6 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   const cancelScan = () => {
     abortRef.current = true
     setIsScanning(false)
-  }
-
-  // Opnieuw zoeken vanuit de resultaten-sheet: sluit de sheet (zodat de
-  // voortgangsoverlay zichtbaar is) en start de scan met de huidige drempels.
-  const handleResearch = () => {
-    setShowSimilarSheet(false)
-    handleFindSimilar()
   }
 
   const handleSimilarDone = (processedIds: string[]) => {
@@ -783,16 +789,11 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         )}
 
         {toast && <UndoToast message={toast.message} onUndo={handleUndo} />}
+        {noMatch && <NoMatchBanner info={noMatch} onClose={() => setNoMatch(null)} />}
         {showPaywall && <PaywallModal photosTriaged={currentUser?.photosTriaged ?? 200} onBack={onBack} />}
         {showSimilarSheet && (
           <SimilarPhotosSheet
             photos={similarPhotos}
-            scannedCount={scannedCount}
-            thresholdHash={thresholdHash}
-            setThresholdHash={setThresholdHash}
-            thresholdColor={thresholdColor}
-            setThresholdColor={setThresholdColor}
-            onResearch={handleResearch}
             msalInstance={msalInstance}
             account={account}
             onClose={() => { setShowSimilarSheet(false); setSimilarPhotos([]) }}
@@ -1032,12 +1033,6 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       {showSimilarSheet && (
         <SimilarPhotosSheet
           photos={similarPhotos}
-          scannedCount={scannedCount}
-          thresholdHash={thresholdHash}
-          setThresholdHash={setThresholdHash}
-          thresholdColor={thresholdColor}
-          setThresholdColor={setThresholdColor}
-          onResearch={handleResearch}
           msalInstance={msalInstance}
           account={account}
           onClose={() => { setShowSimilarSheet(false); setSimilarPhotos([]) }}
@@ -1103,6 +1098,41 @@ function ActionBtn({ onClick, disabled, variant, label, hint, children }: {
       </button>
       <span className="text-xs text-fluent-text-secondary">{isPrimary ? '' : label}</span>
       {hint && <span className="text-[10px] text-fluent-text-disabled font-mono">{hint}</span>}
+    </div>
+  )
+}
+
+// Klein wegklikbaar bannertje als "Vind vergelijkbare" niets vond. Toont de
+// dichtstbijzijnde waarden zodat de gebruiker de schuifjes gericht kan bijstellen.
+function NoMatchBanner({
+  info, onClose,
+}: {
+  info: { scanned: number; bestHam: number; bestHist: number }
+  onClose: () => void
+}) {
+  return (
+    <div
+      className="fixed left-1/2 -translate-x-1/2 bottom-4 z-40 flex items-center gap-3 px-4 py-2.5 shadow-lg"
+      style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border-strong)', borderRadius: 4 }}
+    >
+      <div className="text-sm">
+        <span className="font-semibold text-fluent-text-primary">Geen vergelijkbare gevonden</span>
+        <span className="text-fluent-text-secondary">
+          {' '}· {info.scanned} doorzocht · dichtstbij: vorm {info.bestHam}, kleur {info.bestHist.toFixed(2)}
+        </span>
+        <div className="text-xs text-fluent-text-secondary mt-0.5">
+          Zet "Vorm" boven {info.bestHam} of "Kleur" onder {info.bestHist.toFixed(2)} en zoek opnieuw.
+        </div>
+      </div>
+      <button
+        onClick={onClose}
+        className="text-fluent-text-secondary hover:text-fluent-text-primary p-1 flex-shrink-0"
+        title="Sluiten"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
   )
 }
