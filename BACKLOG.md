@@ -14,6 +14,20 @@ Gepland, nog niet gestart. Volledig plan ligt klaar:
   voor de afspeel-URL (on-demand per video).
 - Stappen A–E: datalaag → modus-keuze → component → routing → verifiëren.
 
+### "Vind vergelijkbare" overal in triage/sorteer-modi
+Akkoord op aanpak. Zit nu alleen in `TriageView`; moet overal terugkomen waar je
+in een triage/sorteer-modus zit — concreet: **ClusterTriageView** (Slim sorteren).
+Aanpak: logica extraheren naar een herbruikbare hook `useFindSimilar` + gedeelde
+UI (`SimilarControls`/`ScanOverlay`/`NoMatchBanner`), `TriageView` ombouwen
+(gedrag identiek), daarna `ClusterTriageView` aansluiten. (ClusterGridView valt
+af: geen "huidige foto".)
+
+### App als PWA aanbieden
+De app installeerbaar maken als PWA. **Eerst uitzoeken wat er nodig is**: web app
+manifest (naam, iconen, theme/display), service worker (caching-strategie,
+offline-gedrag), installability-criteria, en aandachtspunten rond MSAL-login in
+een PWA en de Azure Static Web App-config. Daarna implementeren.
+
 ### Logging uitbreiden
 De logmodule (logService + Logboek-tab) staat er; nu uitbreiden in dekking.
 - **Eerst een plan schrijven: wát willen we allemaal loggen?** Denk aan: triage-
