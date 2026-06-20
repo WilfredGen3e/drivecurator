@@ -2,8 +2,8 @@
 // Combineert vorm/compositie (dHash) met dominante kleur (kleurhistogram),
 // zodat visueel vergelijkbare foto's op beide assen herkend kunnen worden.
 
-export const THRESHOLD_HASH_DEFAULT = 10
-export const THRESHOLD_COLOR_DEFAULT = 0.82
+export const THRESHOLD_HASH_DEFAULT = 12
+export const THRESHOLD_COLOR_DEFAULT = 0.78
 
 export type PhotoFingerprint = {
   itemId: string
