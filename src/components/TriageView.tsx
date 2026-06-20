@@ -1140,7 +1140,7 @@ function SimilarControls({
             <span className="w-10 text-right">Vorm</span>
             <span className="text-fluent-text-disabled">Strikt</span>
             <input
-              type="range" min={2} max={20} step={1} value={thresholdHash}
+              type="range" min={2} max={24} step={1} value={thresholdHash}
               onChange={e => setThresholdHash(+e.target.value)}
               className="accent-fluent-accent"
             />
@@ -1150,7 +1150,7 @@ function SimilarControls({
             <span className="w-10 text-right">Kleur</span>
             <span className="text-fluent-text-disabled">Ruim</span>
             <input
-              type="range" min={0.7} max={0.99} step={0.01} value={thresholdColor}
+              type="range" min={0.5} max={0.99} step={0.01} value={thresholdColor}
               onChange={e => setThresholdColor(+e.target.value)}
               className="accent-fluent-accent"
             />

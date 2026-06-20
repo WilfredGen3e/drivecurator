@@ -48,8 +48,23 @@ function loadImage(objectUrl: string): Promise<HTMLImageElement> {
   })
 }
 
+// dHash op 9×8 (→ 8×8 = 64 bits). Het kleurhistogram berekenen we bewust op een
+// grover raster van véél meer pixels: uit slechts 72 pixels is een histogram te
+// schaars, waardoor bijna-identieke foto's onterecht laag scoren.
+const HIST_SIZE = 32 // 32×32 = 1024 pixels voor het kleurhistogram
+
+function drawToData(img: HTMLImageElement, w: number, h: number): Uint8ClampedArray | null {
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  ctx.drawImage(img, 0, 0, w, h)
+  return ctx.getImageData(0, 0, w, h).data
+}
+
 /**
- * Berekent dHash én kleurhistogram uit dezelfde 9×8 pixeldata.
+ * Berekent dHash (vorm, 9×8) en kleurhistogram (32×32 pixels, 512 emmers).
  * Roept altijd revokeObjectURL aan. Bij fout: null.
  */
 export async function calculateFingerprint(blob: Blob, itemId: string): Promise<PhotoFingerprint | null> {
@@ -57,26 +72,13 @@ export async function calculateFingerprint(blob: Blob, itemId: string): Promise<
   try {
     const img = await loadImage(objectUrl)
 
-    const canvas = document.createElement('canvas')
-    canvas.width = 9
-    canvas.height = 8
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-    ctx.drawImage(img, 0, 0, 9, 8)
-    const { data } = ctx.getImageData(0, 0, 9, 8)
-
-    const totalPixels = 9 * 8
-
-    // Grijswaarde per pixel (luminantie).
-    const gray = new Array<number>(totalPixels)
-    for (let i = 0; i < totalPixels; i++) {
-      const r = data[i * 4]
-      const g = data[i * 4 + 1]
-      const b = data[i * 4 + 2]
-      gray[i] = 0.299 * r + 0.587 * g + 0.114 * b
+    // ── dHash (vorm) ─ uit 9×8 grijswaarden ────────────────────────────────
+    const dData = drawToData(img, 9, 8)
+    if (!dData) return null
+    const gray = new Array<number>(9 * 8)
+    for (let i = 0; i < 9 * 8; i++) {
+      gray[i] = 0.299 * dData[i * 4] + 0.587 * dData[i * 4 + 1] + 0.114 * dData[i * 4 + 2]
     }
-
-    // dHash: 8 rijen × 8 vergelijkingen = 64 bits.
     // Vergelijk elke pixel met zijn rechterbuur: 1 als lichter, anders 0.
     const dHash: number[] = []
     for (let row = 0; row < 8; row++) {
@@ -86,15 +88,18 @@ export async function calculateFingerprint(blob: Blob, itemId: string): Promise<
       }
     }
 
-    // Kleurhistogram: 8×8×8 = 512 emmers, genormaliseerd op aantal pixels.
+    // ── Kleurhistogram ─ uit 32×32 pixels, 8×8×8 = 512 emmers ──────────────
+    const cData = drawToData(img, HIST_SIZE, HIST_SIZE)
+    if (!cData) return null
+    const histPixels = HIST_SIZE * HIST_SIZE
     const colorHistogram = new Array<number>(512).fill(0)
-    for (let i = 0; i < totalPixels; i++) {
-      const r = Math.floor(data[i * 4] / 32)
-      const g = Math.floor(data[i * 4 + 1] / 32)
-      const b = Math.floor(data[i * 4 + 2] / 32)
+    for (let i = 0; i < histPixels; i++) {
+      const r = Math.floor(cData[i * 4] / 32)
+      const g = Math.floor(cData[i * 4 + 1] / 32)
+      const b = Math.floor(cData[i * 4 + 2] / 32)
       colorHistogram[r * 64 + g * 8 + b]++
     }
-    for (let i = 0; i < 512; i++) colorHistogram[i] /= totalPixels
+    for (let i = 0; i < 512; i++) colorHistogram[i] /= histPixels
 
     return { itemId, dHash, colorHistogram }
   } catch {
