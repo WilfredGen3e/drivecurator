@@ -227,18 +227,22 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 
   const handleFindSimilar = async () => {
     if (!photo || isScanning) return
-    const refUrl = photo.thumbnails?.[0]?.medium?.url
-    if (!refUrl) return
 
     abortRef.current = false
     setIsScanning(true)
     setScanProgress(0)
 
-    // Haal een fingerprint uit de cache of bereken hem één keer.
+    // Haal een fingerprint uit de cache, of bereken hem één keer. De opgeslagen
+    // thumbnail-URL kan ontbreken na een herstelde sessie (die worden gestript
+    // omdat Graph-URL's na ~1u verlopen) — dan halen we hem vers op via Graph.
     const getFingerprint = async (item: DriveItem): Promise<PhotoFingerprint | null> => {
       const cached = fingerprintCache.current.get(item.id)
       if (cached) return cached
-      const url = item.thumbnails?.[0]?.medium?.url
+      let url: string | undefined = item.thumbnails?.[0]?.medium?.url ?? thumbCache[item.id]
+      if (!url) {
+        const t = await getItemThumbnails(msalInstance, account, item.id)
+        url = t?.medium?.url ?? t?.large?.url
+      }
       if (!url) return null
       const blob = await fetchThumbnailAsBlob(url)
       const fp = blob ? await calculateFingerprint(blob, item.id) : null
@@ -290,6 +294,13 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   const cancelScan = () => {
     abortRef.current = true
     setIsScanning(false)
+  }
+
+  // Opnieuw zoeken vanuit de resultaten-sheet: sluit de sheet (zodat de
+  // voortgangsoverlay zichtbaar is) en start de scan met de huidige drempels.
+  const handleResearch = () => {
+    setShowSimilarSheet(false)
+    handleFindSimilar()
   }
 
   const handleSimilarDone = (processedIds: string[]) => {
@@ -720,7 +731,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         >
           <SimilarControls
             onFind={handleFindSimilar}
-            disabled={busy || isScanning || !photo.thumbnails?.[0]?.medium?.url}
+            disabled={busy || isScanning || !photo}
             showSliders={!showSimilarSheet}
             thresholdHash={thresholdHash}
             setThresholdHash={setThresholdHash}
@@ -777,6 +788,11 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           <SimilarPhotosSheet
             photos={similarPhotos}
             scannedCount={scannedCount}
+            thresholdHash={thresholdHash}
+            setThresholdHash={setThresholdHash}
+            thresholdColor={thresholdColor}
+            setThresholdColor={setThresholdColor}
+            onResearch={handleResearch}
             msalInstance={msalInstance}
             account={account}
             onClose={() => { setShowSimilarSheet(false); setSimilarPhotos([]) }}
@@ -1001,7 +1017,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           {/* Vind vergelijkbare */}
           <SimilarControls
             onFind={handleFindSimilar}
-            disabled={busy || isScanning || !photo.thumbnails?.[0]?.medium?.url}
+            disabled={busy || isScanning || !photo}
             showSliders={!showSimilarSheet}
             thresholdHash={thresholdHash}
             setThresholdHash={setThresholdHash}
@@ -1017,6 +1033,11 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         <SimilarPhotosSheet
           photos={similarPhotos}
           scannedCount={scannedCount}
+          thresholdHash={thresholdHash}
+          setThresholdHash={setThresholdHash}
+          thresholdColor={thresholdColor}
+          setThresholdColor={setThresholdColor}
+          onResearch={handleResearch}
           msalInstance={msalInstance}
           account={account}
           onClose={() => { setShowSimilarSheet(false); setSimilarPhotos([]) }}
