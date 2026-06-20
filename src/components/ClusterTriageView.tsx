@@ -3,6 +3,9 @@ import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, deleteItem, moveItem, getItemThumbnails } from '../services/graphService'
 import { useIsTouch } from '../hooks/useIsTouch'
 import FolderSidebar, { Crumb } from './FolderSidebar'
+import SimilarPhotosSheet from './SimilarPhotosSheet'
+import { SimilarControls, ScanOverlay, NoMatchBanner } from './findSimilarUI'
+import { useFindSimilar } from '../hooks/useFindSimilar'
 
 const SWIPE_HINT = 30
 const SWIPE_COMMIT = 160
@@ -75,6 +78,20 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
   const photo = photos[index]
   const total = photos.length
   const removedCount = initialPhotos.length - total
+
+  // "Vind vergelijkbare" — zelfde gedeelde logica als de handmatige triage.
+  const sim = useFindSimilar({
+    msalInstance, account,
+    photos,
+    current: photo,
+    thumbCache,
+    onProcessed: (processedIds) => {
+      const set = new Set(processedIds)
+      const next = photos.filter(p => !set.has(p.id))
+      setPhotos(next)
+      setIndex(i => Math.min(i, Math.max(0, next.length - 1)))
+    },
+  })
 
   const showToast = (msg: string) => {
     if (toastTimer.current) clearTimeout(toastTimer.current)
@@ -306,12 +323,22 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
               </div>
             </div>
           )}
+
+          {sim.isScanning && <ScanOverlay progress={sim.scanProgress} onCancel={sim.cancelScan} />}
         </div>
 
-        {/* Metadata */}
+        {/* Metadata + Vind vergelijkbare */}
         <div className="px-4 py-2 text-center flex-shrink-0" style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}>
           <p className="text-fluent-text-secondary text-xs truncate">{photo.name}</p>
           <PhotoMeta photo={photo} />
+          <SimilarControls
+            onFind={sim.findSimilar}
+            disabled={busy || sim.isScanning || !photo}
+            showSliders={!sim.showSheet}
+            thresholdHash={sim.thresholdHash} setThresholdHash={sim.setThresholdHash}
+            thresholdColor={sim.thresholdColor} setThresholdColor={sim.setThresholdColor}
+            lastScan={sim.lastScan}
+          />
         </div>
 
         {/* Preset-mappen */}
@@ -366,6 +393,16 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         )}
 
         {toast && <ToastBar message={toast} />}
+        {sim.noMatch && <NoMatchBanner info={sim.noMatch} onClose={sim.clearNoMatch} />}
+        {sim.showSheet && (
+          <SimilarPhotosSheet
+            photos={sim.similarPhotos}
+            msalInstance={msalInstance}
+            account={account}
+            onClose={sim.closeSheet}
+            onDone={sim.handleDone}
+          />
+        )}
       </div>
     )
   }
@@ -408,7 +445,8 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         </div>
 
         {/* Foto — altijd donker */}
-        <div className="flex-1 min-h-0 flex items-center justify-center" style={{ background: '#06060a' }}>
+        <div className="relative flex-1 min-h-0 flex items-center justify-center" style={{ background: '#06060a' }}>
+          {sim.isScanning && <ScanOverlay progress={sim.scanProgress} onCancel={sim.cancelScan} />}
           {thumbnail && !brokenThumbs.has(photo.id) ? (
             <img src={thumbnail} alt={photo.name} onError={handleThumbError} className="w-full h-full object-contain" style={{ boxShadow: '0 2px 32px rgba(0,0,0,0.6)' }} />
           ) : (
@@ -451,6 +489,14 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
             <DesktopBtn onClick={handleDelete} disabled={busy} variant="danger" label="Verwijderen"><TrashIcon /></DesktopBtn>
             <DesktopBtn onClick={handleNext} disabled={index >= total - 1 || busy} variant="success" label="Volgende"><NextIcon /></DesktopBtn>
           </div>
+          <SimilarControls
+            onFind={sim.findSimilar}
+            disabled={busy || sim.isScanning || !photo}
+            showSliders={!sim.showSheet}
+            thresholdHash={sim.thresholdHash} setThresholdHash={sim.setThresholdHash}
+            thresholdColor={sim.thresholdColor} setThresholdColor={sim.setThresholdColor}
+            lastScan={sim.lastScan}
+          />
         </div>
       </div>
 
