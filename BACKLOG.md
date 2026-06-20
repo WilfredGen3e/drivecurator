@@ -14,14 +14,6 @@ Gepland, nog niet gestart. Volledig plan ligt klaar:
   voor de afspeel-URL (on-demand per video).
 - Stappen A–E: datalaag → modus-keuze → component → routing → verifiëren.
 
-### "Vind vergelijkbare" overal in triage/sorteer-modi
-Akkoord op aanpak. Zit nu alleen in `TriageView`; moet overal terugkomen waar je
-in een triage/sorteer-modus zit — concreet: **ClusterTriageView** (Slim sorteren).
-Aanpak: logica extraheren naar een herbruikbare hook `useFindSimilar` + gedeelde
-UI (`SimilarControls`/`ScanOverlay`/`NoMatchBanner`), `TriageView` ombouwen
-(gedrag identiek), daarna `ClusterTriageView` aansluiten. (ClusterGridView valt
-af: geen "huidige foto".)
-
 ### App als PWA aanbieden
 De app installeerbaar maken als PWA. **Eerst uitzoeken wat er nodig is**: web app
 manifest (naam, iconen, theme/display), service worker (caching-strategie,
@@ -54,6 +46,8 @@ screenshot-harness hierboven.
 - **Camera-album-vastloper** — eenmalig gebleken, niet verder onderzoeken.
 
 ## ✅ Recent afgerond
+- **"Vind vergelijkbare" overal**: geëxtraheerd naar de hook `useFindSimilar` +
+  gedeelde UI, en toegevoegd aan ClusterTriageView (Slim sorteren).
 - Logmodule + Logboek-tab in het beheervenster.
 - Buildnummer (`0.<aantal commits>`) linksboven.
 - "Vind vergelijkbare": fijner kleurhistogram, robuuste scan (timeout/try-catch),
