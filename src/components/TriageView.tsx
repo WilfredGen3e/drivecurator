@@ -108,6 +108,8 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   // Klein "niets gevonden"-bannertje na een scan zonder matches. Toont meteen de
   // dichtstbijzijnde waarden, zodat de gebruiker weet hoe ver de schuif moet.
   const [noMatch, setNoMatch] = useState<{ scanned: number; bestHam: number; bestHist: number } | null>(null)
+  // Beste vorm/kleur van de laatste scan — getoond bij de schuifjes als houvast.
+  const [lastScan, setLastScan] = useState<{ bestHam: number; bestHist: number } | null>(null)
   const abortRef = useRef(false)
   // Hergebruik berekende fingerprints binnen de sessie: elke thumbnail wordt
   // maar één keer opgehaald + berekend, ook over meerdere zoekacties heen.
@@ -296,6 +298,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 
       if (abortRef.current) return
 
+      setLastScan({ bestHam, bestHist })
       logInfo(
         `Vind vergelijkbare: ${matches.length} match(es) in ${others.length} foto's`,
         { bruikbaar: usable, besteVorm: bestHam, besteKleur: +bestHist.toFixed(3), drempelVorm: thresholdHash, drempelKleur: thresholdColor },
@@ -754,6 +757,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             setThresholdHash={setThresholdHash}
             thresholdColor={thresholdColor}
             setThresholdColor={setThresholdColor}
+            lastScan={lastScan}
           />
         </div>
 
@@ -1035,6 +1039,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             setThresholdHash={setThresholdHash}
             thresholdColor={thresholdColor}
             setThresholdColor={setThresholdColor}
+            lastScan={lastScan}
           />
         </div>
       </div>
@@ -1173,7 +1178,7 @@ function ScanOverlay({ progress, onCancel }: { progress: number; onCancel: () =>
 // "Vind vergelijkbare"-knop + de twee gevoeligheidsschuiven.
 function SimilarControls({
   onFind, disabled, showSliders,
-  thresholdHash, setThresholdHash, thresholdColor, setThresholdColor,
+  thresholdHash, setThresholdHash, thresholdColor, setThresholdColor, lastScan,
 }: {
   onFind: () => void
   disabled: boolean
@@ -1182,6 +1187,7 @@ function SimilarControls({
   setThresholdHash: (v: number) => void
   thresholdColor: number
   setThresholdColor: (v: number) => void
+  lastScan: { bestHam: number; bestHist: number } | null
 }) {
   return (
     <div className="flex flex-col items-center gap-2 mt-2.5">
@@ -1207,6 +1213,7 @@ function SimilarControls({
               className="accent-fluent-accent"
             />
             <span className="text-fluent-text-disabled">Ruim</span>
+            <span className="tabular-nums font-semibold text-fluent-text-primary w-6 text-right">{thresholdHash}</span>
           </label>
           <label className="flex items-center gap-2">
             <span className="w-10 text-right">Kleur</span>
@@ -1217,7 +1224,14 @@ function SimilarControls({
               className="accent-fluent-accent"
             />
             <span className="text-fluent-text-disabled">Strikt</span>
+            <span className="tabular-nums font-semibold text-fluent-text-primary w-9 text-right">{thresholdColor.toFixed(2)}</span>
           </label>
+        </div>
+      )}
+      {showSliders && lastScan && (
+        <div className="text-[11px] text-fluent-text-secondary tabular-nums">
+          Laatste scan · beste vorm: <span className="font-semibold text-fluent-text-primary">{lastScan.bestHam}</span>
+          {' '}· beste kleur: <span className="font-semibold text-fluent-text-primary">{lastScan.bestHist.toFixed(3)}</span>
         </div>
       )}
     </div>
