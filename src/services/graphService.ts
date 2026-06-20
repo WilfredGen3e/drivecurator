@@ -33,16 +33,31 @@ async function graphFetch<T>(
 ): Promise<T> {
   const token = await getToken(msalInstance, account)
   const fullUrl = url.startsWith('https://') ? url : `https://graph.microsoft.com/v1.0${url}`
-  const response = await fetch(fullUrl, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  })
-
   const path = (options?.method ?? 'GET') + ' ' + fullUrl.replace('https://graph.microsoft.com/v1.0', '').split('?')[0]
+
+  let response: Response
+  try {
+    response = await fetch(fullUrl, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    })
+  } catch (e) {
+    // Netwerkfout: de fetch faalt vóór er een respons is (bv. wifi valt kort weg).
+    // Een paar keer opnieuw proberen met oplopende wachttijd, zodat een korte
+    // hapering niet een hele maplaadactie van duizenden foto's afbreekt.
+    if (attempt < 5) {
+      const waitMs = Math.min(2 ** attempt, 16) * 1000
+      logWarn(`Netwerkfout bij Graph-call — poging ${attempt + 1}, wacht ${waitMs}ms`, path)
+      await new Promise(r => setTimeout(r, waitMs))
+      return graphFetch(msalInstance, account, url, options, attempt + 1)
+    }
+    logError('Graph-call definitief mislukt na herhaalde netwerkfouten', path)
+    throw e
+  }
 
   if (response.status === 429 && attempt < 3) {
     const retryAfter = parseInt(response.headers.get('Retry-After') ?? '0', 10)
