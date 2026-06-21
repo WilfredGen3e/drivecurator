@@ -119,13 +119,12 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
           folders.map(folder => (
             <div
               key={folder.id}
-              className="flex items-center gap-1 px-2 py-0.5 hover:bg-fluent-bg-hover transition-colors"
-              style={{ borderBottom: '1px solid var(--color-border)' }}
+              className="flex items-center gap-1 mx-1.5 px-1.5 my-0.5 rounded-xl hover:bg-fluent-bg-hover transition-colors"
             >
               {/* Navigeer in map */}
               <button
                 onClick={() => handleNavigate(folder)}
-                className="flex items-center gap-1.5 flex-1 min-w-0 text-left py-1.5"
+                className="flex items-center gap-2 flex-1 min-w-0 text-left py-2"
                 title={folder.name}
               >
                 <svg className="w-4 h-4 flex-shrink-0 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
@@ -139,8 +138,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
                 onClick={() => onMove(folder, breadcrumb)}
                 disabled={disabled}
                 title={`Verplaats naar ${folder.name}`}
-                className="flex-shrink-0 p-1.5 text-fluent-text-disabled hover:text-white hover:bg-fluent-accent transition-colors disabled:opacity-30"
-                style={{ borderRadius: 2 }}
+                className="flex-shrink-0 p-2 rounded-lg text-fluent-text-secondary hover:text-white hover:bg-fluent-accent active:scale-[0.94] transition-all disabled:opacity-30"
               >
                 <MoveArrowIcon />
               </button>
@@ -163,21 +161,18 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
                 if (e.key === 'Escape') setShowInput(false)
               }}
               placeholder="Mapnaam..."
-              className="flex-1 bg-fluent-bg-primary text-fluent-text-primary text-sm px-2 py-1 border border-fluent-border-strong focus:outline-none focus:border-fluent-accent min-w-0"
-              style={{ borderRadius: 2 }}
+              className="flex-1 bg-fluent-bg-primary text-fluent-text-primary text-sm px-3 py-2 rounded-lg border border-fluent-border-strong focus:outline-none focus:border-fluent-accent min-w-0"
             />
             <button
               onClick={handleCreateFolder}
               disabled={creating || !newFolderName.trim()}
-              className="px-2 py-1 bg-fluent-accent text-white text-sm hover:bg-fluent-accent-hover disabled:opacity-40 transition-colors flex-shrink-0"
-              style={{ borderRadius: 2 }}
+              className="px-3 py-2 rounded-lg bg-fluent-accent text-white text-sm hover:bg-fluent-accent-hover active:scale-[0.94] disabled:opacity-40 transition-all flex-shrink-0"
             >
               {creating ? '…' : '✓'}
             </button>
             <button
               onClick={() => { setShowInput(false); setNewFolderName('') }}
-              className="px-2 py-1 text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover text-sm transition-colors flex-shrink-0"
-              style={{ borderRadius: 2 }}
+              className="px-3 py-2 rounded-lg text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover text-sm transition-colors flex-shrink-0"
             >
               ✕
             </button>
@@ -185,8 +180,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
         ) : (
           <button
             onClick={() => setShowInput(true)}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-fluent-text-secondary hover:text-fluent-text-primary text-sm hover:bg-fluent-bg-hover transition-colors"
-            style={{ borderRadius: 2 }}
+            className="w-full flex items-center gap-2 px-2 py-2 rounded-xl text-fluent-text-secondary hover:text-fluent-text-primary text-sm hover:bg-fluent-bg-hover transition-colors"
           >
             <span className="text-base leading-none">+</span>
             <span>Nieuwe map</span>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, deleteItem, moveItem } from '../services/graphService'
 import FolderSidebar from './FolderSidebar'
+import Button from './ui/Button'
 
 interface Props {
   // photos[0] is altijd de referentiefoto; de rest zijn de gevonden matches.
@@ -66,11 +67,11 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <div className="flex-1 bg-black/50" onClick={busy ? undefined : onClose} />
+      <div className="flex-1 bg-black/50 animate-fade" onClick={busy ? undefined : onClose} />
 
       <div
-        className="flex flex-col"
-        style={{ height: '70vh', borderRadius: '12px 12px 0 0', background: 'var(--color-bg-primary)' }}
+        className="flex flex-col rounded-t-3xl pb-safe animate-sheet"
+        style={{ height: '70vh', background: 'var(--color-bg-primary)' }}
       >
         {/* Header */}
         <div
@@ -140,10 +141,9 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
                     key={photo.id}
                     onClick={() => !busy && toggle(photo.id)}
                     disabled={busy}
-                    className="relative aspect-square overflow-hidden flex items-center justify-center"
+                    className="relative aspect-square overflow-hidden flex items-center justify-center rounded-lg active:scale-[0.97] transition-transform"
                     style={{
                       background: '#111116',
-                      borderRadius: 2,
                       border: isSelected
                         ? '2px solid var(--color-danger)'
                         : isReference ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
@@ -169,7 +169,7 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
                       )}
                     </span>
                     {isReference && (
-                      <span className="absolute bottom-1 left-1 text-[9px] font-semibold text-white px-1 rounded-sm" style={{ background: 'var(--color-accent)' }}>
+                      <span className="absolute bottom-1 left-1 text-[9px] font-semibold text-white px-1 rounded-lg" style={{ background: 'var(--color-accent)' }}>
                         referentie
                       </span>
                     )}
@@ -199,28 +199,32 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
             className="flex-shrink-0 flex gap-2 px-4 py-3"
             style={{ borderTop: '1px solid var(--color-border)' }}
           >
-            <button
+            <Button
+              variant="destructive"
+              className="flex-1 min-w-0"
               onClick={handleDeleteSelected}
               disabled={busy || selectedCount === 0}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-fluent-danger hover:bg-red-700 disabled:opacity-40 transition-colors"
-              style={{ borderRadius: 2 }}
+              icon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              }
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              Verwijder ({selectedCount})
-            </button>
-            <button
+              <span className="truncate">Verwijder ({selectedCount})</span>
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1 min-w-0"
               onClick={() => setShowFolderPicker(true)}
               disabled={busy || selectedCount === 0}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-fluent-accent hover:bg-fluent-accent-hover disabled:opacity-40 transition-colors"
-              style={{ borderRadius: 2 }}
+              icon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                </svg>
+              }
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-              </svg>
-              Verplaats ({selectedCount}) naar…
-            </button>
+              <span className="truncate">Verplaats ({selectedCount})</span>
+            </Button>
           </div>
         )}
       </div>

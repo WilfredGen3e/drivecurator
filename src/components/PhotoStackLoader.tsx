@@ -11,26 +11,26 @@ export default function PhotoStackLoader({ currentThumb, photoCount, folderName 
       {/* Fotostapel */}
       <div className="relative" style={{ width: 200, height: 200 }}>
         <div
-          className="absolute inset-0"
-          style={{ transform: 'rotate(-9deg) translate(-6px, 8px)', background: '#1a1a20', borderRadius: 2, zIndex: 0 }}
+          className="absolute inset-0 rounded-2xl bg-fluent-bg-hover"
+          style={{ transform: 'rotate(-9deg) translate(-6px, 8px)', zIndex: 0 }}
         />
         <div
-          className="absolute inset-0"
-          style={{ transform: 'rotate(6deg) translate(5px, 5px)', background: '#22222a', borderRadius: 2, zIndex: 1 }}
+          className="absolute inset-0 rounded-2xl bg-fluent-border"
+          style={{ transform: 'rotate(6deg) translate(5px, 5px)', zIndex: 1 }}
         />
         <div
-          className="absolute inset-0"
-          style={{ transform: 'rotate(-3deg) translate(-2px, 2px)', background: '#2a2a34', borderRadius: 2, zIndex: 2 }}
+          className="absolute inset-0 rounded-2xl bg-fluent-border-strong"
+          style={{ transform: 'rotate(-3deg) translate(-2px, 2px)', zIndex: 2 }}
         />
         <div
           key={currentThumb ?? 'placeholder'}
-          className="absolute inset-0 photo-land"
-          style={{ zIndex: 3, borderRadius: 2, overflow: 'hidden', boxShadow: '0 6px 24px rgba(0,0,0,0.5)' }}
+          className="absolute inset-0 photo-land rounded-2xl overflow-hidden shadow-float"
+          style={{ zIndex: 3 }}
         >
           {currentThumb ? (
             <img src={currentThumb} alt="" draggable={false} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full animate-pulse" style={{ background: '#1e1e26' }} />
+            <div className="w-full h-full animate-pulse bg-fluent-bg-hover" />
           )}
         </div>
       </div>

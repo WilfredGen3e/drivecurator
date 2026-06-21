@@ -3,6 +3,7 @@ import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, moveItem, deleteItem } from '../services/graphService'
 import { PhotoCluster } from '../services/clusterService'
 import FolderSidebar, { Crumb } from './FolderSidebar'
+import Button from './ui/Button'
 
 interface Props {
   msalInstance: PublicClientApplication
@@ -127,7 +128,7 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
               <p className="text-xs text-fluent-text-secondary">{moveProgress ? 'Verplaatsen' : 'Verwijderen'}…</p>
               <p className="text-xs text-fluent-text-disabled tabular-nums">{p.done} / {p.total}</p>
             </div>
-            <div className="h-[3px]" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <div className="h-[3px]" style={{ background: 'var(--color-border)' }}>
               <div className="h-full transition-all duration-200" style={{ width: `${(p.done / p.total) * 100}%`, background: 'var(--color-accent)' }} />
             </div>
           </div>
@@ -145,8 +146,8 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
                 key={photo.id}
                 onClick={() => toggleSelect(photo.id)}
                 disabled={busy}
-                className="aspect-square bg-fluent-bg-hover overflow-hidden relative disabled:pointer-events-none"
-                style={{ borderRadius: 2, outline: selected ? '2px solid #0078d4' : 'none', outlineOffset: '-2px' }}
+                className="aspect-square bg-fluent-bg-hover overflow-hidden relative rounded-lg disabled:pointer-events-none active:scale-[0.97] transition-transform"
+                style={{ outline: selected ? '2px solid var(--color-accent)' : 'none', outlineOffset: '-2px' }}
               >
                 {thumb
                   ? <img src={thumb} alt={photo.name} className="w-full h-full object-cover" />
@@ -167,19 +168,25 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
 
       {/* Actiebalk */}
       {!busy && (
-        <div className="flex-shrink-0 bg-fluent-bg-primary border-t border-fluent-border px-4 py-3 flex items-center gap-2">
-          <button onClick={() => setShowSheet(true)} className="flex items-center gap-1.5 px-4 py-2 bg-fluent-accent hover:bg-fluent-accent-hover text-white text-sm font-semibold transition-colors" style={{ borderRadius: 2 }}>
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
+        <div className="flex-shrink-0 bg-fluent-bg-primary border-t border-fluent-border px-4 py-3 pb-safe flex items-center gap-2">
+          <Button
+            variant="primary"
+            onClick={() => setShowSheet(true)}
+            icon={<svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>}
+          >
             {hasSelection ? `Verplaatsen (${selectedIds.size})` : 'Verplaatsen naar…'}
-          </button>
-          <button onClick={() => setShowDeleteConfirm(true)} className="flex items-center gap-1.5 px-4 py-2 bg-fluent-danger hover:opacity-90 text-white text-sm font-semibold transition-opacity" style={{ borderRadius: 2 }}>
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => setShowDeleteConfirm(true)}
+            icon={<svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
+          >
             {hasSelection ? `Verwijderen (${selectedIds.size})` : 'Alles verwijderen'}
-          </button>
+          </Button>
           {!hasSelection && (
-            <button onClick={onTriage} className="px-4 py-2 text-sm text-fluent-text-secondary border border-fluent-border-strong hover:bg-fluent-bg-hover transition-colors" style={{ borderRadius: 2 }}>
+            <Button variant="neutral" onClick={onTriage}>
               Foto voor foto
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -188,14 +195,14 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowDeleteConfirm(false)} />
-          <div className="relative w-full max-w-sm p-6 space-y-4" style={{ background: 'var(--color-bg-primary)', borderRadius: 4, border: '1px solid var(--color-border)', boxShadow: '0 8px 32px rgba(0,0,0,0.32)' }}>
+          <div className="relative w-full max-w-sm p-6 space-y-4 rounded-2xl bg-fluent-bg-primary shadow-float animate-rise">
             <h2 className="font-semibold text-fluent-text-primary text-base">Weet u het zeker?</h2>
             <p className="text-sm text-fluent-text-secondary">
               {actionCount} foto{actionCount !== 1 ? "'s" : ''} worden naar de <strong>OneDrive-prullenbak</strong> verplaatst. U kunt ze daar nog terugzetten.
             </p>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2 text-sm text-fluent-text-secondary border border-fluent-border-strong hover:bg-fluent-bg-hover transition-colors" style={{ borderRadius: 2 }}>Annuleren</button>
-              <button onClick={handleDelete} className="px-4 py-2 text-sm font-semibold text-white bg-fluent-danger hover:opacity-90 transition-opacity" style={{ borderRadius: 2 }}>Ja, verwijderen</button>
+              <Button variant="ghost" onClick={() => setShowDeleteConfirm(false)}>Annuleren</Button>
+              <Button variant="destructive" onClick={handleDelete}>Ja, verwijderen</Button>
             </div>
           </div>
         </div>
@@ -204,8 +211,8 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       {/* Folder sheet */}
       {showSheet && (
         <div className="fixed inset-0 z-40 flex flex-col justify-end">
-          <div className="flex-1 bg-black/40" onClick={() => setShowSheet(false)} />
-          <div className="flex flex-col" style={{ height: '60vh', borderRadius: '12px 12px 0 0', background: 'var(--color-bg-primary)' }}>
+          <div className="flex-1 bg-black/40 animate-fade" onClick={() => setShowSheet(false)} />
+          <div className="flex flex-col rounded-t-3xl pb-safe animate-sheet" style={{ height: '60vh', background: 'var(--color-bg-primary)' }}>
             <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
               <div className="min-w-0">
                 <p className="font-semibold text-fluent-text-primary text-sm">Verplaatsen naar</p>
@@ -223,7 +230,7 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-fluent-text-primary text-white text-sm px-4 py-2 z-50" style={{ borderRadius: 2 }}>{toast}</div>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-fluent-text-primary text-fluent-bg-primary text-sm px-4 py-2 rounded-full shadow-float z-50">{toast}</div>
       )}
     </div>
   )

@@ -11,6 +11,7 @@ import SimilarPhotosSheet from './SimilarPhotosSheet'
 import { SimilarControls, ScanOverlay, NoMatchBanner } from './findSimilarUI'
 import { useFindSimilar } from '../hooks/useFindSimilar'
 import { useIsTouch } from '../hooks/useIsTouch'
+import Button from './ui/Button'
 
 const MONTHS = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
 const SWIPE_HINT = 30
@@ -360,7 +361,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           <>
             <div
               className="w-14 h-14 rounded-full flex items-center justify-center"
-              style={{ background: 'rgba(16,124,16,0.12)', border: '1px solid rgba(16,124,16,0.25)' }}
+              style={{ background: 'var(--color-success-light)' }}
             >
               <svg className="w-7 h-7 text-fluent-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -388,7 +389,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             <button
               onClick={clearFilter}
               className="border border-fluent-border-strong text-fluent-text-secondary hover:bg-fluent-bg-hover px-5 py-2 text-sm transition-colors"
-              style={{ borderRadius: 2 }}
+              style={{ borderRadius: 10 }}
             >
               Wis filter
             </button>
@@ -396,7 +397,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           <button
             onClick={onBack}
             className="bg-fluent-accent hover:bg-fluent-accent-hover text-white font-semibold px-5 py-2 text-sm transition-colors"
-            style={{ borderRadius: 2 }}
+            style={{ borderRadius: 10 }}
           >
             Andere map kiezen
           </button>
@@ -408,7 +409,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   // ── TOUCH LAYOUT ────────────────────────────────────────────────────────
   if (isTouch) {
     return (
-      <div className="flex flex-col h-full" style={{ background: '#080809' }}>
+      <div className="flex flex-col h-full" style={{ background: 'var(--color-canvas)' }}>
 
         {/* Topbalk */}
         <div
@@ -448,7 +449,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               value={fromYear ?? ''}
               onChange={e => { setFromYear(e.target.value ? +e.target.value : null); setFromMonth(null) }}
               className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm"
-              style={{ borderRadius: 2 }}
+              style={{ borderRadius: 10 }}
             >
               <option value="">Alle jaren</option>
               {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
@@ -458,7 +459,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               onChange={e => setFromMonth(e.target.value ? +e.target.value : null)}
               disabled={!fromYear}
               className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm disabled:opacity-40"
-              style={{ borderRadius: 2 }}
+              style={{ borderRadius: 10 }}
             >
               <option value="">Alle maanden</option>
               {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
@@ -468,7 +469,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               value={toYear ?? ''}
               onChange={e => { setToYear(e.target.value ? +e.target.value : null); setToMonth(null) }}
               className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm"
-              style={{ borderRadius: 2 }}
+              style={{ borderRadius: 10 }}
             >
               <option value="">Heden</option>
               {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
@@ -478,7 +479,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               onChange={e => setToMonth(e.target.value ? +e.target.value : null)}
               disabled={!toYear}
               className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm disabled:opacity-40"
-              style={{ borderRadius: 2 }}
+              style={{ borderRadius: 10 }}
             >
               <option value="">Alle maanden</option>
               {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
@@ -490,7 +491,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         )}
 
         {/* Voortgangsbalk */}
-        <div className="h-[3px] flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }}>
+        <div className="h-[3px] flex-shrink-0" style={{ background: 'var(--color-border)' }}>
           <div
             className="h-full transition-all duration-300"
             style={{ width: `${progressPct}%`, background: 'var(--color-accent)' }}
@@ -529,8 +530,8 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               className="absolute inset-0 flex items-center justify-end pr-10 pointer-events-none"
               style={{
                 backgroundColor: swipeLeftCommitted
-                  ? 'rgba(209,52,56,0.85)'
-                  : `rgba(209,52,56,${Math.min(0.25, swipeAbsX / SWIPE_COMMIT * 0.25)})`,
+                  ? 'rgba(255,59,48,0.85)'
+                  : `rgba(255,59,48,${Math.min(0.25, swipeAbsX / SWIPE_COMMIT * 0.25)})`,
               }}
             >
               <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeLeftCommitted ? 'scale-110' : 'scale-100'}`}>
@@ -548,8 +549,8 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               className="absolute inset-0 flex items-center justify-start pl-10 pointer-events-none"
               style={{
                 backgroundColor: swipeRightCommitted
-                  ? 'rgba(16,124,16,0.85)'
-                  : `rgba(16,124,16,${Math.min(0.25, swipeDelta.x / SWIPE_COMMIT * 0.25)})`,
+                  ? 'rgba(52,199,89,0.85)'
+                  : `rgba(52,199,89,${Math.min(0.25, swipeDelta.x / SWIPE_COMMIT * 0.25)})`,
               }}
             >
               <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeRightCommitted ? 'scale-110' : 'scale-100'}`}>
@@ -567,8 +568,8 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none"
               style={{
                 backgroundColor: swipeUpCommitted
-                  ? 'rgba(0,120,212,0.85)'
-                  : `rgba(0,120,212,${Math.min(0.25, swipeAbsY / SWIPE_COMMIT * 0.25)})`,
+                  ? 'rgba(0,122,255,0.85)'
+                  : `rgba(0,122,255,${Math.min(0.25, swipeAbsY / SWIPE_COMMIT * 0.25)})`,
               }}
             >
               <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeUpCommitted ? 'scale-110' : 'scale-100'}`}>
@@ -581,99 +582,93 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           )}
         </div>
 
-        {/* Metadata */}
-        <div
-          className="px-4 py-2 text-center flex-shrink-0"
-          style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}
-        >
-          <p className="text-fluent-text-secondary text-xs truncate">{photo.name}</p>
-          <PhotoMeta photo={photo} />
-        </div>
+        {/* ── Onderste bedieningspaneel — één blok i.p.v. losse strepen ── */}
+        <div className="flex-shrink-0 bg-fluent-bg-primary rounded-t-3xl shadow-float pb-safe">
 
-        {/* Preset-mappen */}
-        {presets.length > 0 && (
-          <div
-            className="flex-shrink-0 px-3 py-2 flex gap-2 overflow-x-auto"
-            style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}
-          >
-            {presets.map(preset => (
-              <button
-                key={preset.id}
-                onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
-                disabled={busy}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-fluent-accent-light text-fluent-accent text-sm font-medium border border-fluent-accent disabled:opacity-40 active:bg-fluent-accent active:text-white transition-colors"
-                style={{ borderRadius: 2 }}
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-                </svg>
-                <span className="max-w-[100px] truncate">{preset.name}</span>
-              </button>
-            ))}
+          {/* Greep + metadata */}
+          <div className="pt-2.5 pb-1 text-center">
+            <div className="mx-auto mb-2 h-1 w-9 rounded-full bg-fluent-border-strong" />
+            <p className="text-fluent-text-primary text-sm font-medium truncate px-5">{photo.name}</p>
+            <PhotoMeta photo={photo} />
           </div>
-        )}
 
-        {/* Actie-balk */}
-        <div
-          className="flex-shrink-0 flex items-stretch"
-          style={{ height: 72, background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}
-        >
-          <TouchActionBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} label="Ongedaan" color="secondary">
-            <UndoIcon />
-          </TouchActionBtn>
-          <TouchActionBtn onClick={() => setFilteredIndex(i => Math.max(0, i - 1))} disabled={filteredIndex === 0 || busy} label="Vorige" color="secondary">
-            <PrevIcon />
-          </TouchActionBtn>
-          <TouchActionBtn onClick={handleDelete} disabled={busy} label="Verwijderen" color="danger">
-            <TrashIcon />
-          </TouchActionBtn>
-          <TouchActionBtn
-            onClick={lastFolder ? handleMoveToLastFolder : () => setShowFolderSheet(true)}
-            disabled={busy}
-            label={lastFolder ? lastFolder.name : 'Verplaatsen'}
-            color="primary"
-          >
-            <FolderIcon />
-          </TouchActionBtn>
-          <TouchActionBtn onClick={handleKeep} disabled={busy} label="Volgende" color="success">
-            <NextIcon />
-          </TouchActionBtn>
+          {/* Secundaire acties: ongedaan / vorige links, andere map rechts */}
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center">
+              <Button variant="ghost" size="sm" onClick={handleUndo} disabled={busy || undoStack.length === 0} icon={<UndoIcon />}>
+                Ongedaan
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setFilteredIndex(i => Math.max(0, i - 1))} disabled={filteredIndex === 0 || busy} icon={<PrevIcon />}>
+                Vorige
+              </Button>
+            </div>
+            {lastFolder && (
+              <Button variant="ghost" size="sm" onClick={() => setShowFolderSheet(true)}>
+                Andere map…
+              </Button>
+            )}
+          </div>
+
+          {/* Preset-mappen als Apple-pillen */}
+          {presets.length > 0 && (
+            <div className="px-3 pt-1.5 flex gap-2 overflow-x-auto">
+              {presets.map(preset => (
+                <button
+                  key={preset.id}
+                  onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
+                  disabled={busy}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-fluent-accent-light text-fluent-accent text-sm font-medium disabled:opacity-40 active:scale-[0.97] transition-transform"
+                >
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                  </svg>
+                  <span className="max-w-[120px] truncate">{preset.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Hoofdacties — 3 grote knoppen (icoon boven label), kleuren gelijk aan de swipe-richtingen */}
+          <div className="flex gap-2.5 px-3 pt-2.5">
+            <Button variant="destructive" className="flex-1 min-w-0 flex-col gap-1 !min-h-[60px] !px-2 !text-xs" onClick={handleDelete} disabled={busy} icon={<TrashIcon />}>
+              Verwijder
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1 min-w-0 flex-col gap-1 !min-h-[60px] !px-2 !text-xs"
+              onClick={lastFolder ? handleMoveToLastFolder : () => setShowFolderSheet(true)}
+              disabled={busy}
+              icon={<FolderIcon />}
+            >
+              <span className="max-w-full truncate">{lastFolder ? lastFolder.name : 'Verplaats'}</span>
+            </Button>
+            <Button variant="success" className="flex-1 min-w-0 flex-col gap-1 !min-h-[60px] !px-2 !text-xs" onClick={handleKeep} disabled={busy} icon={<NextIcon />}>
+              Volgende
+            </Button>
+          </div>
+
+          {/* Vind vergelijkbare — compact; sliders ingeklapt op mobiel */}
+          <div className="px-3 pb-1">
+            <SimilarControls
+              onFind={handleFindSimilar}
+              disabled={busy || isScanning || !photo}
+              showSliders={false}
+              thresholdHash={thresholdHash}
+              setThresholdHash={setThresholdHash}
+              thresholdColor={thresholdColor}
+              setThresholdColor={setThresholdColor}
+              lastScan={lastScan}
+            />
+          </div>
         </div>
-
-        {/* Vind vergelijkbare */}
-        <div
-          className="flex-shrink-0 px-3 py-2"
-          style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}
-        >
-          <SimilarControls
-            onFind={handleFindSimilar}
-            disabled={busy || isScanning || !photo}
-            showSliders={!showSimilarSheet}
-            thresholdHash={thresholdHash}
-            setThresholdHash={setThresholdHash}
-            thresholdColor={thresholdColor}
-            setThresholdColor={setThresholdColor}
-            lastScan={lastScan}
-          />
-        </div>
-
-        {lastFolder && (
-          <button
-            onClick={() => setShowFolderSheet(true)}
-            className="flex-shrink-0 text-fluent-text-secondary text-xs py-2 text-center hover:bg-fluent-bg-hover transition-colors"
-            style={{ background: 'var(--color-bg-secondary)', borderTop: '1px solid var(--color-border)' }}
-          >
-            Andere map kiezen
-          </button>
-        )}
 
         {/* Bottom sheet — mappen */}
         {showFolderSheet && (
           <div className="fixed inset-0 z-40 flex flex-col justify-end">
-            <div className="flex-1 bg-black/40" onClick={() => setShowFolderSheet(false)} />
+            <div className="flex-1 bg-black/40 animate-fade" onClick={() => setShowFolderSheet(false)} />
             <div
-              className="flex flex-col"
-              style={{ height: '60vh', borderRadius: '12px 12px 0 0', background: 'var(--color-bg-primary)' }}
+              className="flex flex-col rounded-t-3xl pb-safe animate-sheet"
+              style={{ height: '60vh', background: 'var(--color-bg-primary)' }}
             >
               <div
                 className="flex items-center justify-between px-4 py-3 flex-shrink-0"
@@ -717,7 +712,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 
   // ── DESKTOP LAYOUT ───────────────────────────────────────────────────────
   return (
-    <div className="flex h-full" style={{ background: '#080809' }}>
+    <div className="flex h-full" style={{ background: 'var(--color-canvas)' }}>
 
       {/* Sidebar — mapnavigatie */}
       <div className={`flex-shrink-0 transition-all duration-200 ${sidebarOpen ? 'w-56' : 'w-0 overflow-hidden'}`}>
@@ -742,7 +737,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           <button
             onClick={() => setSidebarOpen(v => !v)}
             className="p-1.5 text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover transition-colors"
-            style={{ borderRadius: 2 }}
+            style={{ borderRadius: 10 }}
             title="Sidebar (M)"
           >
             <SidebarIcon />
@@ -775,7 +770,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               value={fromYear ?? ''}
               onChange={e => { setFromYear(e.target.value ? +e.target.value : null); setFromMonth(null) }}
               className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs"
-              style={{ borderRadius: 2 }}
+              style={{ borderRadius: 10 }}
             >
               <option value="">Alle jaren</option>
               {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
@@ -785,7 +780,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               onChange={e => setFromMonth(e.target.value ? +e.target.value : null)}
               disabled={!fromYear}
               className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs disabled:opacity-40"
-              style={{ borderRadius: 2 }}
+              style={{ borderRadius: 10 }}
             >
               <option value="">Alle maanden</option>
               {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
@@ -795,7 +790,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               value={toYear ?? ''}
               onChange={e => { setToYear(e.target.value ? +e.target.value : null); setToMonth(null) }}
               className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs"
-              style={{ borderRadius: 2 }}
+              style={{ borderRadius: 10 }}
             >
               <option value="">Heden</option>
               {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
@@ -805,7 +800,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               onChange={e => setToMonth(e.target.value ? +e.target.value : null)}
               disabled={!toYear}
               className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs disabled:opacity-40"
-              style={{ borderRadius: 2 }}
+              style={{ borderRadius: 10 }}
             >
               <option value="">Alle maanden</option>
               {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
@@ -875,7 +870,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
                   onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
                   disabled={busy}
                   className="flex items-center gap-1.5 px-3 py-1 bg-fluent-accent-light text-fluent-accent text-xs font-medium border border-fluent-accent hover:bg-fluent-accent hover:text-white disabled:opacity-40 transition-colors"
-                  style={{ borderRadius: 2 }}
+                  style={{ borderRadius: 10 }}
                 >
                   <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
@@ -957,30 +952,6 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
-function TouchActionBtn({ onClick, disabled, label, color, children }: {
-  onClick: () => void
-  disabled: boolean
-  label: string
-  color: 'danger' | 'success' | 'primary' | 'secondary'
-  children: React.ReactNode
-}) {
-  const styles = {
-    danger:    'text-fluent-danger active:bg-fluent-danger active:text-white',
-    success:   'text-fluent-success active:bg-fluent-success active:text-white',
-    primary:   'text-fluent-accent active:bg-fluent-accent active:text-white',
-    secondary: 'text-fluent-text-secondary active:bg-fluent-bg-hover',
-  }
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors disabled:opacity-30 ${styles[color]}`}
-    >
-      {children}
-      <span className="text-xs font-medium truncate max-w-full px-1">{label}</span>
-    </button>
-  )
-}
 
 function ActionBtn({ onClick, disabled, variant, label, hint, children }: {
   onClick: () => void
@@ -1003,7 +974,7 @@ function ActionBtn({ onClick, disabled, variant, label, hint, children }: {
         onClick={onClick}
         disabled={disabled}
         className={btnClass}
-        style={{ borderRadius: 2 }}
+        style={{ borderRadius: 10 }}
       >
         {children}
         {isPrimary && <span>{label}</span>}

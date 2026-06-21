@@ -38,138 +38,115 @@ DriveCurator is een Azure Static Web App waarmee gebruikers snel en efficiënt h
 
 ## Stijlgids — DriveCurator
 
-DriveCurator volgt de **Microsoft Fluent Design** stijl, vergelijkbaar met onedrive.live.com. Vertrouwd voor OneDrive-gebruikers, maar met eigen identiteit.
+DriveCurator volgt een **Apple-geïnspireerde stijl** (iOS/macOS Human Interface
+Guidelines): rustig, verfijnd, met ruime afronding, het SF-systeemfont en zachte
+diepte. Doel: een gebruiker moet denken "dit lijkt door Apple gemaakt". De foto's
+blijven het middelpunt; de UI eromheen is licht en terughoudend.
 
-### Kleuren
+> Historisch volgde de app Microsoft Fluent. Dat is bewust losgelaten
+> (zie gespreksbeslissing 2026-06-21). De Tailwind-tokens heten nog `fluent.*`
+> om een grote rename te vermijden — de **waarden** zijn Apple-systeemkleuren.
+
+### Bronnen van waarheid
+- **Kleuren/diepte:** CSS-variabelen in `src/index.css` (`:root` + dark).
+- **Tokens:** `tailwind.config.js` (`fluent.*` kleuren, `borderRadius`, `boxShadow`).
+- **Knoppen:** altijd `src/components/ui/Button.tsx` gebruiken — geen losse knop-classes.
+
+### Kleuren (Apple system colors)
 
 ```css
-/* Primair */
---color-accent:        #0078d4;   /* Microsoft blauw — knoppen, links, actieve states */
---color-accent-hover:  #106ebe;   /* Donkerder blauw voor hover */
---color-accent-light:  #deecf9;   /* Lichtblauw voor geselecteerde items */
+/* Primair — systemBlue */
+--color-accent:        #007aff;   /* knoppen, links, actieve states */
+--color-accent-hover:  #0066d6;
+--color-accent-light:  #e9f2ff;   /* getinte vulling / geselecteerd */
 
 /* Achtergronden */
---color-bg-primary:    #ffffff;   /* Hoofdachtergrond */
---color-bg-secondary:  #f5f5f5;   /* Zijbalk, header */
---color-bg-hover:      #edebe9;   /* Hover state op rijen/items */
---color-bg-selected:   #deecf9;   /* Geselecteerd item */
+--color-bg-primary:    #ffffff;   /* kaarten / voorgrond */
+--color-bg-secondary:  #f2f2f7;   /* systemGroupedBackground */
+--color-bg-hover:      #e5e5ea;
+--color-bg-selected:   #e9f2ff;
 
 /* Tekst */
---color-text-primary:  #201f1e;   /* Hoofdtekst */
---color-text-secondary:#605e5c;   /* Subtekst, labels */
---color-text-disabled: #a19f9d;   /* Uitgeschakeld */
+--color-text-primary:  #1c1c1e;   /* label */
+--color-text-secondary:#6e6e73;   /* secondaryLabel */
+--color-text-disabled: #aeaeb2;
 
-/* Borders */
---color-border:        #edebe9;   /* Standaard border */
---color-border-strong: #c8c6c4;   /* Zichtbare border */
+/* Borders / scheidingslijnen */
+--color-border:        #e5e5ea;
+--color-border-strong: #c6c6c8;
 
 /* Semantisch */
---color-danger:        #d13438;   /* Verwijderen */
---color-danger-light:  #fde7e9;   /* Verwijder-hover achtergrond */
---color-success:       #107c10;   /* Bewaren/bevestigen */
---color-success-light: #dff6dd;   /* Bewaar-hover achtergrond */
+--color-danger:        #ff3b30;   /* systemRed — verwijderen */
+--color-success:       #34c759;   /* systemGreen — bewaren */
+
+/* Diepte (zacht, iOS-achtig) */
+--shadow-card:  0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06);
+--shadow-float: 0 8px 30px rgba(0,0,0,0.12);
 ```
+
+Dark mode-waarden staan naast deze in `src/index.css` (o.a. systemBlue `#0a84ff`,
+zacht zwart `#000000`/`#1c1c1e`). De app gebruikt het zachte Apple-zwart
+`var(--color-canvas)` als triage-achtergrond (niet meer hardgecodeerd `#080809`).
 
 ### Typografie
 
 ```css
-font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+/* SF Pro op Apple-apparaten, met nette fallbacks */
+font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+  system-ui, 'Segoe UI', Roboto, sans-serif;
+-webkit-font-smoothing: antialiased;
 
-/* Groottes */
---font-size-xs:   12px;   /* Labels, metadata */
---font-size-sm:   14px;   /* Standaard UI tekst */
---font-size-base: 16px;   /* Body */
---font-size-lg:   18px;   /* Sectietitels */
---font-size-xl:   24px;   /* Paginatitels */
-
-/* Gewichten */
-font-weight: 400;   /* Body tekst */
-font-weight: 600;   /* Koppen, labels */
+font-weight: 400;   /* body */
+font-weight: 600;   /* koppen, labels, knoppen */
 ```
 
-### Componenten
+### Afronding
 
-**Knoppen**
-```css
-/* Primaire knop */
-background: #0078d4;
-color: #ffffff;
-border: none;
-border-radius: 2px;
-padding: 6px 16px;
-font-size: 14px;
-font-weight: 600;
+| Element            | Radius        | Tailwind        |
+|--------------------|---------------|-----------------|
+| Knoppen, chips     | 12px          | `rounded-xl`    |
+| Kaarten            | 16px          | `rounded-2xl`   |
+| Bottom-sheets      | 22px (boven)  | `rounded-t-3xl` |
+| Pillen / avatars   | vol rond      | `rounded-full`  |
 
-/* Secundaire knop */
-background: #ffffff;
-color: #201f1e;
-border: 1px solid #8a8886;
-border-radius: 2px;
+### Animaties (subtiel, Apple-achtig)
 
-/* Destructief (verwijderen) */
-background: #d13438;
-color: #ffffff;
+Gedefinieerd in `src/index.css` (respecteren `prefers-reduced-motion`):
 
-/* Hover: gebruik --color-accent-hover of --color-bg-hover */
+| Utility         | Gebruik                                        |
+|-----------------|------------------------------------------------|
+| `animate-rise`  | kaarten/modals zacht laten opkomen bij mount   |
+| `animate-fade`  | overlay-backdrops laten infaden                |
+| `animate-sheet` | bottom-sheets vanaf onder laten inschuiven     |
+| `active:scale-[0.97]` | indruk-feedback (zit al in `<Button>`)   |
+
+Houd het ingetogen: geen lange of opvallende animaties.
+
+### Knoppen — gebruik altijd `<Button>`
+
+```tsx
+import Button from './ui/Button'
+
+<Button variant="primary">Volgende</Button>
+<Button variant="destructive" icon={<TrashIcon/>}>Verwijderen</Button>
+<Button variant="secondary" size="sm">Wijzigen</Button>
+<Button variant="ghost">Annuleren</Button>
 ```
 
-**Topbar / commandobalk**
-```css
-background: #ffffff;
-border-bottom: 1px solid #edebe9;
-height: 48px;
-padding: 0 16px;
-```
-
-**Zijbalk**
-```css
-background: #f5f5f5;
-border-right: 1px solid #edebe9;
-width: 220px;
-```
-
-**Foto-grid items**
-```css
-border-radius: 2px;
-border: 1px solid transparent;
-/* Bij hover: */
-border-color: #edebe9;
-background: #f5f5f5;
-```
-
-**Geselecteerd item**
-```css
-background: #deecf9;
-border-color: #0078d4;
-```
-
-### Donker thema
-
-DriveCurator ondersteunt ook een donker thema via een `data-theme="dark"` attribuut op `<body>`.
-
-```css
-[data-theme="dark"] {
-  --color-bg-primary:    #1b1a19;
-  --color-bg-secondary:  #252423;
-  --color-bg-hover:      #323130;
-  --color-bg-selected:   #004578;
-  --color-text-primary:  #f3f2f1;
-  --color-text-secondary:#c8c6c4;
-  --color-border:        #323130;
-  --color-border-strong: #484644;
-  --color-accent:        #479ef5;
-  --color-accent-hover:  #62abf5;
-}
-```
+Varianten: `primary` (gevuld accent) · `secondary` (getinte vulling) ·
+`neutral` (grijze vulling) · `destructive` (gevuld rood) · `ghost` (alleen tekst).
+Alle knoppen: min. **44px** tikdoel (iOS), `rounded-xl`, subtiele `active:scale`
+indruk-animatie. Op mobiel hoofdacties bij voorkeur `fullWidth`.
 
 ### Wat te vermijden
-- ❌ Geen afgeronde hoeken groter dan `4px` (Fluent gebruikt scherpe hoeken)
-- ❌ Geen zware schaduwen — alleen subtiele `box-shadow: 0 1px 2px rgba(0,0,0,0.1)`
-- ❌ Geen felle of niet-Microsoft kleuren als accent
-- ❌ Geen andere fonts dan Segoe UI / system-ui
-- ❌ Geen gradient achtergronden
-- ✅ Veel witruimte
-- ✅ Vlakke, functionele UI — de foto's zijn het middelpunt
+- ❌ Geen losse knop-classes meer — alles via `<Button>`.
+- ❌ Geen scherpe 2px-hoeken; gebruik de afrondingsschaal hierboven.
+- ❌ Geen Microsoft Fluent-kleuren (`#0078d4` e.d.) — gebruik de tokens.
+- ❌ Geen andere fonts dan de SF-stack hierboven.
+- ❌ Geen `onMouseEnter`-only effecten — touch heeft geen hover; gebruik `active:`-states.
+- ❌ Geen onderste balk zonder safe-area — gebruik `.pb-safe` op sticky/bottom-balken.
+- ✅ Ruime witruimte, weinig scheidingslijnen, zachte schaduwen.
+- ✅ De foto's zijn het middelpunt — UI eromheen blijft terughoudend.
 
 ---
 

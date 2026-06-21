@@ -21,8 +21,7 @@ export function SimilarControls({
       <button
         onClick={onFind}
         disabled={disabled}
-        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-fluent-accent bg-fluent-accent-light border border-fluent-accent hover:bg-fluent-accent hover:text-white disabled:opacity-40 transition-colors"
-        style={{ borderRadius: 2 }}
+        className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-fluent-accent bg-fluent-accent-light hover:brightness-95 active:scale-[0.97] disabled:opacity-40 transition-all"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -79,7 +78,7 @@ export function ScanOverlay({ progress, onCancel }: { progress: number; onCancel
       <button
         onClick={onCancel}
         className="px-5 py-2 text-sm font-semibold text-white border border-white/40 hover:bg-white/10 transition-colors"
-        style={{ borderRadius: 2 }}
+        style={{ borderRadius: 10 }}
       >
         Annuleren
       </button>
@@ -98,7 +97,7 @@ export function NoMatchBanner({
   return (
     <div
       className="fixed left-1/2 -translate-x-1/2 bottom-4 z-40 flex items-center gap-3 px-4 py-2.5 shadow-lg"
-      style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border-strong)', borderRadius: 4 }}
+      style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border-strong)', borderRadius: 12 }}
     >
       <div className="text-sm">
         <span className="font-semibold text-fluent-text-primary">Geen vergelijkbare gevonden</span>

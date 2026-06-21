@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { LogEntry, LogLevel, getLogs, clearLogs, subscribe } from '../services/logService'
 
 const LEVEL_STYLE: Record<LogLevel, { label: string; color: string }> = {
-  info: { label: 'INFO', color: '#8888a8' },
-  warn: { label: 'WARN', color: '#e0a106' },
-  error: { label: 'FOUT', color: '#d13438' },
+  info: { label: 'INFO', color: 'var(--color-text-secondary)' },
+  warn: { label: 'WARN', color: '#ff9f0a' },
+  error: { label: 'FOUT', color: 'var(--color-danger)' },
 }
 
 function fmtTime(ts: number): string {

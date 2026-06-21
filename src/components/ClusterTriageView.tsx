@@ -6,6 +6,7 @@ import FolderSidebar, { Crumb } from './FolderSidebar'
 import SimilarPhotosSheet from './SimilarPhotosSheet'
 import { SimilarControls, ScanOverlay, NoMatchBanner } from './findSimilarUI'
 import { useFindSimilar } from '../hooks/useFindSimilar'
+import Button from './ui/Button'
 
 const SWIPE_HINT = 30
 const SWIPE_COMMIT = 160
@@ -234,7 +235,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
       <div className="h-full flex flex-col items-center justify-center gap-4 text-center px-6 bg-fluent-bg-secondary">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(16,124,16,0.1)', border: '1px solid rgba(16,124,16,0.25)' }}
+          style={{ background: 'var(--color-success-light)' }}
         >
           <svg className="w-7 h-7 text-fluent-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -248,13 +249,9 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
             </p>
           )}
         </div>
-        <button
-          onClick={() => onDone(photos)}
-          className="bg-fluent-accent hover:bg-fluent-accent-hover text-white px-5 py-2 text-sm font-semibold transition-colors"
-          style={{ borderRadius: 2 }}
-        >
+        <Button variant="primary" onClick={() => onDone(photos)}>
           Terug naar overzicht
-        </button>
+        </Button>
       </div>
     )
   }
@@ -262,7 +259,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
   // ── Touch layout ──────────────────────────────────────────────────────────
   if (isTouch) {
     return (
-      <div className="flex flex-col h-full" style={{ background: '#080809' }}>
+      <div className="flex flex-col h-full" style={{ background: 'var(--color-canvas)' }}>
         {/* Topbalk */}
         <div
           className="flex items-center gap-2 px-3 flex-shrink-0 h-12"
@@ -278,7 +275,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         </div>
 
         {/* Voortgangsbalk */}
-        <div className="h-[3px] flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }}>
+        <div className="h-[3px] flex-shrink-0" style={{ background: 'var(--color-border)' }}>
           <div className="h-full transition-all duration-300" style={{ width: `${progressPct}%`, background: 'var(--color-accent)' }} />
         </div>
 
@@ -300,7 +297,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
           </div>
 
           {isActivelySwiping && swipeDelta.x < -SWIPE_HINT && (
-            <div className="absolute inset-0 flex items-center justify-end pr-10 pointer-events-none" style={{ backgroundColor: swipeLeftCommitted ? 'rgba(209,52,56,0.85)' : `rgba(209,52,56,${Math.min(0.25, swipeAbsX / SWIPE_COMMIT * 0.25)})` }}>
+            <div className="absolute inset-0 flex items-center justify-end pr-10 pointer-events-none" style={{ backgroundColor: swipeLeftCommitted ? 'rgba(255,59,48,0.85)' : `rgba(255,59,48,${Math.min(0.25, swipeAbsX / SWIPE_COMMIT * 0.25)})` }}>
               <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeLeftCommitted ? 'scale-110' : 'scale-100'}`}>
                 <div className={`rounded-full p-4 ${swipeLeftCommitted ? 'bg-white/20' : 'bg-fluent-danger'}`}><TrashIcon /></div>
                 {swipeLeftCommitted && <span className="text-sm font-semibold">Loslaten om te verwijderen</span>}
@@ -308,7 +305,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
             </div>
           )}
           {isActivelySwiping && swipeDelta.x > SWIPE_HINT && (
-            <div className="absolute inset-0 flex items-center justify-start pl-10 pointer-events-none" style={{ backgroundColor: swipeRightCommitted ? 'rgba(16,124,16,0.85)' : `rgba(16,124,16,${Math.min(0.25, swipeDelta.x / SWIPE_COMMIT * 0.25)})` }}>
+            <div className="absolute inset-0 flex items-center justify-start pl-10 pointer-events-none" style={{ backgroundColor: swipeRightCommitted ? 'rgba(52,199,89,0.85)' : `rgba(52,199,89,${Math.min(0.25, swipeDelta.x / SWIPE_COMMIT * 0.25)})` }}>
               <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeRightCommitted ? 'scale-110' : 'scale-100'}`}>
                 <div className={`rounded-full p-4 ${swipeRightCommitted ? 'bg-white/20' : 'bg-fluent-success'}`}><NextIcon /></div>
                 {swipeRightCommitted && <span className="text-sm font-semibold">Loslaten voor volgende</span>}
@@ -316,7 +313,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
             </div>
           )}
           {isActivelySwiping && swipeDelta.y < -SWIPE_HINT && !swipeHoriz && (
-            <div className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none" style={{ backgroundColor: swipeUpCommitted ? 'rgba(0,120,212,0.85)' : `rgba(0,120,212,${Math.min(0.25, swipeAbsY / SWIPE_COMMIT * 0.25)})` }}>
+            <div className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none" style={{ backgroundColor: swipeUpCommitted ? 'rgba(0,122,255,0.85)' : `rgba(0,122,255,${Math.min(0.25, swipeAbsY / SWIPE_COMMIT * 0.25)})` }}>
               <div className={`text-white flex flex-col items-center gap-2 transition-transform duration-150 ${swipeUpCommitted ? 'scale-110' : 'scale-100'}`}>
                 <div className={`rounded-full p-4 ${swipeUpCommitted ? 'bg-white/20' : 'bg-fluent-accent'}`}><FolderIcon /></div>
                 {swipeUpCommitted && <span className="text-sm font-semibold">Loslaten om te verplaatsen</span>}
@@ -327,58 +324,77 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
           {sim.isScanning && <ScanOverlay progress={sim.scanProgress} onCancel={sim.cancelScan} />}
         </div>
 
-        {/* Metadata + Vind vergelijkbare */}
-        <div className="px-4 py-2 text-center flex-shrink-0" style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}>
-          <p className="text-fluent-text-secondary text-xs truncate">{photo.name}</p>
-          <PhotoMeta photo={photo} />
-          <SimilarControls
-            onFind={sim.findSimilar}
-            disabled={busy || sim.isScanning || !photo}
-            showSliders={!sim.showSheet}
-            thresholdHash={sim.thresholdHash} setThresholdHash={sim.setThresholdHash}
-            thresholdColor={sim.thresholdColor} setThresholdColor={sim.setThresholdColor}
-            lastScan={sim.lastScan}
-          />
-        </div>
+        {/* ── Onderste bedieningspaneel — één blok i.p.v. losse strepen ── */}
+        <div className="flex-shrink-0 bg-fluent-bg-primary rounded-t-3xl shadow-float pb-safe">
 
-        {/* Preset-mappen */}
-        {presets.length > 0 && (
-          <div className="flex-shrink-0 px-3 py-2 flex gap-2 overflow-x-auto" style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}>
-            {presets.map(preset => (
-              <button
-                key={preset.id}
-                onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
-                disabled={busy}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-fluent-accent-light text-fluent-accent text-sm font-medium border border-fluent-accent disabled:opacity-40 active:bg-fluent-accent active:text-white transition-colors"
-                style={{ borderRadius: 2 }}
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
-                <span className="max-w-[100px] truncate">{preset.name}</span>
-              </button>
-            ))}
+          {/* Greep + metadata */}
+          <div className="pt-2.5 pb-1 text-center">
+            <div className="mx-auto mb-2 h-1 w-9 rounded-full bg-fluent-border-strong" />
+            <p className="text-fluent-text-primary text-sm font-medium truncate px-5">{photo.name}</p>
+            <PhotoMeta photo={photo} />
           </div>
-        )}
 
-        {/* Actiebalk */}
-        <div className="flex-shrink-0 flex items-stretch" style={{ height: 72, background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}>
-          <TouchBtn onClick={handleUndo} disabled={busy || undoStack.length === 0} label="Ongedaan" color="secondary"><UndoIcon /></TouchBtn>
-          <TouchBtn onClick={handlePrev} disabled={index === 0 || busy} label="Vorige" color="secondary"><PrevIcon /></TouchBtn>
-          <TouchBtn onClick={handleDelete} disabled={busy} label="Verwijderen" color="danger"><TrashIcon /></TouchBtn>
-          <TouchBtn onClick={lastFolder ? handleMoveToLastFolder : () => setShowFolderSheet(true)} disabled={busy} label={lastFolder ? lastFolder.name : 'Verplaatsen'} color="primary"><FolderIcon /></TouchBtn>
-          <TouchBtn onClick={handleNext} disabled={index >= total - 1 || busy} label="Volgende" color="success"><NextIcon /></TouchBtn>
+          {/* Secundaire acties */}
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center">
+              <Button variant="ghost" size="sm" onClick={handleUndo} disabled={busy || undoStack.length === 0} icon={<UndoIcon />}>Ongedaan</Button>
+              <Button variant="ghost" size="sm" onClick={handlePrev} disabled={index === 0 || busy} icon={<PrevIcon />}>Vorige</Button>
+            </div>
+            {lastFolder && (
+              <Button variant="ghost" size="sm" onClick={() => setShowFolderSheet(true)}>Andere map…</Button>
+            )}
+          </div>
+
+          {/* Preset-mappen als Apple-pillen */}
+          {presets.length > 0 && (
+            <div className="px-3 pt-1.5 flex gap-2 overflow-x-auto">
+              {presets.map(preset => (
+                <button
+                  key={preset.id}
+                  onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
+                  disabled={busy}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-fluent-accent-light text-fluent-accent text-sm font-medium disabled:opacity-40 active:scale-[0.97] transition-transform"
+                >
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
+                  <span className="max-w-[120px] truncate">{preset.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Hoofdacties — 3 grote knoppen */}
+          <div className="flex gap-2.5 px-3 pt-2.5">
+            <Button variant="destructive" className="flex-1 min-w-0 flex-col gap-1 !min-h-[60px] !px-2 !text-xs" onClick={handleDelete} disabled={busy} icon={<TrashIcon />}>Verwijder</Button>
+            <Button
+              variant="primary"
+              className="flex-1 min-w-0 flex-col gap-1 !min-h-[60px] !px-2 !text-xs"
+              onClick={lastFolder ? handleMoveToLastFolder : () => setShowFolderSheet(true)}
+              disabled={busy}
+              icon={<FolderIcon />}
+            >
+              <span className="max-w-full truncate">{lastFolder ? lastFolder.name : 'Verplaats'}</span>
+            </Button>
+            <Button variant="success" className="flex-1 min-w-0 flex-col gap-1 !min-h-[60px] !px-2 !text-xs" onClick={handleNext} disabled={index >= total - 1 || busy} icon={<NextIcon />}>Volgende</Button>
+          </div>
+
+          {/* Vind vergelijkbare — compact */}
+          <div className="px-3 pb-1">
+            <SimilarControls
+              onFind={sim.findSimilar}
+              disabled={busy || sim.isScanning || !photo}
+              showSliders={false}
+              thresholdHash={sim.thresholdHash} setThresholdHash={sim.setThresholdHash}
+              thresholdColor={sim.thresholdColor} setThresholdColor={sim.setThresholdColor}
+              lastScan={sim.lastScan}
+            />
+          </div>
         </div>
-
-        {lastFolder && (
-          <button onClick={() => setShowFolderSheet(true)} className="flex-shrink-0 text-fluent-text-secondary text-xs py-2 text-center hover:bg-fluent-bg-hover transition-colors" style={{ background: 'var(--color-bg-secondary)', borderTop: '1px solid var(--color-border)' }}>
-            Andere map kiezen
-          </button>
-        )}
 
         {/* Folder sheet */}
         {showFolderSheet && (
           <div className="fixed inset-0 z-40 flex flex-col justify-end">
-            <div className="flex-1 bg-black/40" onClick={() => setShowFolderSheet(false)} />
-            <div className="flex flex-col" style={{ height: '60vh', borderRadius: '12px 12px 0 0', background: 'var(--color-bg-primary)' }}>
+            <div className="flex-1 bg-black/40 animate-fade" onClick={() => setShowFolderSheet(false)} />
+            <div className="flex flex-col rounded-t-3xl pb-safe animate-sheet" style={{ height: '60vh', background: 'var(--color-bg-primary)' }}>
               <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
                 <span className="font-semibold text-fluent-text-primary">Verplaatsen naar</span>
                 <button onClick={() => setShowFolderSheet(false)} className="text-fluent-text-secondary p-1">
@@ -409,7 +425,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
 
   // ── Desktop layout ────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full" style={{ background: '#080809' }}>
+    <div className="flex h-full" style={{ background: 'var(--color-canvas)' }}>
       {/* Sidebar */}
       <div className={`flex-shrink-0 transition-all duration-200 ${sidebarOpen ? 'w-56' : 'w-0 overflow-hidden'}`}>
         <FolderSidebar
@@ -428,7 +444,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
           className="flex items-center gap-2 px-3 flex-shrink-0 h-10"
           style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}
         >
-          <button onClick={() => setSidebarOpen(v => !v)} className="p-1.5 text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover transition-colors" style={{ borderRadius: 2 }}>
+          <button onClick={() => setSidebarOpen(v => !v)} className="p-2 rounded-lg text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover transition-colors">
             <SidebarIcon />
           </button>
           <button onClick={() => onDone(photos)} className="flex items-center gap-1 text-fluent-text-secondary hover:text-fluent-text-primary text-sm transition-colors">
@@ -440,7 +456,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         </div>
 
         {/* Voortgangsbalk */}
-        <div className="h-[3px] flex-shrink-0" style={{ background: 'rgba(255,255,255,0.05)' }}>
+        <div className="h-[3px] flex-shrink-0" style={{ background: 'var(--color-border)' }}>
           <div className="h-full transition-all duration-300" style={{ width: `${progressPct}%`, background: 'var(--color-accent)' }} />
         </div>
 
@@ -474,8 +490,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
                   key={preset.id}
                   onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
                   disabled={busy}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-fluent-accent-light text-fluent-accent text-xs font-medium border border-fluent-accent hover:bg-fluent-accent hover:text-white disabled:opacity-40 transition-colors"
-                  style={{ borderRadius: 2 }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-fluent-accent-light text-fluent-accent text-xs font-medium hover:brightness-95 active:scale-[0.97] disabled:opacity-40 transition-all"
                 >
                   <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
                   <span className="max-w-[120px] truncate">{preset.name}</span>
@@ -510,29 +525,11 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
 function ToastBar({ message }: { message: string }) {
   return (
     <div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 text-white text-sm px-4 py-2 z-50"
-      style={{ background: 'var(--color-text-primary)', borderRadius: 2, boxShadow: '0 2px 12px rgba(0,0,0,0.3)', whiteSpace: 'nowrap' }}
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 text-sm px-4 py-2 rounded-full shadow-float z-50"
+      style={{ background: 'var(--color-text-primary)', color: 'var(--color-bg-primary)', whiteSpace: 'nowrap' }}
     >
       {message}
     </div>
-  )
-}
-
-function TouchBtn({ onClick, disabled, label, color, children }: {
-  onClick: () => void; disabled: boolean; label: string
-  color: 'danger' | 'success' | 'primary' | 'secondary'; children: React.ReactNode
-}) {
-  const styles = {
-    danger:    'text-fluent-danger active:bg-fluent-danger active:text-white',
-    success:   'text-fluent-success active:bg-fluent-success active:text-white',
-    primary:   'text-fluent-accent active:bg-fluent-accent active:text-white',
-    secondary: 'text-fluent-text-secondary active:bg-fluent-bg-hover',
-  }
-  return (
-    <button onClick={onClick} disabled={disabled} className={`flex-1 flex flex-col items-center justify-center gap-1 transition-colors disabled:opacity-30 ${styles[color]}`}>
-      {children}
-      <span className="text-xs font-medium truncate max-w-full px-1">{label}</span>
-    </button>
   )
 }
 
@@ -542,13 +539,13 @@ function DesktopBtn({ onClick, disabled, variant, label, children }: {
   const isPrimary = variant === 'danger' || variant === 'success'
   const btnClass = isPrimary
     ? variant === 'danger'
-      ? 'flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-fluent-danger hover:bg-red-700 disabled:opacity-30 transition-colors'
-      : 'flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-fluent-accent hover:bg-fluent-accent-hover disabled:opacity-30 transition-colors'
-    : 'flex items-center gap-1.5 px-4 py-2.5 text-sm text-fluent-text-secondary bg-fluent-bg-secondary border border-fluent-border-strong hover:bg-fluent-bg-hover hover:text-fluent-text-primary disabled:opacity-30 transition-colors'
+      ? 'flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-fluent-danger hover:brightness-95 active:scale-[0.97] disabled:opacity-30 transition-all'
+      : 'flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-fluent-success hover:brightness-95 active:scale-[0.97] disabled:opacity-30 transition-all'
+    : 'flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm text-fluent-text-primary bg-fluent-bg-secondary hover:bg-fluent-bg-hover active:scale-[0.97] disabled:opacity-30 transition-all'
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <button onClick={onClick} disabled={disabled} className={btnClass} style={{ borderRadius: 2 }}>
+      <button onClick={onClick} disabled={disabled} className={btnClass}>
         {children}
         {isPrimary && <span>{label}</span>}
       </button>

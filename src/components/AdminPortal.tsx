@@ -12,7 +12,7 @@ interface Props {
 function UserInitials({ name }: { name: string }) {
   const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
   return (
-    <div className="w-8 h-8 rounded-sm bg-fluent-accent-light flex items-center justify-center flex-shrink-0">
+    <div className="w-8 h-8 rounded-lg bg-fluent-accent-light flex items-center justify-center flex-shrink-0">
       <span className="text-xs font-semibold text-fluent-accent">{initials}</span>
     </div>
   )
@@ -47,7 +47,7 @@ function LimitCell({ user, onSave }: { user: UserProfile; onSave: (val: number) 
         onChange={e => setValue(e.target.value)}
         onBlur={commit}
         onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setValue(String(user.freeTierLimit)); setEditing(false) } }}
-        className="w-24 border border-fluent-accent px-2 py-0.5 text-sm rounded-sm outline-none"
+        className="w-24 border border-fluent-accent px-2 py-0.5 text-sm rounded-lg outline-none"
       />
     )
   }
@@ -73,7 +73,7 @@ function ToggleButton({ active, labelOn, labelOff, colorOn, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`text-xs font-semibold px-2.5 py-1 rounded-sm transition-colors ${
+      className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${
         active ? colorOn : 'bg-fluent-bg-secondary text-fluent-text-secondary hover:bg-fluent-bg-hover'
       }`}
     >
@@ -149,7 +149,7 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`text-xs px-3 py-1 rounded-sm transition-colors ${
+                className={`text-xs px-3 py-1 rounded-lg transition-colors ${
                   tab === t
                     ? 'bg-fluent-accent text-white'
                     : 'text-fluent-text-secondary hover:bg-fluent-bg-hover'
@@ -184,7 +184,7 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
         )}
 
         {error && (
-          <div className="m-6 p-4 border border-fluent-danger bg-fluent-danger-light text-fluent-danger text-sm rounded-sm">
+          <div className="m-6 p-4 border border-fluent-danger bg-fluent-danger-light text-fluent-danger text-sm rounded-lg">
             {error}
           </div>
         )}
@@ -217,7 +217,7 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
                           <div className="font-semibold text-fluent-text-primary flex items-center gap-2">
                             {user.displayName}
                             {user.isAdmin && (
-                              <span className="text-xs bg-fluent-accent text-white px-1.5 py-0.5 rounded-sm">Admin</span>
+                              <span className="text-xs bg-fluent-accent text-white px-1.5 py-0.5 rounded-lg">Admin</span>
                             )}
                           </div>
                           <div className="text-xs text-fluent-text-secondary">{user.email}</div>
@@ -277,7 +277,7 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
                             <button
                               onClick={() => remove(user.id)}
                               disabled={isBusy}
-                              className="text-xs font-semibold text-white bg-fluent-danger px-2.5 py-1 rounded-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                              className="text-xs font-semibold text-white bg-fluent-danger px-2.5 py-1 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
                             >
                               Ja
                             </button>

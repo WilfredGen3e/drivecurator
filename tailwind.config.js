@@ -21,10 +21,26 @@ export default {
           'danger-light':  'var(--color-danger-light)',
           success:         'var(--color-success)',
           'success-light': 'var(--color-success-light)',
+          canvas:          'var(--color-canvas)',
         },
       },
       fontFamily: {
-        sans: ["'Segoe UI'", 'system-ui', '-apple-system', 'sans-serif'],
+        sans: [
+          '-apple-system', 'BlinkMacSystemFont', "'SF Pro Text'", "'SF Pro Display'",
+          'system-ui', "'Segoe UI'", 'Roboto', 'sans-serif',
+        ],
+      },
+      borderRadius: {
+        // Apple-achtige afronding: knoppen 12px, kaarten 16px, sheets 22px
+        DEFAULT: '8px',
+        lg: '10px',
+        xl: '12px',
+        '2xl': '16px',
+        '3xl': '22px',
+      },
+      boxShadow: {
+        card:  'var(--shadow-card)',
+        float: 'var(--shadow-float)',
       },
     },
   },

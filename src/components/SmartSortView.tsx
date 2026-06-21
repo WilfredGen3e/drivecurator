@@ -7,6 +7,7 @@ import FolderSidebar, { Crumb } from './FolderSidebar'
 import ClusterTriageView from './ClusterTriageView'
 import ClusterGridView from './ClusterGridView'
 import { getPhotoDate } from '../services/clusterService'
+import Button from './ui/Button'
 // import { findEventForCluster } from '../services/eventService'  // IJskast: zie eventService.ts
 
 interface Props {
@@ -285,20 +286,8 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
           <p className="text-fluent-text-secondary text-sm mt-1 max-w-sm">{phase.message}</p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={startAnalysis}
-            className="bg-fluent-accent hover:bg-fluent-accent-hover text-white px-5 py-2 text-sm font-semibold transition-colors"
-            style={{ borderRadius: 2 }}
-          >
-            Opnieuw proberen
-          </button>
-          <button
-            onClick={onBack}
-            className="border border-fluent-border-strong text-fluent-text-secondary hover:bg-fluent-bg-hover px-5 py-2 text-sm transition-colors"
-            style={{ borderRadius: 2 }}
-          >
-            Andere map kiezen
-          </button>
+          <Button variant="primary" onClick={startAnalysis}>Opnieuw proberen</Button>
+          <Button variant="neutral" onClick={onBack}>Andere map kiezen</Button>
         </div>
       </div>
     )
@@ -483,13 +472,12 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                       setPhase({ name: 'category', key: cat.key, label: cat.label, clusters: buildClusters(cat.key, result) })
                     }}
                     disabled={!active}
-                    className={`group flex items-start gap-3 px-4 py-4 text-left w-full transition-all ${
-                      active ? 'cursor-pointer' : 'cursor-default opacity-50'
+                    className={`group flex items-start gap-3 px-4 py-4 text-left w-full rounded-2xl shadow-card transition-all ${
+                      active ? 'cursor-pointer active:scale-[0.99]' : 'cursor-default opacity-50'
                     }`}
                     style={{
                       background: 'var(--color-bg-primary)',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 4,
                     }}
                     onMouseEnter={e => {
                       if (!active) return
@@ -559,7 +547,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
       <div className="h-full flex flex-col items-center justify-center gap-5 px-6 text-center bg-fluent-bg-secondary">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(16,124,16,0.1)', border: '1px solid rgba(16,124,16,0.25)' }}
+          style={{ background: 'var(--color-success-light)' }}
         >
           <svg className="w-7 h-7 text-fluent-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -571,13 +559,9 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
             Alle pakketjes in "{categoryLabel}" zijn verwerkt.
           </p>
         </div>
-        <button
-          onClick={() => setPhase({ name: 'dashboard' })}
-          className="bg-fluent-accent hover:bg-fluent-accent-hover text-white font-semibold px-6 py-2 text-sm transition-colors"
-          style={{ borderRadius: 2 }}
-        >
+        <Button variant="primary" onClick={() => setPhase({ name: 'dashboard' })}>
           Terug naar overzicht
-        </button>
+        </Button>
       </div>
     )
   }
@@ -618,11 +602,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
             return (
               <div
                 key={cluster.id}
-                style={{
-                  background: 'var(--color-bg-primary)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 4,
-                }}
+                className="rounded-2xl bg-fluent-bg-primary shadow-card overflow-hidden"
               >
                 {/* Thumbnail strip */}
                 {thumbs.length > 0 && (
@@ -630,7 +610,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                     onClick={() => setPhase({ name: 'grid', key: categoryKey, label: categoryLabel, clusters, clusterId: cluster.id })}
                     disabled={busy}
                     className="w-full flex items-stretch gap-px overflow-hidden disabled:pointer-events-none"
-                    style={{ height: 80, borderRadius: '4px 4px 0 0' }}
+                    style={{ height: 80 }}
                   >
                     {thumbs.map((photo, idx) => (
                       <div key={photo.id} className="relative flex-1 min-w-0 overflow-hidden bg-fluent-bg-hover">
@@ -688,35 +668,35 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                   {/* Knoppen */}
                   {!isMoving && (
                     <div className="flex items-center gap-2">
-                      <button
+                      <Button
+                        variant="primary"
+                        size="sm"
                         onClick={() => setActiveSheet(cluster)}
                         disabled={busy}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-fluent-accent hover:bg-fluent-accent-hover text-white text-sm font-semibold transition-colors disabled:opacity-40"
-                        style={{ borderRadius: 2 }}
+                        icon={
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                          </svg>
+                        }
                       >
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-                        </svg>
                         Verplaatsen naar…
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="neutral"
+                        size="sm"
                         onClick={() => setPhase({ name: 'triage', key: categoryKey, label: categoryLabel, clusters, clusterId: cluster.id })}
                         disabled={busy}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-fluent-text-secondary border border-fluent-border-strong hover:bg-fluent-bg-hover transition-colors disabled:opacity-40"
-                        style={{ borderRadius: 2 }}
+                        icon={
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                          </svg>
+                        }
                       >
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
                         Één voor één
-                      </button>
-                      <button
-                        onClick={() => handleSkip(cluster.id)}
-                        disabled={busy}
-                        className="px-3 py-1.5 text-sm text-fluent-text-disabled hover:text-fluent-text-secondary transition-colors disabled:opacity-40"
-                      >
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleSkip(cluster.id)} disabled={busy}>
                         Overslaan
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -729,12 +709,11 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
       {/* Folder sheet */}
       {activeSheet && (
         <div className="fixed inset-0 z-40 flex flex-col justify-end">
-          <div className="flex-1 bg-black/40" onClick={() => setActiveSheet(null)} />
+          <div className="flex-1 bg-black/40 animate-fade" onClick={() => setActiveSheet(null)} />
           <div
-            className="flex flex-col"
+            className="flex flex-col rounded-t-3xl pb-safe animate-sheet"
             style={{
               height: '60vh',
-              borderRadius: '12px 12px 0 0',
               background: 'var(--color-bg-primary)',
             }}
           >
