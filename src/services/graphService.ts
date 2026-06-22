@@ -158,11 +158,18 @@ export async function getItemDownloadUrl(
   itemId: string,
 ): Promise<string | null> {
   try {
+    // Géén $select: de @microsoft.graph.downloadUrl is een instance-annotatie die
+    // OneDrive standaard meestuurt, maar wegvalt zodra je $select gebruikt.
     const data = await graphFetch<{ '@microsoft.graph.downloadUrl'?: string }>(
-      msalInstance, account, `/me/drive/items/${itemId}?$select=id,@microsoft.graph.downloadUrl`,
+      msalInstance, account, `/me/drive/items/${itemId}`,
     )
-    return data['@microsoft.graph.downloadUrl'] ?? null
-  } catch { return null }
+    const url = data['@microsoft.graph.downloadUrl'] ?? null
+    if (!url) logWarn('Geen afspeel-URL in respons (@microsoft.graph.downloadUrl ontbreekt)', itemId)
+    return url
+  } catch (e) {
+    logError('Afspeel-URL ophalen mislukt', e)
+    return null
+  }
 }
 
 export async function getItemThumbnails(

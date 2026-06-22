@@ -82,6 +82,7 @@ export default function VideoTriageView({ msalInstance, account, folderName, ini
   // opnieuw fetcht.
   const [urlCache, setUrlCache] = useState<Record<string, string>>({})
   const [urlError, setUrlError] = useState(false)
+  const [playbackError, setPlaybackError] = useState(false)
 
   const video = videos[index]
   const total = videos.length
@@ -102,6 +103,7 @@ export default function VideoTriageView({ msalInstance, account, folderName, ini
 
   // Haal de afspeel-URL voor de huidige video op (indien nog niet gecachet).
   useEffect(() => {
+    setPlaybackError(false)
     if (!video || urlCache[video.id]) { setUrlError(false); return }
     let cancelled = false
     setUrlError(false)
@@ -177,15 +179,24 @@ export default function VideoTriageView({ msalInstance, account, folderName, ini
   // Speler — gedeeld tussen beide layouts.
   const player = (
     <div className="relative w-full h-full flex items-center justify-center" style={{ background: '#06060a' }}>
-      {videoUrl ? (
+      {videoUrl && !playbackError ? (
         <video
           key={video?.id}
           src={videoUrl}
           poster={video?.thumbnails?.[0]?.large?.url ?? video?.thumbnails?.[0]?.medium?.url}
           controls
           playsInline
+          onError={() => setPlaybackError(true)}
           className="max-w-full max-h-full"
         />
+      ) : playbackError ? (
+        <div className="flex flex-col items-center gap-3 px-6 text-center max-w-sm">
+          <PlayIcon />
+          <span className="text-fluent-text-secondary text-sm">
+            Deze video kan niet in de browser worden afgespeeld (formaat niet ondersteund — vaak bij .mov).
+            Je kunt 'm wel verwijderen of verplaatsen op basis van naam en details hieronder.
+          </span>
+        </div>
       ) : urlError ? (
         <div className="flex flex-col items-center gap-3 px-6 text-center">
           <PlayIcon />
