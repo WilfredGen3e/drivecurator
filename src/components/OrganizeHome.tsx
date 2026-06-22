@@ -3,10 +3,11 @@ interface Props {
   photoCount: number
   onManual: () => void
   onSmartSort: () => void
+  onVideo: () => void
   onChangeFolder: () => void
 }
 
-export default function OrganizeHome({ folder, photoCount, onManual, onSmartSort, onChangeFolder }: Props) {
+export default function OrganizeHome({ folder, photoCount, onManual, onSmartSort, onVideo, onChangeFolder }: Props) {
   return (
     <div className="h-full flex flex-col bg-fluent-bg-secondary">
 
@@ -35,7 +36,7 @@ export default function OrganizeHome({ folder, photoCount, onManual, onSmartSort
         <div className="w-full max-w-2xl">
           <h1 className="text-2xl font-semibold text-fluent-text-primary mb-1 tracking-tight">Hoe wil je opschonen?</h1>
           <p className="text-fluent-text-secondary text-sm mb-7">
-            Kies handmatig voor volledige controle, of slim sorteren voor automatische categorisering.
+            Handmatig voor volledige controle, slim sorteren voor automatische categorisering, of ruim losse video's op.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
@@ -89,6 +90,31 @@ export default function OrganizeHome({ folder, photoCount, onManual, onSmartSort
 
               <div className="flex items-center gap-1 text-xs font-semibold text-fluent-accent">
                 <span>Analyseren</span>
+                <svg className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </button>
+
+            {/* Video's opruimen */}
+            <button
+              onClick={onVideo}
+              className="group flex-1 text-left p-5 rounded-2xl bg-fluent-bg-primary border border-fluent-border shadow-card transition-all hover:shadow-float hover:-translate-y-0.5 active:scale-[0.99]"
+            >
+              {/* Icoon */}
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 bg-fluent-accent-light text-fluent-accent">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+
+              <p className="font-semibold text-fluent-text-primary mb-1.5">Video's opruimen</p>
+              <p className="text-fluent-text-secondary text-sm leading-relaxed mb-5">
+                Bekijk je video's één voor één en gooi weg of verplaats wat weg kan. Video's nemen vaak de meeste ruimte in.
+              </p>
+
+              <div className="flex items-center gap-1 text-xs font-semibold text-fluent-text-secondary group-hover:text-fluent-accent transition-colors">
+                <span>Starten</span>
                 <svg className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

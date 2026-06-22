@@ -6,13 +6,14 @@ import OrganizeHome from './components/OrganizeHome'
 import SmartSortView from './components/SmartSortView'
 import FolderBrowser from './components/FolderBrowser'
 import TriageView from './components/TriageView'
+import VideoTriageView from './components/VideoTriageView'
 import BlockedScreen from './components/BlockedScreen'
 import AdminPortal from './components/AdminPortal'
 import StepIndicator from './components/StepIndicator'
 import PhotoStackLoader from './components/PhotoStackLoader'
 import { useAppStore } from './store/useAppStore'
 import { registerUser, AccountBlockedError } from './services/apiService'
-import { getFolderContents, DriveItem } from './services/graphService'
+import { getFolderContents, getFolderVideos, DriveItem } from './services/graphService'
 import { AnalysisResult } from './services/analysisService'
 import { installGlobalErrorLogging, logInfo, logWarn, logError, createLogger } from './services/logService'
 
@@ -63,11 +64,13 @@ export default function App() {
   const [blocked, setBlocked] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
-  const [screen, setScreen] = useState<'browse' | 'loading' | 'organize' | 'smart-sort'>('browse')
+  const [screen, setScreen] = useState<'browse' | 'loading' | 'organize' | 'smart-sort' | 'video'>('browse')
   const [selectedFolder, setSelectedFolder] = useState<{ id: string; name: string } | null>(null)
   const [loadedPhotos, setLoadedPhotos] = useState<DriveItem[]>([])
   const [photoLoadCount, setPhotoLoadCount] = useState(0)
   const [currentThumb, setCurrentThumb] = useState<string | null>(null)
+  const [videos, setVideos] = useState<DriveItem[]>([])
+  const [videoLoading, setVideoLoading] = useState(false)
 
   // Voorkomt dat pagina's van een oude mapkeuze binnenkomen terwijl de gebruiker
   // al een andere map heeft geselecteerd (race condition bij snelle navigatie).
@@ -134,6 +137,7 @@ export default function App() {
       setBlocked(false)
       setSelectedFolder(null)
       setLoadedPhotos([])
+      setVideos([])
       setCurrentThumb(null)
       setScreen('browse')
     })
@@ -187,6 +191,26 @@ export default function App() {
     setFullyLoaded(true)
   }
 
+  const handleStartVideo = async () => {
+    if (!selectedFolder || !account) return
+    setScreen('video')
+    setVideos([])
+    setVideoLoading(true)
+    logInfo(`Video's zoeken in "${selectedFolder.name}"`, { id: selectedFolder.id })
+    const all: DriveItem[] = []
+    try {
+      await getFolderVideos(msalInstance, account, selectedFolder.id, (page) => {
+        all.push(...page)
+        setVideos([...all])
+      })
+      logInfo(`Video's gevonden: ${all.length} in "${selectedFolder.name}"`)
+    } catch (e) {
+      logError(`Video's laden mislukt: "${selectedFolder.name}"`, e)
+    } finally {
+      setVideoLoading(false)
+    }
+  }
+
   if (initializing) {
     return (
       <div className="min-h-screen bg-fluent-bg-primary flex items-center justify-center">
@@ -219,7 +243,7 @@ export default function App() {
     return <LandingPage onLogin={handleLogin} />
   }
 
-  const currentStep = (currentFolderId || screen === 'smart-sort') ? 3
+  const currentStep = (currentFolderId || screen === 'smart-sort' || screen === 'video') ? 3
                     : (screen === 'organize' || screen === 'loading') ? 2
                     : 1
 
@@ -344,12 +368,31 @@ export default function App() {
             onResult={(r) => { smartSortCache.current = { folderId: selectedFolder.id, result: r } }}
             onBack={() => setScreen('organize')}
           />
+        ) : screen === 'video' && selectedFolder ? (
+          videoLoading ? (
+            <div className="h-full flex flex-col items-center justify-center gap-4 bg-fluent-bg-secondary px-6 text-center">
+              <div className="w-7 h-7 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin" />
+              <p className="text-fluent-text-secondary text-sm">
+                Video's zoeken in "{selectedFolder.name}"…{videos.length > 0 && ` ${videos.length} gevonden`}
+              </p>
+            </div>
+          ) : (
+            <VideoTriageView
+              msalInstance={msalInstance}
+              account={account}
+              folderName={selectedFolder.name}
+              initialVideos={videos}
+              sourceFolderId={selectedFolder.id}
+              onBack={() => setScreen('organize')}
+            />
+          )
         ) : screen === 'organize' && selectedFolder ? (
           <OrganizeHome
             folder={selectedFolder}
             photoCount={loadedPhotos.length}
             onManual={handleStartManual}
             onSmartSort={() => setScreen('smart-sort')}
+            onVideo={handleStartVideo}
             onChangeFolder={() => setScreen('browse')}
           />
         ) : (

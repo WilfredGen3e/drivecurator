@@ -6,14 +6,6 @@ de projectinstructies.
 
 ## 🔨 Openstaande features
 
-### Video-support (T9)
-Gepland, nog niet gestart. Volledig plan ligt klaar:
-- 3e kaart "Video's opruimen" in OrganizeHome (naast Handmatig / Slim sorteren).
-- Eigen `VideoTriageView` met `<video>`-afspeler i.p.v. een foto.
-- Datalaag: `getFolderContents` verzamelt ook video's; `getItemDownloadUrl()`
-  voor de afspeel-URL (on-demand per video).
-- Stappen A–E: datalaag → modus-keuze → component → routing → verifiëren.
-
 ### App als PWA aanbieden
 De app installeerbaar maken als PWA. **Eerst uitzoeken wat er nodig is**: web app
 manifest (naam, iconen, theme/display), service worker (caching-strategie,
@@ -38,6 +30,13 @@ screenshot-harness hierboven.
 - **Camera-album-vastloper** — eenmalig gebleken, niet verder onderzoeken.
 
 ## ✅ Recent afgerond
+- **Video-support (T9)**: 3e kaart "Video's opruimen" in OrganizeHome → eigen
+  `VideoTriageView` met `<video controls>`-speler (bron on-demand via
+  `getItemDownloadUrl`, thumbnail als poster). Datalaag: `getFolderVideos` +
+  gedeelde `streamFolderItems`-paginering, `video`-facet op `DriveItem`.
+  Bewust géén swipe (botst met afspeelbediening) en géén "vind vergelijkbare".
+  Verwijderen/verplaatsen/undo/presets identiek aan de foto-triage.
+  ⏳ Nog handmatig te testen op desktop + mobiel met echte OneDrive-video's.
 - **Logging uitgebreid (dekking + filterbaar)**: `logService` kreeg een `scope`
   (app/auth/triage/smartsort/similar/paywall/graph) + optioneel `durationMs`, met
   een `createLogger(scope)`-factory; het Logboek (`LogView`) kreeg scope-filterchips

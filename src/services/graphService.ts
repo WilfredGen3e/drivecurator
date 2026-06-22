@@ -9,6 +9,7 @@ export interface DriveItem {
   folder?: object
   file?: { mimeType: string }
   photo?: { takenDateTime?: string; cameraMake?: string; cameraModel?: string }
+  video?: { duration?: number; width?: number; height?: number; bitrate?: number }
   fileSystemInfo?: { createdDateTime?: string; lastModifiedDateTime?: string }
   thumbnails?: { medium?: { url: string }; large?: { url: string } }[]
   location?: { latitude: number; longitude: number; altitude?: number }
@@ -96,25 +97,72 @@ export async function getSubFolders(
   return data.value.filter((item) => item.folder)
 }
 
-export async function getFolderContents(
+// Pagineert door een map (200 items per pagina, volgt @odata.nextLink) en levert
+// per pagina de items die aan `predicate` voldoen. Gedeelde basis voor het
+// ophalen van foto's én video's, zodat de lus niet gedupliceerd wordt.
+async function streamFolderItems(
   msalInstance: PublicClientApplication,
   account: AccountInfo,
   folderId: string,
-  onPage: (photos: DriveItem[], isFirst: boolean) => void,
+  selectFields: string,
+  predicate: (item: DriveItem) => boolean,
+  onPage: (items: DriveItem[], isFirst: boolean) => void,
 ): Promise<void> {
   let url: string | undefined =
-    `/me/drive/items/${folderId}/children?$expand=thumbnails&$select=id,name,size,file,folder,photo,fileSystemInfo,thumbnails,location&$top=200`
+    `/me/drive/items/${folderId}/children?$expand=thumbnails&$select=${selectFields}&$top=200`
   let isFirst = true
 
   while (url) {
     const data: { value: DriveItem[]; '@odata.nextLink'?: string } = await graphFetch(
       msalInstance, account, url,
     )
-    const photos = data.value.filter((item: DriveItem) => item.file?.mimeType.startsWith('image/'))
-    onPage(photos, isFirst)
+    onPage(data.value.filter(predicate), isFirst)
     isFirst = false
     url = data['@odata.nextLink']
   }
+}
+
+export async function getFolderContents(
+  msalInstance: PublicClientApplication,
+  account: AccountInfo,
+  folderId: string,
+  onPage: (photos: DriveItem[], isFirst: boolean) => void,
+): Promise<void> {
+  await streamFolderItems(
+    msalInstance, account, folderId,
+    'id,name,size,file,folder,photo,fileSystemInfo,thumbnails,location',
+    (item) => !!item.file?.mimeType.startsWith('image/'),
+    onPage,
+  )
+}
+
+export async function getFolderVideos(
+  msalInstance: PublicClientApplication,
+  account: AccountInfo,
+  folderId: string,
+  onPage: (videos: DriveItem[], isFirst: boolean) => void,
+): Promise<void> {
+  await streamFolderItems(
+    msalInstance, account, folderId,
+    'id,name,size,file,folder,video,fileSystemInfo,thumbnails,location',
+    (item) => !!item.file?.mimeType.startsWith('video/'),
+    onPage,
+  )
+}
+
+// Haalt de tijdelijke, voor-geauthenticeerde download-URL op voor één item.
+// Voor video gebruiken we deze als afspeel-bron (on-demand, niet vooraf laden).
+export async function getItemDownloadUrl(
+  msalInstance: PublicClientApplication,
+  account: AccountInfo,
+  itemId: string,
+): Promise<string | null> {
+  try {
+    const data = await graphFetch<{ '@microsoft.graph.downloadUrl'?: string }>(
+      msalInstance, account, `/me/drive/items/${itemId}?$select=id,@microsoft.graph.downloadUrl`,
+    )
+    return data['@microsoft.graph.downloadUrl'] ?? null
+  } catch { return null }
 }
 
 export async function getItemThumbnails(

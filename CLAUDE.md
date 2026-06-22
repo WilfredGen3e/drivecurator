@@ -5,6 +5,7 @@ DriveCurator is een Azure Static Web App waarmee gebruikers snel en efficiënt h
 
 - **Handmatig organiseren** — foto's één voor één beoordelen via swipe-interface, verwijderen of verplaatsen naar map
 - **Slim sorteren** — de app analyseert alle foto's automatisch en groepeert ze in categorieën (locatie/vakantie, schermafbeeldingen, WhatsApp, maandelijks, burst-reeksen, duplicaten); hele groepen in één keer verplaatsen
+- **Video's opruimen** — video's één voor één bekijken in een `<video>`-speler, verwijderen of verplaatsen naar map
 
 ## Doelplatform — mobiel én desktop
 DriveCurator wordt op **zowel mobiel/touch (iPhone, iPad) als desktop** gebruikt;
@@ -254,6 +255,7 @@ drivecurator/
 │   │   ├── FolderSidebar.tsx          — sidebar: mappen + verplaats-knop
 │   │   ├── PhotoStackLoader.tsx       — laad-animatie (fotostapel)
 │   │   ├── TriageView.tsx             — handmatige triage: foto voor foto
+│   │   ├── VideoTriageView.tsx        — video-triage: <video>-speler, on-demand afspeel-URL (geen swipe/vind-vergelijkbare)
 │   │   ├── SmartSortView.tsx          — slim sorteren: analyse + categorie-dashboard
 │   │   ├── ClusterGridView.tsx        — bulk-grid binnen één cluster
 │   │   ├── ClusterTriageView.tsx      — triage binnen één cluster (swipe + knoppen)
@@ -281,6 +283,7 @@ drivecurator/
 ```
 LandingPage → LoginScreen → OrganizeHome
                                 ├── Handmatig → FolderBrowser → TriageView
+                                ├── Video's opruimen → [getFolderVideos] → VideoTriageView
                                 └── Slim sorteren → SmartSortView
                                                         ├── FolderBrowser (mapkeuze)
                                                         ├── [analyse + geocoding]
@@ -440,8 +443,14 @@ npm run dev
 - **Grid-modus per map + bulk-selectie (G1-G3)** — descoped 2026-06-19. Triage +
   Slim sorteren dekken de behoefte; zie PRD §4.4. Niet oppakken tenzij expliciet gevraagd.
 
-### 🔒 Fase 3 — Nog niet bouwen
-- Video support (T9)
+### ✅ Fase 3 — Video-support (gebouwd)
+- [x] T9 — Derde modus "Video's opruimen" in OrganizeHome
+- [x] VideoTriageView — `<video controls>`-speler, afspeel-URL on-demand via `getItemDownloadUrl`
+- [x] Datalaag — `getFolderVideos` + gedeelde `streamFolderItems`-paginering; `video`-facet op `DriveItem`
+- [x] Verwijderen / verplaatsen / undo / preset-mappen (hergebruik foto-triage-patroon)
+- Bewust géén swipe (botst met afspeelbediening), géén "vind vergelijkbare" (foto-vingerafdruk)
+
+### 🔒 Nog niet bouwen
 - Google Photos integratie, AI-suggesties
 
 ---
