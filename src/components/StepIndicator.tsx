@@ -5,35 +5,50 @@ interface Props {
 }
 
 export default function StepIndicator({ current }: Props) {
-  return (
-    <div className="flex items-center px-6 py-2.5 border-b border-fluent-border bg-fluent-bg-secondary flex-shrink-0">
-      {STEPS.map((label, i) => {
-        const stepNum = i + 1
-        const done = stepNum < current
-        const active = stepNum === current
+  const activeLabel = STEPS[Math.min(current, STEPS.length) - 1]
 
-        return (
-          <div key={i} className="flex items-center">
-            {i > 0 && (
-              <div className={`w-8 h-px mx-3 flex-shrink-0 ${done ? 'bg-fluent-accent' : 'bg-fluent-border-strong'}`} />
-            )}
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <div className={`w-5 h-5 flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
-                done || active ? 'bg-fluent-accent text-white' : 'border border-fluent-border-strong text-fluent-text-disabled'
-              }`} style={{ borderRadius: '50%' }}>
-                {done ? <CheckIcon /> : stepNum}
+  return (
+    <div className="border-b border-fluent-border bg-fluent-bg-secondary flex-shrink-0">
+
+      {/* Mobiel/tablet (iPhone, iPad) — alleen de huidige stap */}
+      <div className="flex lg:hidden items-center gap-2.5 px-5 py-2.5">
+        <div className="w-6 h-6 rounded-full bg-fluent-accent text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+          {current}
+        </div>
+        <span className="text-sm font-semibold text-fluent-text-primary flex-1 truncate">{activeLabel}</span>
+        <span className="text-xs text-fluent-text-disabled flex-shrink-0 tabular-nums">Stap {current} van {STEPS.length}</span>
+      </div>
+
+      {/* Desktop — volledige stappenbalk */}
+      <div className="hidden lg:flex items-center px-6 py-2.5">
+        {STEPS.map((label, i) => {
+          const stepNum = i + 1
+          const done = stepNum < current
+          const active = stepNum === current
+
+          return (
+            <div key={i} className="flex items-center">
+              {i > 0 && (
+                <div className={`w-8 h-px mx-3 flex-shrink-0 ${done ? 'bg-fluent-accent' : 'bg-fluent-border-strong'}`} />
+              )}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
+                  done || active ? 'bg-fluent-accent text-white' : 'border border-fluent-border-strong text-fluent-text-disabled'
+                }`}>
+                  {done ? <CheckIcon /> : stepNum}
+                </div>
+                <span className={`text-sm ${
+                  active ? 'font-semibold text-fluent-text-primary' :
+                  done ? 'text-fluent-text-secondary' :
+                  'text-fluent-text-disabled'
+                }`}>
+                  {label}
+                </span>
               </div>
-              <span className={`text-sm ${
-                active ? 'font-semibold text-fluent-text-primary' :
-                done ? 'text-fluent-text-secondary' :
-                'text-fluent-text-disabled'
-              }`}>
-                {label}
-              </span>
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
