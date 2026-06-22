@@ -6,6 +6,14 @@ DriveCurator is een Azure Static Web App waarmee gebruikers snel en efficiënt h
 - **Handmatig organiseren** — foto's één voor één beoordelen via swipe-interface, verwijderen of verplaatsen naar map
 - **Slim sorteren** — de app analyseert alle foto's automatisch en groepeert ze in categorieën (locatie/vakantie, schermafbeeldingen, WhatsApp, maandelijks, burst-reeksen, duplicaten); hele groepen in één keer verplaatsen
 
+## Doelplatform — mobiel én desktop
+DriveCurator wordt op **zowel mobiel/touch (iPhone, iPad) als desktop** gebruikt;
+beide zijn volwaardig ondersteund. Het verschil zit in de **weergave**: op mobiel
+krijgen sommige onderdelen een aangepaste, compactere layout. Test UI-wijzigingen
+dus op beide. Concreet schakelt de shell onder `lg` (1024px) naar compacte varianten:
+header-acties (naam · Beheer · Uitloggen) in een avatar-menu, en de stappenbalk toont
+dan alleen de huidige stap. Triage heeft een aparte touch-layout (zie `useIsTouch`).
+
 ## Repo & Deployment
 - **GitHub repo:** `https://github.com/WilfredGen3e/drivecurator`
 - **Lokaal:** `/Users/stefan/git/drivecurator`
@@ -134,9 +142,13 @@ import Button from './ui/Button'
 ```
 
 Varianten: `primary` (gevuld accent) · `secondary` (getinte vulling) ·
-`neutral` (grijze vulling) · `destructive` (gevuld rood) · `ghost` (alleen tekst).
+`neutral` (grijze vulling) · `success` (gevuld groen, bewaren/volgende) ·
+`destructive` (gevuld rood) · `ghost` (alleen tekst).
 Alle knoppen: min. **44px** tikdoel (iOS), `rounded-xl`, subtiele `active:scale`
-indruk-animatie. Op mobiel hoofdacties bij voorkeur `fullWidth`.
+indruk-animatie. Op mobiel hoofdacties bij voorkeur `fullWidth` of `flex-1`.
+
+In de triage-actiebalk komen de kleuren overeen met de swipe-richtingen:
+**Verwijder = `destructive`**, **Verplaats = `primary`**, **Volgende = `success`**.
 
 ### Wat te vermijden
 - ❌ Geen losse knop-classes meer — alles via `<Button>`.
@@ -226,18 +238,27 @@ drivecurator/
 │   ├── store/
 │   │   └── useAppStore.ts             — Zustand global state
 │   ├── hooks/
-│   │   └── useIsTouch.ts              — detecteert touch-apparaat
+│   │   ├── useIsTouch.ts              — detecteert touch-apparaat
+│   │   └── useFindSimilar.ts          — gedeelde "vind vergelijkbare"-logica
 │   ├── components/
-│   │   ├── LandingPage.tsx            — startpagina vóór login (vervangt het oude LoginScreen)
-│   │   ├── BlockedScreen.tsx          — paywall / geblokkeerd scherm
+│   │   ├── ui/
+│   │   │   └── Button.tsx             — centrale Apple-stijl knop (altijd gebruiken)
+│   │   ├── LandingPage.tsx            — publieke startpagina (lichte Apple-look)
+│   │   ├── BlockedScreen.tsx          — geblokkeerd scherm
 │   │   ├── PaywallModal.tsx           — upgrade-modal bij limietbereik
 │   │   ├── AdminPortal.tsx            — beheerdersinzicht (alleen admin-account)
+│   │   ├── LogView.tsx                — client-side logboek (in beheerportal)
+│   │   ├── StepIndicator.tsx          — stappenbalk (mobiel: alleen huidige stap)
 │   │   ├── OrganizeHome.tsx           — keuze tussen handmatig en slim sorteren
 │   │   ├── FolderBrowser.tsx          — mapnavigatie vóór triage/analyse
 │   │   ├── FolderSidebar.tsx          — sidebar: mappen + verplaats-knop
+│   │   ├── PhotoStackLoader.tsx       — laad-animatie (fotostapel)
 │   │   ├── TriageView.tsx             — handmatige triage: foto voor foto
 │   │   ├── SmartSortView.tsx          — slim sorteren: analyse + categorie-dashboard
+│   │   ├── ClusterGridView.tsx        — bulk-grid binnen één cluster
 │   │   ├── ClusterTriageView.tsx      — triage binnen één cluster (swipe + knoppen)
+│   │   ├── SimilarPhotosSheet.tsx     — sheet met gevonden vergelijkbare foto's
+│   │   ├── findSimilarUI.tsx          — gedeelde UI voor "vind vergelijkbare"
 │   │   └── UndoToast.tsx              — undo-notificatie
 │   ├── App.tsx                        — root component, routing tussen schermen
 │   ├── main.tsx
@@ -283,11 +304,16 @@ LandingPage → LoginScreen → OrganizeHome
 - "Start in [map]" → `getFolderContents()` met lazy loading:
   - Eerste 200 foto's → direct triage starten
   - Rest → `appendPhotos()` op de achtergrond
-- TriageView: foto voor foto, sidebar links + foto rechts
+- TriageView heeft twee layouts (via `useIsTouch`):
+  - **Touch (iPhone/iPad, de standaard):** foto vult het scherm, daaronder één
+    bedieningspaneel met 3 grote acties — **Verwijder** (rood) · **Verplaats**
+    (blauw) · **Volgende** (groen) — plus twee grijze pillen (Ongedaan · Vorige)
+    en een compacte "Vind vergelijkbare". Doelmappen verschijnen via een bottom-sheet.
+  - **Desktop:** foto rechts, mappen-sidebar links — volwaardige eigen layout.
   - `large` thumbnail (800×800px), fallback naar `medium`
   - Metadata: bestandsnaam, datum (EXIF of aanmaakdatum), camera, bestandsgrootte
-  - Knoppen: ← Vorige | 🗑 Verwijderen | → Volgende | map-selector in sidebar
-  - Touch: swipe links = verwijderen, swipe rechts = volgende, swipe omhoog = verplaatsen
+  - Touch-gebaren: swipe links = verwijderen, swipe rechts = volgende, swipe omhoog = verplaatsen
+  - Verwijder-/Volgende-/Verplaats-kleuren komen overeen met de swipe-richtingen
   - Verwijderen → OneDrive prullenbak (niet permanent)
   - Undo verplaatsen werkt; undo verwijderen is niet mogelijk via API
 
