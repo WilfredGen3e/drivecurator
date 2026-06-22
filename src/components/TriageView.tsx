@@ -11,7 +11,11 @@ import SimilarPhotosSheet from './SimilarPhotosSheet'
 import { SimilarControls, ScanOverlay, NoMatchBanner } from './findSimilarUI'
 import { useFindSimilar } from '../hooks/useFindSimilar'
 import { useIsTouch } from '../hooks/useIsTouch'
+import { createLogger } from '../services/logService'
 import Button from './ui/Button'
+
+const log = createLogger('triage')
+const paywallLog = createLogger('paywall')
 
 const MONTHS = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
 const SWIPE_HINT = 30
@@ -162,10 +166,14 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       return true
     } catch (e) {
       if (e instanceof FreeLimitReachedError) {
+        paywallLog.warn(
+          `Gratis limiet bereikt: ${e.userProfile.photosTriaged}/${e.userProfile.freeTierLimit} foto's`,
+        )
         setCurrentUser(e.userProfile)
         setShowPaywall(true)
         return false
       }
+      paywallLog.error('Usage-teller bijwerken mislukt', e)
       return true
     }
   }
@@ -184,7 +192,11 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       await deleteItem(msalInstance, account, photo.id)
       pushUndo({ type: 'delete', item: photo, previousFolderId: currentFolderId! })
       removePhotoById(photo.id)
+      log.info(`Verwijderd: "${photo.name}"`, { id: photo.id, map: currentFolderName })
       showToast(`"${photo.name}" verwijderd`)
+    } catch (e) {
+      log.error(`Verwijderen mislukt: "${photo.name}"`, e)
+      throw e
     } finally { setBusy(false) }
   }
 
@@ -210,7 +222,11 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       if (breadcrumb !== undefined) setLastFolderBreadcrumb(breadcrumb)
       addToPresets({ id: targetFolder.id, name: targetFolder.name })
       setPresets(loadPresets())
+      log.info(`Verplaatst: "${photo.name}" → "${targetFolder.name}"`, { id: photo.id })
       showToast(`Verplaatst naar "${targetFolder.name}"`)
+    } catch (e) {
+      log.error(`Verplaatsen mislukt: "${photo.name}" → "${targetFolder.name}"`, e)
+      throw e
     } finally { setBusy(false) }
   }
 
@@ -226,10 +242,15 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
     try {
       if (action.type === 'move') {
         await moveItem(msalInstance, account, action.item.id, action.previousFolderId)
+        log.info(`Verplaatsing ongedaan: "${action.item.name}"`, { id: action.item.id })
         showToast('Verplaatsing ongedaan gemaakt')
       } else {
+        log.info(`Undo verwijderen niet mogelijk via API: "${action.item.name}"`)
         showToast("Verwijderde foto's staan in de OneDrive prullenbak")
       }
+    } catch (e) {
+      log.error('Ongedaan maken mislukt', e)
+      throw e
     } finally { setBusy(false) }
   }
 

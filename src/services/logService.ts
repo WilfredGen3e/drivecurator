@@ -4,12 +4,35 @@
 
 export type LogLevel = 'info' | 'warn' | 'error'
 
+// Categorie waaronder een regel valt — maakt het logboek filterbaar en regels
+// herleidbaar naar het onderdeel waar ze vandaan komen.
+export type LogScope =
+  | 'app' // algemeen / opstarten / map laden
+  | 'auth' // inloggen, uitloggen, registratie
+  | 'triage' // handmatige triage: verwijderen/verplaatsen/undo
+  | 'smartsort' // Slim sorteren: analyse, geocoding, bulk-acties
+  | 'similar' // Vind vergelijkbare
+  | 'paywall' // gratis limiet / paywall
+  | 'graph' // Microsoft Graph API-calls
+
+export const LOG_SCOPES: LogScope[] = [
+  'app',
+  'auth',
+  'triage',
+  'smartsort',
+  'similar',
+  'paywall',
+  'graph',
+]
+
 export interface LogEntry {
   id: number
   ts: number // epoch ms
   level: LogLevel
+  scope: LogScope
   msg: string
   data?: string // geserialiseerde extra info
+  durationMs?: number // optionele duur voor prestatie-metingen
 }
 
 const STORAGE_KEY = 'drivecurator_logs'
@@ -18,7 +41,10 @@ const MAX_ENTRIES = 500
 function load(): LogEntry[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as LogEntry[]) : []
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as LogEntry[]
+    // Regels van vóór het scope-veld een standaardcategorie geven.
+    return parsed.map(e => ({ ...e, scope: e.scope ?? 'app' }))
   } catch {
     return []
   }
@@ -51,17 +77,48 @@ function serialize(data: unknown): string | undefined {
   }
 }
 
-export function log(level: LogLevel, msg: string, data?: unknown) {
-  const entry: LogEntry = { id: nextId++, ts: Date.now(), level, msg, data: serialize(data) }
+export function log(
+  level: LogLevel,
+  scope: LogScope,
+  msg: string,
+  data?: unknown,
+  durationMs?: number,
+) {
+  const entry: LogEntry = {
+    id: nextId++,
+    ts: Date.now(),
+    level,
+    scope,
+    msg,
+    data: serialize(data),
+    durationMs,
+  }
   entries.push(entry)
   if (entries.length > MAX_ENTRIES) entries = entries.slice(-MAX_ENTRIES)
   persist()
   emit()
 }
 
-export const logInfo = (msg: string, data?: unknown) => log('info', msg, data)
-export const logWarn = (msg: string, data?: unknown) => log('warn', msg, data)
-export const logError = (msg: string, data?: unknown) => log('error', msg, data)
+// Scoped logger: roep eenmalig `createLogger('triage')` aan en gebruik daarna
+// `log.info(...)` / `log.warn(...)` / `log.error(...)` zonder de scope te herhalen.
+export interface ScopedLogger {
+  info: (msg: string, data?: unknown, durationMs?: number) => void
+  warn: (msg: string, data?: unknown, durationMs?: number) => void
+  error: (msg: string, data?: unknown, durationMs?: number) => void
+}
+
+export function createLogger(scope: LogScope): ScopedLogger {
+  return {
+    info: (msg, data, durationMs) => log('info', scope, msg, data, durationMs),
+    warn: (msg, data, durationMs) => log('warn', scope, msg, data, durationMs),
+    error: (msg, data, durationMs) => log('error', scope, msg, data, durationMs),
+  }
+}
+
+// Achterwaarts compatibel: bestaande aanroepen loggen onder scope 'app'.
+export const logInfo = (msg: string, data?: unknown) => log('info', 'app', msg, data)
+export const logWarn = (msg: string, data?: unknown) => log('warn', 'app', msg, data)
+export const logError = (msg: string, data?: unknown) => log('error', 'app', msg, data)
 
 export function getLogs(): LogEntry[] {
   return entries
@@ -88,9 +145,9 @@ export function installGlobalErrorLogging() {
   if (installed) return
   installed = true
   window.addEventListener('error', e => {
-    logError('Ongevangen fout', e.message || serialize(e.error))
+    log('error', 'app', 'Ongevangen fout', e.message || serialize(e.error))
   })
   window.addEventListener('unhandledrejection', e => {
-    logError('Ongevangen promise-rejection', serialize(e.reason))
+    log('error', 'app', 'Ongevangen promise-rejection', serialize(e.reason))
   })
 }

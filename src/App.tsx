@@ -14,7 +14,9 @@ import { useAppStore } from './store/useAppStore'
 import { registerUser, AccountBlockedError } from './services/apiService'
 import { getFolderContents, DriveItem } from './services/graphService'
 import { AnalysisResult } from './services/analysisService'
-import { installGlobalErrorLogging, logInfo, logWarn, logError } from './services/logService'
+import { installGlobalErrorLogging, logInfo, logWarn, logError, createLogger } from './services/logService'
+
+const authLog = createLogger('auth')
 
 const msalInstance = new PublicClientApplication(msalConfig)
 
@@ -85,9 +87,17 @@ export default function App() {
     try {
       const user = await registerUser(msalInstance, acc)
       setCurrentUser(user)
+      authLog.info(`Geregistreerd/ingelogd: ${user.email}`, {
+        premium: user.isPremium,
+        admin: user.isAdmin,
+        getrieerd: user.photosTriaged,
+      })
     } catch (e) {
       if (e instanceof AccountBlockedError) {
+        authLog.warn(`Account geblokkeerd: ${acc.username}`)
         setBlocked(true)
+      } else {
+        authLog.error('Registratie mislukt', e)
       }
     }
   }
@@ -113,7 +123,9 @@ export default function App() {
   }, [])
 
   const handleLogout = () => {
+    authLog.info('Uitloggen gestart')
     msalInstance.logoutPopup().then(() => {
+      authLog.info('Uitgelogd')
       clearSession()
       setAccount(null)
       setCurrentUser(null)
@@ -188,12 +200,18 @@ export default function App() {
   }
 
   const handleLogin = async () => {
-    const { loginRequest } = await import('./auth/msalConfig')
-    const result = await msalInstance.loginPopup(loginRequest)
-    if (result?.account) {
-      setAccount(result.account)
-      setShowApp(true)
-      await handleRegistration(result.account)
+    authLog.info('Inloggen gestart')
+    try {
+      const { loginRequest } = await import('./auth/msalConfig')
+      const result = await msalInstance.loginPopup(loginRequest)
+      if (result?.account) {
+        authLog.info(`Ingelogd: ${result.account.username}`)
+        setAccount(result.account)
+        setShowApp(true)
+        await handleRegistration(result.account)
+      }
+    } catch (e) {
+      authLog.warn('Inloggen afgebroken of mislukt', e)
     }
   }
 

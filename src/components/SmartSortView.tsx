@@ -7,8 +7,11 @@ import FolderSidebar, { Crumb } from './FolderSidebar'
 import ClusterTriageView from './ClusterTriageView'
 import ClusterGridView from './ClusterGridView'
 import { getPhotoDate } from '../services/clusterService'
+import { createLogger } from '../services/logService'
 import Button from './ui/Button'
 // import { findEventForCluster } from '../services/eventService'  // IJskast: zie eventService.ts
+
+const log = createLogger('smartsort')
 
 interface Props {
   msalInstance: PublicClientApplication
@@ -173,6 +176,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
         })
       } catch (err) {
         console.error("[SmartSort] Foto's ophalen mislukt:", err)
+        log.error("Foto's ophalen mislukt", err)
         setPhase({ name: 'error', message: err instanceof Error ? err.message : String(err) })
         return
       }
@@ -187,6 +191,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
       setPhase({ name: 'dashboard' })
     } catch (err) {
       console.error('[SmartSort] Analyse mislukt:', err)
+      log.error('Analyse mislukt', err)
       setPhase({ name: 'error', message: err instanceof Error ? err.message : String(err) })
     }
   }
@@ -196,19 +201,34 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
     setLastBreadcrumb(breadcrumb)
     setMoveProgress({ clusterId: cluster.id, done: 0, total: cluster.photos.length })
 
+    const startedAt = Date.now()
+    log.info(
+      `Bulk verplaatsen gestart: ${cluster.photos.length} foto's → "${targetFolder.name}"`,
+      { cluster: cluster.label },
+    )
+
     const queue = [...cluster.photos]
     let done = 0
+    let failed = 0
     const worker = async () => {
       while (true) {
         const photo = queue.shift()
         if (!photo) break
-        try { await moveItem(msalInstance, account, photo.id, targetFolder.id) } catch { /* skip */ }
+        try { await moveItem(msalInstance, account, photo.id, targetFolder.id) }
+        catch { failed++ }
         done++
         setMoveProgress(p => p ? { ...p, done } : null)
       }
     }
     await Promise.all(Array.from({ length: 5 }, worker))
     setMoveProgress(null)
+
+    const moved = cluster.photos.length - failed
+    log[failed > 0 ? 'warn' : 'info'](
+      `Bulk verplaatsen klaar: ${moved} verplaatst${failed > 0 ? `, ${failed} mislukt` : ''} → "${targetFolder.name}"`,
+      undefined,
+      Date.now() - startedAt,
+    )
 
     setPhase(prev => {
       if (prev.name !== 'category') return prev
@@ -218,6 +238,10 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
   }
 
   const handleSkip = (clusterId: string) => {
+    if (phase.name === 'category') {
+      const skipped = phase.clusters.find(c => c.id === clusterId)
+      if (skipped) log.info(`Categorie overgeslagen: "${skipped.label}" (${skipped.photos.length} foto's)`)
+    }
     setPhase(prev => prev.name === 'category'
       ? { ...prev, clusters: prev.clusters.filter(c => c.id !== clusterId) }
       : prev,

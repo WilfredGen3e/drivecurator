@@ -6,7 +6,10 @@ import FolderSidebar, { Crumb } from './FolderSidebar'
 import SimilarPhotosSheet from './SimilarPhotosSheet'
 import { SimilarControls, ScanOverlay, NoMatchBanner } from './findSimilarUI'
 import { useFindSimilar } from '../hooks/useFindSimilar'
+import { createLogger } from '../services/logService'
 import Button from './ui/Button'
+
+const log = createLogger('smartsort')
 
 const SWIPE_HINT = 30
 const SWIPE_COMMIT = 160
@@ -113,7 +116,11 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
       await deleteItem(msalInstance, account, photo.id)
       setUndoStack(s => [...s, { type: 'delete', item: photo }])
       removeCurrentPhoto(photo.id)
+      log.info(`Cluster-triage verwijderd: "${photo.name}"`, { id: photo.id })
       showToast(`"${photo.name}" verwijderd`)
+    } catch (e) {
+      log.error(`Cluster-triage verwijderen mislukt: "${photo.name}"`, e)
+      throw e
     } finally { setBusy(false) }
   }
 
@@ -129,7 +136,11 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
       addToPresets({ id: targetFolder.id, name: targetFolder.name })
       setPresets(loadPresets())
       removeCurrentPhoto(photo.id)
+      log.info(`Cluster-triage verplaatst: "${photo.name}" → "${targetFolder.name}"`, { id: photo.id })
       showToast(`Verplaatst naar "${targetFolder.name}"`)
+    } catch (e) {
+      log.error(`Cluster-triage verplaatsen mislukt: "${photo.name}" → "${targetFolder.name}"`, e)
+      throw e
     } finally { setBusy(false) }
   }
 
@@ -142,10 +153,14 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
       if (action.type === 'move' && action.previousFolderId) {
         await moveItem(msalInstance, account, action.item.id, action.previousFolderId)
         setPhotos(p => [...p, action.item])
+        log.info(`Cluster-triage verplaatsing ongedaan: "${action.item.name}"`, { id: action.item.id })
         showToast('Verplaatsing ongedaan gemaakt')
       } else {
         showToast("Verwijderde foto's staan in de OneDrive prullenbak")
       }
+    } catch (e) {
+      log.error('Cluster-triage ongedaan maken mislukt', e)
+      throw e
     } finally { setBusy(false) }
   }
 

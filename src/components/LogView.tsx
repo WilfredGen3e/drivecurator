@@ -1,10 +1,28 @@
 import { useEffect, useState } from 'react'
-import { LogEntry, LogLevel, getLogs, clearLogs, subscribe } from '../services/logService'
+import {
+  LogEntry,
+  LogLevel,
+  LogScope,
+  LOG_SCOPES,
+  getLogs,
+  clearLogs,
+  subscribe,
+} from '../services/logService'
 
 const LEVEL_STYLE: Record<LogLevel, { label: string; color: string }> = {
   info: { label: 'INFO', color: 'var(--color-text-secondary)' },
   warn: { label: 'WARN', color: '#ff9f0a' },
   error: { label: 'FOUT', color: 'var(--color-danger)' },
+}
+
+const SCOPE_LABEL: Record<LogScope, string> = {
+  app: 'App',
+  auth: 'Inloggen',
+  triage: 'Triage',
+  smartsort: 'Slim sorteren',
+  similar: 'Vergelijkbare',
+  paywall: 'Limiet',
+  graph: 'Graph',
 }
 
 function fmtTime(ts: number): string {
@@ -18,7 +36,8 @@ function entriesToText(list: LogEntry[]): string {
     .map(e => {
       const d = new Date(e.ts).toISOString()
       const lvl = LEVEL_STYLE[e.level].label
-      return `[${d}] ${lvl} ${e.msg}${e.data ? ` — ${e.data}` : ''}`
+      const dur = e.durationMs != null ? ` (${e.durationMs}ms)` : ''
+      return `[${d}] ${lvl} [${e.scope}] ${e.msg}${dur}${e.data ? ` — ${e.data}` : ''}`
     })
     .join('\n')
 }
@@ -26,13 +45,22 @@ function entriesToText(list: LogEntry[]): string {
 export default function LogView() {
   const [, setTick] = useState(0)
   const [filter, setFilter] = useState<'all' | 'issues'>('all')
+  const [scope, setScope] = useState<LogScope | 'all'>('all')
   const [copied, setCopied] = useState(false)
 
   // Live mee-updaten als er nieuwe regels bijkomen.
   useEffect(() => subscribe(() => setTick(t => t + 1)), [])
 
   const all = getLogs()
-  const visible = (filter === 'issues' ? all.filter(e => e.level !== 'info') : all).slice().reverse()
+  const visible = all
+    .filter(e => (filter === 'issues' ? e.level !== 'info' : true))
+    .filter(e => (scope === 'all' ? true : e.scope === scope))
+    .slice()
+    .reverse()
+
+  // Alleen scopes tonen die ook echt voorkomen, zodat de filterbalk niet vol
+  // staat met lege categorieën.
+  const presentScopes = LOG_SCOPES.filter(s => all.some(e => e.scope === s))
 
   const copy = async () => {
     try {
@@ -49,7 +77,7 @@ export default function LogView() {
       {/* Werkbalk */}
       <div className="flex items-center justify-between px-6 py-2 border-b border-fluent-border bg-fluent-bg-secondary flex-shrink-0">
         <div className="flex items-center gap-3 text-xs">
-          <span className="text-fluent-text-secondary">{all.length} regels</span>
+          <span className="text-fluent-text-secondary">{visible.length} regels</span>
           <button
             onClick={() => setFilter(f => (f === 'all' ? 'issues' : 'all'))}
             className="text-fluent-accent hover:text-fluent-accent-hover"
@@ -70,6 +98,20 @@ export default function LogView() {
         </div>
       </div>
 
+      {/* Scope-filter */}
+      {presentScopes.length > 0 && (
+        <div className="flex items-center gap-1.5 px-6 py-2 border-b border-fluent-border bg-fluent-bg-secondary flex-shrink-0 overflow-x-auto">
+          <ScopeChip active={scope === 'all'} onClick={() => setScope('all')}>
+            Alles
+          </ScopeChip>
+          {presentScopes.map(s => (
+            <ScopeChip key={s} active={scope === s} onClick={() => setScope(s)}>
+              {SCOPE_LABEL[s]}
+            </ScopeChip>
+          ))}
+        </div>
+      )}
+
       {/* Regels */}
       <div className="flex-1 overflow-auto font-mono text-xs">
         {visible.length === 0 ? (
@@ -84,8 +126,14 @@ export default function LogView() {
               <span className="font-semibold flex-shrink-0 w-9" style={{ color: LEVEL_STYLE[e.level].color }}>
                 {LEVEL_STYLE[e.level].label}
               </span>
+              <span className="text-fluent-text-disabled flex-shrink-0 w-24 truncate" title={SCOPE_LABEL[e.scope]}>
+                {SCOPE_LABEL[e.scope]}
+              </span>
               <span className="text-fluent-text-primary break-words min-w-0">
                 {e.msg}
+                {e.durationMs != null && (
+                  <span className="text-fluent-text-disabled"> ({e.durationMs}ms)</span>
+                )}
                 {e.data && <span className="text-fluent-text-secondary"> — {e.data}</span>}
               </span>
             </div>
@@ -93,5 +141,28 @@ export default function LogView() {
         )}
       </div>
     </div>
+  )
+}
+
+function ScopeChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+        active
+          ? 'bg-fluent-accent text-white'
+          : 'bg-fluent-bg-hover text-fluent-text-secondary hover:text-fluent-text-primary'
+      }`}
+    >
+      {children}
+    </button>
   )
 }

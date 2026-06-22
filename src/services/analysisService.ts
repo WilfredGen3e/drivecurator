@@ -1,5 +1,8 @@
 import { DriveItem } from './graphService'
 import { PhotoCluster, clusterPhotos, geocodeClusters, isScreenshot, getPhotoDate } from './clusterService'
+import { createLogger } from './logService'
+
+const log = createLogger('smartsort')
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -184,6 +187,9 @@ export async function analyzePhotos(
   photos: DriveItem[],
   onGeoProgress?: (done: number, total: number) => void,
 ): Promise<AnalysisResult> {
+  const startedAt = Date.now()
+  log.info(`Analyse gestart: ${photos.length} foto's`)
+
   // 1. Screenshots en WhatsApp/social eruit halen
   const screenshots = photos.filter(p => isScreenshot(p))
   const screenshotIds = new Set(screenshots.map(p => p.id))
@@ -199,7 +205,18 @@ export async function analyzePhotos(
   const otherPhotos = rawClusters.find(c => c.type === 'other')?.photos ?? []
 
   // 3. Geocoding (async — max 1 req/sec via Nominatim)
+  const geoStartedAt = Date.now()
+  if (locationClusters.length > 0) {
+    log.info(`Geocoding gestart: ${locationClusters.length} locatie-clusters (±1/sec)`)
+  }
   const geocodedClusters = await geocodeClusters(locationClusters, onGeoProgress)
+  if (locationClusters.length > 0) {
+    log.info(
+      `Geocoding klaar: ${locationClusters.length} clusters`,
+      undefined,
+      Date.now() - geoStartedAt,
+    )
+  }
 
   // 4. Maandelijkse groepen: camera-foto's zonder GPS
   const cameraWithoutGps = otherPhotos.filter(p => p.photo?.cameraMake)
@@ -217,6 +234,21 @@ export async function analyzePhotos(
 
   // 8. Mogelijk rommel (klein + geen GPS, exclusief screenshots en WhatsApp)
   const potentialJunk = detectPotentialJunk(photos, excludeFromOtherCamera)
+
+  log.info(
+    `Analyse klaar: ${photos.length} foto's`,
+    {
+      locatieClusters: geocodedClusters.length,
+      screenshots: screenshots.length,
+      whatsapp: whatsapp.length,
+      maandgroepen: monthlyGroups.length,
+      bursts: burstSets.length,
+      duplicaten: duplicateSets.length,
+      andereCameras: otherCameraGroups.length,
+      mogelijkRommel: potentialJunk.length,
+    },
+    Date.now() - startedAt,
+  )
 
   return {
     totalPhotos: photos.length,

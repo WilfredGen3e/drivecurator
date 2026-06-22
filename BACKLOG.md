@@ -20,14 +20,6 @@ manifest (naam, iconen, theme/display), service worker (caching-strategie,
 offline-gedrag), installability-criteria, en aandachtspunten rond MSAL-login in
 een PWA en de Azure Static Web App-config. Daarna implementeren.
 
-### Logging uitbreiden
-De logmodule (logService + Logboek-tab) staat er; nu uitbreiden in dekking.
-- **Eerst een plan schrijven: wát willen we allemaal loggen?** Denk aan: triage-
-  acties (verwijderen/verplaatsen/undo), Slim sorteren (analyse-stappen,
-  geocoding, bulk-acties), login/registratie, paywall/limiet, prestaties
-  (laadtijden, aantallen), en niveaus/retentie.
-- Daarna implementeren volgens dat plan.
-
 ### Playwright stap 2 — screenshot-harness
 Niet gestart. App-schermen (Triage/SmartSort) met nepfoto's renderen zónder
 login → echte marketing-screenshots + basis voor UI-tests.
@@ -46,6 +38,14 @@ screenshot-harness hierboven.
 - **Camera-album-vastloper** — eenmalig gebleken, niet verder onderzoeken.
 
 ## ✅ Recent afgerond
+- **Logging uitgebreid (dekking + filterbaar)**: `logService` kreeg een `scope`
+  (app/auth/triage/smartsort/similar/paywall/graph) + optioneel `durationMs`, met
+  een `createLogger(scope)`-factory; het Logboek (`LogView`) kreeg scope-filterchips
+  en een duur-kolom. Aanroepen toegevoegd in: triage (verwijderen/verplaatsen/undo
+  + foutpaden), Slim sorteren (analyse start/eind met aantallen + duur, geocoding-
+  samenvatting, bulk-verplaatsen met succes/mislukt + duur, categorie overslaan,
+  cluster-triage), login/registratie/uitloggen, en paywall (gratis limiet bereikt).
+  Bestaande `logInfo/Warn/Error` blijven werken (scope `app`).
 - **"Vind vergelijkbare" overal**: geëxtraheerd naar de hook `useFindSimilar` +
   gedeelde UI, en toegevoegd aan ClusterTriageView (Slim sorteren).
 - Logmodule + Logboek-tab in het beheervenster.
