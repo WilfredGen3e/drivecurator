@@ -592,21 +592,14 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             <PhotoMeta photo={photo} />
           </div>
 
-          {/* Secundaire acties: ongedaan / vorige links, andere map rechts */}
-          <div className="flex items-center justify-between px-2">
-            <div className="flex items-center">
-              <Button variant="ghost" size="sm" onClick={handleUndo} disabled={busy || undoStack.length === 0} icon={<UndoIcon />}>
-                Ongedaan
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setFilteredIndex(i => Math.max(0, i - 1))} disabled={filteredIndex === 0 || busy} icon={<PrevIcon />}>
-                Vorige
-              </Button>
-            </div>
-            {lastFolder && (
-              <Button variant="ghost" size="sm" onClick={() => setShowFolderSheet(true)}>
-                Andere map…
-              </Button>
-            )}
+          {/* Secundaire acties — twee nette gelijke pillen (duidelijk ondergeschikt aan de 3 grote) */}
+          <div className="flex gap-2 px-3 pt-1">
+            <Button variant="neutral" size="sm" className="flex-1" onClick={handleUndo} disabled={busy || undoStack.length === 0} icon={<UndoIcon />}>
+              Ongedaan
+            </Button>
+            <Button variant="neutral" size="sm" className="flex-1" onClick={() => setFilteredIndex(i => Math.max(0, i - 1))} disabled={filteredIndex === 0 || busy} icon={<PrevIcon />}>
+              Vorige
+            </Button>
           </div>
 
           {/* Preset-mappen als Apple-pillen */}
@@ -646,6 +639,15 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               Volgende
             </Button>
           </div>
+
+          {/* Andere map kiezen (alleen als er een vaste doelmap is) */}
+          {lastFolder && (
+            <div className="px-3 pt-1.5 text-center">
+              <Button variant="ghost" size="sm" onClick={() => setShowFolderSheet(true)}>
+                Andere map kiezen…
+              </Button>
+            </div>
+          )}
 
           {/* Vind vergelijkbare — compact; sliders ingeklapt op mobiel */}
           <div className="px-3 pb-1">

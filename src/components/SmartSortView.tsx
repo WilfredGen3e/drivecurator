@@ -671,6 +671,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                       <Button
                         variant="primary"
                         size="sm"
+                        className="flex-1 min-w-0"
                         onClick={() => setActiveSheet(cluster)}
                         disabled={busy}
                         icon={
@@ -679,11 +680,12 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                           </svg>
                         }
                       >
-                        Verplaatsen naar…
+                        <span className="truncate">Verplaatsen</span>
                       </Button>
                       <Button
                         variant="neutral"
                         size="sm"
+                        className="flex-1 min-w-0"
                         onClick={() => setPhase({ name: 'triage', key: categoryKey, label: categoryLabel, clusters, clusterId: cluster.id })}
                         disabled={busy}
                         icon={
@@ -692,7 +694,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                           </svg>
                         }
                       >
-                        Één voor één
+                        <span className="truncate">Één voor één</span>
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleSkip(cluster.id)} disabled={busy}>
                         Overslaan

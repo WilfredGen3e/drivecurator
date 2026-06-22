@@ -168,23 +168,27 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
 
       {/* Actiebalk */}
       {!busy && (
-        <div className="flex-shrink-0 bg-fluent-bg-primary border-t border-fluent-border px-4 py-3 pb-safe flex items-center gap-2">
-          <Button
-            variant="primary"
-            onClick={() => setShowSheet(true)}
-            icon={<svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>}
-          >
-            {hasSelection ? `Verplaatsen (${selectedIds.size})` : 'Verplaatsen naar…'}
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => setShowDeleteConfirm(true)}
-            icon={<svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
-          >
-            {hasSelection ? `Verwijderen (${selectedIds.size})` : 'Alles verwijderen'}
-          </Button>
+        <div className="flex-shrink-0 bg-fluent-bg-primary border-t border-fluent-border px-4 py-3 pb-safe space-y-2">
+          <div className="flex gap-2">
+            <Button
+              variant="primary"
+              className="flex-1 min-w-0"
+              onClick={() => setShowSheet(true)}
+              icon={<svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>}
+            >
+              <span className="truncate">{hasSelection ? `Verplaatsen (${selectedIds.size})` : 'Verplaatsen'}</span>
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1 min-w-0"
+              onClick={() => setShowDeleteConfirm(true)}
+              icon={<svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
+            >
+              <span className="truncate">{hasSelection ? `Verwijderen (${selectedIds.size})` : 'Verwijderen'}</span>
+            </Button>
+          </div>
           {!hasSelection && (
-            <Button variant="neutral" onClick={onTriage}>
+            <Button variant="neutral" fullWidth onClick={onTriage}>
               Foto voor foto
             </Button>
           )}

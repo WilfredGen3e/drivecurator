@@ -334,15 +334,10 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
             <PhotoMeta photo={photo} />
           </div>
 
-          {/* Secundaire acties */}
-          <div className="flex items-center justify-between px-2">
-            <div className="flex items-center">
-              <Button variant="ghost" size="sm" onClick={handleUndo} disabled={busy || undoStack.length === 0} icon={<UndoIcon />}>Ongedaan</Button>
-              <Button variant="ghost" size="sm" onClick={handlePrev} disabled={index === 0 || busy} icon={<PrevIcon />}>Vorige</Button>
-            </div>
-            {lastFolder && (
-              <Button variant="ghost" size="sm" onClick={() => setShowFolderSheet(true)}>Andere map…</Button>
-            )}
+          {/* Secundaire acties — twee nette gelijke pillen */}
+          <div className="flex gap-2 px-3 pt-1">
+            <Button variant="neutral" size="sm" className="flex-1" onClick={handleUndo} disabled={busy || undoStack.length === 0} icon={<UndoIcon />}>Ongedaan</Button>
+            <Button variant="neutral" size="sm" className="flex-1" onClick={handlePrev} disabled={index === 0 || busy} icon={<PrevIcon />}>Vorige</Button>
           </div>
 
           {/* Preset-mappen als Apple-pillen */}
@@ -376,6 +371,13 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
             </Button>
             <Button variant="success" className="flex-1 min-w-0 flex-col gap-1 !min-h-[60px] !px-2 !text-xs" onClick={handleNext} disabled={index >= total - 1 || busy} icon={<NextIcon />}>Volgende</Button>
           </div>
+
+          {/* Andere map kiezen (alleen als er een vaste doelmap is) */}
+          {lastFolder && (
+            <div className="px-3 pt-1.5 text-center">
+              <Button variant="ghost" size="sm" onClick={() => setShowFolderSheet(true)}>Andere map kiezen…</Button>
+            </div>
+          )}
 
           {/* Vind vergelijkbare — compact */}
           <div className="px-3 pb-1">
