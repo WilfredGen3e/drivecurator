@@ -1,6 +1,12 @@
 {
   "routes": [
     {
+      "route": "/assets/*",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
       "route": "/*",
       "serve": "/index.html",
       "statusCode": 200
@@ -8,7 +14,16 @@
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/favicon.ico"]
+    "exclude": [
+      "/assets/*",
+      "/favicon.ico",
+      "/manifest.webmanifest",
+      "/sw.js",
+      "/registerSW.js",
+      "/workbox-*.js",
+      "/*.png",
+      "/*.svg"
+    ]
   },
   "responseOverrides": {
     "404": {
@@ -23,6 +38,7 @@
     "Referrer-Policy": "strict-origin-when-cross-origin"
   },
   "mimeTypes": {
-    ".json": "application/json"
+    ".json": "application/json",
+    ".webmanifest": "application/manifest+json"
   }
 }

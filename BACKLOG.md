@@ -6,12 +6,6 @@ de projectinstructies.
 
 ## 🔨 Openstaande features
 
-### App als PWA aanbieden
-De app installeerbaar maken als PWA. **Eerst uitzoeken wat er nodig is**: web app
-manifest (naam, iconen, theme/display), service worker (caching-strategie,
-offline-gedrag), installability-criteria, en aandachtspunten rond MSAL-login in
-een PWA en de Azure Static Web App-config. Daarna implementeren.
-
 ### Playwright stap 2 — screenshot-harness
 Niet gestart. App-schermen (Triage/SmartSort) met nepfoto's renderen zónder
 login → echte marketing-screenshots + basis voor UI-tests.
@@ -30,13 +24,23 @@ screenshot-harness hierboven.
 - **Camera-album-vastloper** — eenmalig gebleken, niet verder onderzoeken.
 
 ## ✅ Recent afgerond
+- **PWA (desktop-first, iOS meeliftend)**: `vite-plugin-pwa` (Workbox) genereert
+  manifest + service worker. Folder-glyph-iconen (wit op systemBlue) in `public/`
+  (192/512/maskable/apple-touch-180). SW precacht alleen de app-shell; Graph-API,
+  `/api/*` en thumbnails blijven network-only (`navigateFallbackDenylist`). iOS-meta's
+  + `apple-touch-icon` in `index.html`. `staticwebapp.config.json`: PWA-bestanden
+  uitgesloten van de SPA-rewrite, `.webmanifest`-MIME, assets cachebaar (SW/index
+  `no-store`). `cacheLocation` → `localStorage` (ingelogd blijven). Popup-login
+  bewust ongewijzigd (werkt op desktop-PWA's).
+  ⏳ Nog te doen: deployen + installeren testen op Mac (Chrome/Edge/Safari) en
+  Windows; iOS "Zet op beginscherm" is bonus (login daar nog niet geverifieerd).
 - **Video-support (T9)**: 3e kaart "Video's opruimen" in OrganizeHome → eigen
   `VideoTriageView` met `<video controls>`-speler (bron on-demand via
   `getItemDownloadUrl`, thumbnail als poster). Datalaag: `getFolderVideos` +
   gedeelde `streamFolderItems`-paginering, `video`-facet op `DriveItem`.
   Bewust géén swipe (botst met afspeelbediening) en géén "vind vergelijkbare".
   Verwijderen/verplaatsen/undo/presets identiek aan de foto-triage.
-  ⏳ Nog handmatig te testen op desktop + mobiel met echte OneDrive-video's.
+  ✅ Handmatig getest op desktop + mobiel met echte OneDrive-video's (werkt).
 - **Logging uitgebreid (dekking + filterbaar)**: `logService` kreeg een `scope`
   (app/auth/triage/smartsort/similar/paywall/graph) + optioneel `durationMs`, met
   een `createLogger(scope)`-factory; het Logboek (`LogView`) kreeg scope-filterchips

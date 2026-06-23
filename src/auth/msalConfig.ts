@@ -7,7 +7,9 @@ export const msalConfig: Configuration = {
     redirectUri: window.location.origin,
   },
   cache: {
-    cacheLocation: 'sessionStorage',
+    // localStorage i.p.v. sessionStorage: in een geïnstalleerde PWA wordt
+    // sessionStorage bij afsluiten gewist → anders elke start opnieuw inloggen.
+    cacheLocation: 'localStorage',
     storeAuthStateInCookie: false,
   },
 }

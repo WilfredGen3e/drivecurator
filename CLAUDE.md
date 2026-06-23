@@ -450,6 +450,16 @@ npm run dev
 - [x] Verwijderen / verplaatsen / undo / preset-mappen (hergebruik foto-triage-patroon)
 - Bewust géén swipe (botst met afspeelbediening), géén "vind vergelijkbare" (foto-vingerafdruk)
 
+### ✅ Fase 4 — PWA (gebouwd, desktop-first)
+- [x] `vite-plugin-pwa` (Workbox) — manifest + service worker bij elke build
+- [x] Folder-glyph-iconen in `public/` (192/512/maskable-512/apple-touch-180), wit op systemBlue
+- [x] SW precacht **alleen de app-shell**; Graph-API, `/api/*` en thumbnails network-only (`navigateFallbackDenylist` op `/api/` en `/.auth/`)
+- [x] iOS-meta's + `apple-touch-icon` in `index.html` ("Zet op beginscherm" full-screen)
+- [x] `staticwebapp.config.json` — PWA-bestanden uitgesloten van SPA-rewrite, `.webmanifest`-MIME, assets cachebaar (SW/index `no-store`)
+- [x] `cacheLocation` → `localStorage` (ingelogd blijven tussen sessies)
+- Doel = **desktop (Mac/Windows, Chrome/Edge/Safari)**; iOS lift mee. Popup-login bewust ongewijzigd (werkt op desktop-PWA's; iOS-login pas oplossen indien nodig).
+- ⏳ Vereist deploy (HTTPS) om installatie te testen.
+
 ### 🔒 Nog niet bouwen
 - Google Photos integratie, AI-suggesties
 
