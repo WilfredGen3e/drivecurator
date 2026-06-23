@@ -262,10 +262,18 @@ drivecurator/
 │   │   ├── SimilarPhotosSheet.tsx     — sheet met gevonden vergelijkbare foto's
 │   │   ├── findSimilarUI.tsx          — gedeelde UI voor "vind vergelijkbare"
 │   │   └── UndoToast.tsx              — undo-notificatie
+│   ├── harness/                       — DEV-ONLY screenshot-harness (geen login/Graph)
+│   │   ├── Harness.tsx                — rendert losse schermen met nep-data + fetch-shim voor nep-mappen
+│   │   └── mockData.ts                — nep-foto's, -mappen, -account, -AnalysisResult
 │   ├── App.tsx                        — root component, routing tussen schermen
-│   ├── main.tsx
+│   ├── main.tsx                       — entry; ?harness=<view> in dev → Harness (valt weg in prod-build)
 │   ├── index.css
 │   └── vite-env.d.ts
+├── e2e/
+│   ├── landing.spec.ts                — landing-rooktest + marketing-screenshot
+│   ├── marketing.spec.ts              — harness-screenshots (triage/organize/smartsort/cluster)
+│   ├── mock-photos/                   — demo-foto's, dev-only geserveerd op /mock/* (NIET in dist/)
+│   └── screenshots/                   — output voor de website
 ├── CLAUDE.md
 ├── PRD.md
 ├── .env.example
@@ -403,6 +411,29 @@ cp .env.example .env.local
 npm run dev
 # → http://localhost:5173
 ```
+
+---
+
+## Marketing-screenshots (dev-only harness)
+
+Reproduceerbare schermafbeeldingen voor de website, **zonder login of Graph**.
+
+- **Aanroep in de dev-server:** `?harness=<view>` —
+  `triage` (voeg `&touch=1` toe voor de mobiele layout), `organize`,
+  `smartsort`, `cluster`. Bijv. `http://localhost:5173/?harness=smartsort`.
+- **Genereren:** `npm run screenshots` (Playwright) → `e2e/screenshots/`.
+- **Hoe het werkt:** `src/harness/` rendert losse componenten met nep-data uit
+  `mockData.ts`. Foto's hebben een ingebouwde thumbnail-URL, dus er gaat geen
+  Graph-call uit; een fetch-shim levert nep-mappen aan FolderSidebar.
+- **Demo-foto's** staan in `e2e/mock-photos/` en worden **alleen in de
+  dev-server** geserveerd op `/mock/*` (Vite-plugin `apply: 'serve'`). Bewust
+  níét in `public/`, zodat ze niet in de productiebuild (`dist/`) belanden.
+- **Productie:** de hele harness valt weg via `import.meta.env.DEV` in
+  `main.tsx` — geen nep-auth-achterdeur in de live app. Echte e2e-tests door de
+  loginflow zijn bewust gedescoped (zie `BACKLOG.md`).
+
+> Echte foto's gebruiken? Zet JPEG's in `e2e/mock-photos/` en wijs ernaar in
+> `PHOTO_FILES` (`mockData.ts`).
 
 ---
 

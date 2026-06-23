@@ -150,6 +150,114 @@ const steps = [
   },
 ]
 
+// ── Showcase (echte app-screenshots) ──────────────────────────────────────────
+
+// Browservenster-frame rond een desktop-screenshot — geeft de beelden context
+// en een verzorgde uitstraling.
+function BrowserFrame({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-float border border-fluent-border bg-fluent-bg-primary">
+      <div className="flex items-center gap-2 px-3.5 h-9 border-b border-fluent-border bg-fluent-bg-secondary">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#ff5f57' }} />
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#febc2e' }} />
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#28c840' }} />
+        </div>
+        <div className="mx-auto px-3 py-0.5 rounded-md text-[10px] text-fluent-text-disabled bg-fluent-bg-primary border border-fluent-border">
+          drivecurator.app
+        </div>
+      </div>
+      <img src={src} alt={alt} loading="lazy" className="w-full block" />
+    </div>
+  )
+}
+
+// Telefoon-frame rond de mobiele screenshot.
+function PhoneFrame({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="mx-auto w-[220px] rounded-[2.4rem] p-2 shadow-float" style={{ background: '#1c1c1e' }}>
+      <div className="rounded-[1.9rem] overflow-hidden bg-black">
+        <img src={src} alt={alt} loading="lazy" className="w-full block" />
+      </div>
+    </div>
+  )
+}
+
+const showcaseRows = [
+  {
+    eyebrow: 'Handmatig organiseren',
+    title: 'Eén foto, één beslissing',
+    body: 'Elke foto groot in beeld met datum, camera en grootte. Links weg, rechts bewaren, of verplaats naar een map — met de muis, met sneltoetsen, of met een swipe. Geen checkboxjes, geen gepriegel.',
+    src: '/screenshots/triage-desktop.png',
+    alt: 'DriveCurator triage-scherm: één foto groot in beeld met verwijder- en bewaarknoppen',
+  },
+  {
+    eyebrow: 'Slim sorteren',
+    title: 'De rommel sorteert zichzelf',
+    body: 'De app analyseert je hele map en groepeert automatisch: vakanties op locatie, screenshots, WhatsApp-foto\'s, burst-reeksen en duplicaten — elk met een teller. Verzet een hele categorie in één keer.',
+    src: '/screenshots/smartsort-dashboard.png',
+    alt: 'DriveCurator slim-sorteren-dashboard met categorieën en aantallen',
+  },
+  {
+    eyebrow: 'In één oogopslag',
+    title: 'Hele reeksen tegelijk',
+    body: 'Open een groep en zie alle foto\'s naast elkaar. Bewaar de beste, gooi de rest weg, of verplaats de hele set — zonder eindeloos te scrollen.',
+    src: '/screenshots/smartsort-cluster.png',
+    alt: 'DriveCurator cluster-grid met meerdere foto\'s naast elkaar',
+  },
+]
+
+function Showcase() {
+  return (
+    <section className="border-t border-fluent-border">
+      <div className="max-w-6xl mx-auto px-6 py-24">
+        <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-center text-fluent-accent">
+          Zie het zelf
+        </p>
+        <h2 className="text-3xl font-bold text-center mb-4 tracking-tight">
+          Zo ziet opruimen eruit
+        </h2>
+        <p className="text-base text-center max-w-xl mx-auto mb-16 text-fluent-text-secondary">
+          Geen verrassingen achter de login. Dit is precies wat je krijgt.
+        </p>
+
+        <div className="space-y-20">
+          {showcaseRows.map((row, i) => (
+            <div
+              key={row.title}
+              className={`flex flex-col gap-8 lg:gap-12 items-center ${i % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}
+            >
+              <div className="flex-1 w-full">
+                <BrowserFrame src={row.src} alt={row.alt} />
+              </div>
+              <div className="flex-1 max-w-md">
+                <p className={`${'text-xs font-semibold uppercase tracking-widest text-fluent-accent'} mb-3`}>{row.eyebrow}</p>
+                <h3 className="text-2xl font-bold mb-3 tracking-tight">{row.title}</h3>
+                <p className="text-base leading-relaxed text-fluent-text-secondary">{row.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Mobiel-accent */}
+        <div className="mt-20 rounded-3xl bg-fluent-bg-secondary px-6 py-12">
+          <div className="flex flex-col md:flex-row items-center gap-10 max-w-4xl mx-auto">
+            <PhoneFrame src="/screenshots/triage-mobile.png" alt="DriveCurator op een telefoon, met grote touch-knoppen" />
+            <div className="flex-1 text-center md:text-left">
+              <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-fluent-accent">Ook op je telefoon</p>
+              <h3 className="text-2xl font-bold mb-3 tracking-tight">Opruimen vanaf de bank</h3>
+              <p className="text-base leading-relaxed text-fluent-text-secondary">
+                Op mobiel krijg je een touch-layout met grote knoppen en swipe-gebaren. Installeer DriveCurator als
+                app op je beginscherm en ruim je camerarol op waar en wanneer je wilt.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ── Microsoft login knop ──────────────────────────────────────────────────────
 
 function MsftButton({ onClick, loading }: { onClick: () => void; loading: boolean }) {
@@ -305,6 +413,9 @@ export default function LandingPage({ onLogin }: Props) {
           </p>
         </div>
       </section>
+
+      {/* ── Showcase (echte screenshots) ──────────────────────────────────── */}
+      <Showcase />
 
       {/* ── Features ─────────────────────────────────────────────────────── */}
       <section className="border-t border-fluent-border bg-fluent-bg-secondary">

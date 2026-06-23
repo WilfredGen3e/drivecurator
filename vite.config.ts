@@ -1,7 +1,30 @@
-import { defineConfig } from 'vite'
+import { defineConfig, Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'node:child_process'
+import { createReadStream } from 'node:fs'
+import { extname, join, normalize } from 'node:path'
+
+// Serveert de nep-foto's voor de screenshot-harness op /mock/* — ALLEEN in de
+// dev-server (apply: 'serve'). Ze staan bewust in e2e/mock-photos/ i.p.v.
+// public/, zodat ze niet in de productiebuild (dist/) belanden.
+function mockPhotos(): Plugin {
+  const dir = join(__dirname, 'e2e', 'mock-photos')
+  const types: Record<string, string> = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml' }
+  return {
+    name: 'drivecurator-mock-photos',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/mock', (req, res, next) => {
+        // Pad-traversal blokkeren: alleen een kale bestandsnaam toestaan.
+        const name = normalize(decodeURIComponent((req.url ?? '').split('?')[0])).replace(/^[/\\]+/, '')
+        if (!name || name.includes('/') || name.includes('\\')) return next()
+        res.setHeader('Content-Type', types[extname(name).toLowerCase()] ?? 'application/octet-stream')
+        createReadStream(join(dir, name)).on('error', () => next()).pipe(res)
+      })
+    },
+  }
+}
 
 // Buildnummer als 0.<aantal commits>, zodat in de app zichtbaar is welke versie
 // draait. Op de lokale dev-server komt er "-dev" achter. Vereist volledige
@@ -20,6 +43,7 @@ export default defineConfig(({ command }) => ({
   },
   plugins: [
     react(),
+    mockPhotos(),
     VitePWA({
       registerType: 'autoUpdate',
       // Iconen + statische SVG's staan in public/ en worden zo meegekopieerd.

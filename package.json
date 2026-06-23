@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "screenshots": "playwright test landing"
+    "screenshots": "playwright test landing marketing"
   },
   "dependencies": {
     "@azure/msal-browser": "^3.28.1",

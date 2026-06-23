@@ -3,9 +3,12 @@ import { defineConfig, devices } from '@playwright/test'
 /**
  * Playwright-config voor DriveCurator.
  *
- * Twee doelen:
- *  1. Screenshots voor de website (marketing) — zie e2e/*.spec.ts
- *  2. End-to-end / visuele regressietests
+ * Doel: marketing-screenshots voor de website (zie e2e/*.spec.ts). De
+ * app-schermen komen uit de dev-only harness (?harness=<view>, zie
+ * src/harness/) — geen login of Graph nodig. `npm run screenshots`.
+ *
+ * E2e-tests door de echte loginflow zijn bewust gedescoped (MSAL-popup tegen
+ * echte Microsoft-accounts is niet betrouwbaar te automatiseren) — zie BACKLOG.md.
  *
  * De dev-server (vite) wordt automatisch gestart als die nog niet draait.
  */

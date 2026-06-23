@@ -5,25 +5,31 @@ nieuwe opduiken. Zie `PRD.md` voor de oorspronkelijke scope en `CLAUDE.md` voor
 de projectinstructies.
 
 ## 🔨 Openstaande features
-
-### Playwright stap 2 — screenshot-harness
-Niet gestart. App-schermen (Triage/SmartSort) met nepfoto's renderen zónder
-login → echte marketing-screenshots + basis voor UI-tests.
-
-### e2e-tests (PRD §8.3 / §8.4)
-Alleen een landing-rooktest bestaat. UI- en responsive-tests; leunt op de
-screenshot-harness hierboven.
+- (geen) — Stripe staat in de PRD-roadmap, niet als losse backlog-taak.
 
 ## 🤔 Beslissingen die nog open staan
-- **Standaarddrempels "Vind vergelijkbare"**: huidige `vorm ≤12 / kleur ≥0.78`
-  laten, of iets ruimer (~`16 / 0.73`) zodat randgevallen rond 18/0.73 standaard
-  matchen? Ruimer = meer kans op valse matches.
+- (geen openstaand)
 
 ## ❌ Bewust niet doen
 - **Grid-modus per map (G1–G3)** — gedescoped 2026-06-19, zie PRD §4.4.
 - **Camera-album-vastloper** — eenmalig gebleken, niet verder onderzoeken.
+- **e2e-tests door de echte loginflow** — gedescoped 2026-06-23. MSAL-popup tegen
+  echte Microsoft-accounts is niet betrouwbaar te automatiseren (bot-detectie,
+  2FA, credentials in CI). Reproduceerbare schermen halen we uit de
+  screenshot-harness (zie afgerond) i.p.v. echte e2e.
+- **Standaarddrempels "Vind vergelijkbare"** — besloten 2026-06-23: huidige
+  `vorm ≤12 / kleur ≥0.78` blijven; niet verruimen.
 
 ## ✅ Recent afgerond
+- **Screenshot-harness (marketing)**: dev-only `?harness=<view>` (zie
+  `src/harness/`) rendert losse schermen — Triage (desktop + mobiel/touch),
+  OrganizeHome, Slim sorteren-dashboard en cluster-grid — met nep-data, zónder
+  login of Graph. Foto's met ingebouwde thumbnail-URL → geen netwerk; een
+  dev-only Vite-middleware serveert de demo-foto's uit `e2e/mock-photos/` op
+  `/mock/*` (bewust níét in `public/`, dus niet in de productiebuild). Een
+  fetch-shim in de harness levert nep-mappen aan FolderSidebar. `npm run
+  screenshots` schrijft naar `e2e/screenshots/`. Valt in productie volledig weg
+  (`import.meta.env.DEV` in `main.tsx`).
 - **PWA (desktop-first, iOS meeliftend)**: `vite-plugin-pwa` (Workbox) genereert
   manifest + service worker. Folder-glyph-iconen (wit op systemBlue) in `public/`
   (192/512/maskable/apple-touch-180). SW precacht alleen de app-shell; Graph-API,
