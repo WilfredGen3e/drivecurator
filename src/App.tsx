@@ -12,6 +12,7 @@ import AdminPortal from './components/AdminPortal'
 import StepIndicator from './components/StepIndicator'
 import PhotoStackLoader from './components/PhotoStackLoader'
 import { useAppStore } from './store/useAppStore'
+import { usePwaUpdate } from './hooks/usePwaUpdate'
 import { registerUser, AccountBlockedError } from './services/apiService'
 import { getFolderContents, getFolderVideos, DriveItem } from './services/graphService'
 import { AnalysisResult } from './services/analysisService'
@@ -71,6 +72,9 @@ export default function App() {
   const [currentThumb, setCurrentThumb] = useState<string | null>(null)
   const [videos, setVideos] = useState<DriveItem[]>([])
   const [videoLoading, setVideoLoading] = useState(false)
+
+  // PWA-updates: verstopte update-actie in de app-naam (zie header).
+  const pwa = usePwaUpdate()
 
   // Voorkomt dat pagina's van een oude mapkeuze binnenkomen terwijl de gebruiker
   // al een andere map heeft geselecteerd (race condition bij snelle navigatie).
@@ -250,13 +254,34 @@ export default function App() {
   return (
     <div className="h-screen bg-fluent-bg-primary text-fluent-text-primary flex flex-col">
       <header className="flex items-center justify-between px-4 border-b border-fluent-border bg-fluent-bg-primary flex-shrink-0 h-12">
-        <div className="flex items-center gap-2">
+        <button
+          onClick={() => pwa.needRefresh ? pwa.applyUpdate() : pwa.checkForUpdate()}
+          className="flex items-center gap-2 group rounded-lg px-1 -mx-1 py-1 hover:bg-fluent-bg-hover active:scale-[0.98] transition-all"
+          title={
+            pwa.needRefresh
+              ? 'Nieuwe versie beschikbaar — tik om bij te werken'
+              : pwa.checking
+              ? 'Controleren op updates…'
+              : 'Tik om op updates te controleren'
+          }
+        >
           <svg className="w-5 h-5 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
           </svg>
           <span className="font-semibold text-sm">DriveCurator</span>
-          <span className="text-[10px] text-fluent-text-secondary font-mono" title="Buildnummer">{__BUILD_ID__}</span>
-        </div>
+          <span className="text-[10px] text-fluent-text-secondary font-mono group-hover:text-fluent-text-primary transition-colors">
+            {__BUILD_ID__}
+          </span>
+          {pwa.checking && (
+            <span className="w-3 h-3 border-[1.5px] border-fluent-accent border-t-transparent rounded-full animate-spin" />
+          )}
+          {pwa.needRefresh && !pwa.checking && (
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-fluent-accent">
+              <span className="w-1.5 h-1.5 rounded-full bg-fluent-accent animate-pulse" />
+              bijwerken
+            </span>
+          )}
+        </button>
         {/* Desktop — volledige header (geen ruimtegebrek hier) */}
         <div className="hidden lg:flex items-center gap-3">
           <span className="text-fluent-text-secondary text-sm">{account.name}</span>

@@ -45,7 +45,11 @@ export default defineConfig(({ command }) => ({
     react(),
     mockPhotos(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt': een nieuwe versie staat klaar zonder direct te herladen; de
+      // gebruiker past 'm toe via de verstopte update-actie in de app-naam
+      // (zie usePwaUpdate + App-header). Voorkomt dat een geïnstalleerde PWA op
+      // een oude buildversie blijft hangen.
+      registerType: 'prompt',
       // Iconen + statische SVG's staan in public/ en worden zo meegekopieerd.
       includeAssets: ['apple-touch-icon-180x180.png', 'icon-any.svg'],
       manifest: {
