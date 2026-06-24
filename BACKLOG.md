@@ -38,8 +38,7 @@ de projectinstructies.
   uitgesloten van de SPA-rewrite, `.webmanifest`-MIME, assets cachebaar (SW/index
   `no-store`). `cacheLocation` → `localStorage` (ingelogd blijven). Popup-login
   bewust ongewijzigd (werkt op desktop-PWA's).
-  ⏳ Nog te doen: deployen + installeren testen op Mac (Chrome/Edge/Safari) en
-  Windows; iOS "Zet op beginscherm" is bonus (login daar nog niet geverifieerd).
+  ✅ Geverifieerd: na deploy geïnstalleerd en werkt naar tevredenheid (2026-06-24).
 - **Video-support (T9)**: 3e kaart "Video's opruimen" in OrganizeHome → eigen
   `VideoTriageView` met `<video controls>`-speler (bron on-demand via
   `getItemDownloadUrl`, thumbnail als poster). Datalaag: `getFolderVideos` +

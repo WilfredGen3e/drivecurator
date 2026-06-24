@@ -489,7 +489,7 @@ Reproduceerbare schermafbeeldingen voor de website, **zonder login of Graph**.
 - [x] `staticwebapp.config.json` — PWA-bestanden uitgesloten van SPA-rewrite, `.webmanifest`-MIME, assets cachebaar (SW/index `no-store`)
 - [x] `cacheLocation` → `localStorage` (ingelogd blijven tussen sessies)
 - Doel = **desktop (Mac/Windows, Chrome/Edge/Safari)**; iOS lift mee. Popup-login bewust ongewijzigd (werkt op desktop-PWA's; iOS-login pas oplossen indien nodig).
-- ⏳ Vereist deploy (HTTPS) om installatie te testen.
+- ✅ Geverifieerd: geïnstalleerd na deploy, werkt naar tevredenheid (2026-06-24).
 
 ### 🔒 Nog niet bouwen
 - Google Photos integratie, AI-suggesties
