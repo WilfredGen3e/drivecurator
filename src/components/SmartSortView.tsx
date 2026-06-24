@@ -31,6 +31,15 @@ type Phase =
   | { name: 'grid'; key: string; label: string; clusters: PhotoCluster[]; clusterId: string }
   | { name: 'triage'; key: string; label: string; clusters: PhotoCluster[]; clusterId: string }
 
+// Verplaats-sheet: één pakketje, of meerdere geselecteerde tegelijk
+type MoveSheet =
+  | { kind: 'single'; cluster: PhotoCluster }
+  | { kind: 'many'; clusters: PhotoCluster[] }
+
+// Categorieën waar je meerdere pakketjes mag selecteren en in één keer verplaatsen.
+// Voorlopig alleen burst-reeksen; later eenvoudig uit te breiden.
+const MULTI_SELECT_CATEGORIES = new Set<string>(['bursts'])
+
 function formatDateRange(start?: Date, end?: Date): string {
   if (!start || !end) return ''
   if (start.getTime() === end.getTime())
@@ -147,9 +156,10 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
   const [phase, setPhase] = useState<Phase>({ name: 'initializing', photoCount: 0, geoStep: 0, geoTotal: 0 })
   const [result, setResult] = useState<AnalysisResult | null>(null)
 
-  const [activeSheet, setActiveSheet] = useState<PhotoCluster | null>(null)
-  const [moveProgress, setMoveProgress] = useState<{ clusterId: string; done: number; total: number } | null>(null)
+  const [moveSheet, setMoveSheet] = useState<MoveSheet | null>(null)
+  const [moveProgress, setMoveProgress] = useState<{ clusterId: string | null; done: number; total: number } | null>(null)
   const [lastBreadcrumb, setLastBreadcrumb] = useState<Crumb[]>([])
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const busy = moveProgress !== null
 
@@ -196,18 +206,14 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
     }
   }
 
-  const handleBulkMove = async (cluster: PhotoCluster, targetFolder: DriveItem, breadcrumb: Crumb[]) => {
-    setActiveSheet(null)
-    setLastBreadcrumb(breadcrumb)
-    setMoveProgress({ clusterId: cluster.id, done: 0, total: cluster.photos.length })
-
-    const startedAt = Date.now()
-    log.info(
-      `Bulk verplaatsen gestart: ${cluster.photos.length} foto's → "${targetFolder.name}"`,
-      { cluster: cluster.label },
-    )
-
-    const queue = [...cluster.photos]
+  // Verplaatst een lijst foto's naar één map met 5 parallelle workers. Geeft het
+  // aantal mislukte verplaatsingen terug; rapporteert voortgang via onProgress.
+  const movePhotos = async (
+    photos: DriveItem[],
+    targetFolder: DriveItem,
+    onProgress: (done: number) => void,
+  ): Promise<number> => {
+    const queue = [...photos]
     let done = 0
     let failed = 0
     const worker = async () => {
@@ -217,10 +223,25 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
         try { await moveItem(msalInstance, account, photo.id, targetFolder.id) }
         catch { failed++ }
         done++
-        setMoveProgress(p => p ? { ...p, done } : null)
+        onProgress(done)
       }
     }
     await Promise.all(Array.from({ length: 5 }, worker))
+    return failed
+  }
+
+  const handleBulkMove = async (cluster: PhotoCluster, targetFolder: DriveItem, breadcrumb: Crumb[]) => {
+    setMoveSheet(null)
+    setLastBreadcrumb(breadcrumb)
+    setMoveProgress({ clusterId: cluster.id, done: 0, total: cluster.photos.length })
+
+    const startedAt = Date.now()
+    log.info(
+      `Bulk verplaatsen gestart: ${cluster.photos.length} foto's → "${targetFolder.name}"`,
+      { cluster: cluster.label },
+    )
+
+    const failed = await movePhotos(cluster.photos, targetFolder, done => setMoveProgress(p => p ? { ...p, done } : null))
     setMoveProgress(null)
 
     const moved = cluster.photos.length - failed
@@ -237,6 +258,34 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
     })
   }
 
+  // Verplaatst alle foto's uit meerdere geselecteerde pakketjes naar dezelfde map.
+  const handleBulkMoveMany = async (cls: PhotoCluster[], targetFolder: DriveItem, breadcrumb: Crumb[]) => {
+    setMoveSheet(null)
+    setLastBreadcrumb(breadcrumb)
+    const allPhotos = cls.flatMap(c => c.photos)
+    setMoveProgress({ clusterId: null, done: 0, total: allPhotos.length })
+
+    const startedAt = Date.now()
+    log.info(`Bulk verplaatsen gestart: ${cls.length} pakketjes (${allPhotos.length} foto's) → "${targetFolder.name}"`)
+
+    const failed = await movePhotos(allPhotos, targetFolder, done => setMoveProgress(p => p ? { ...p, done } : null))
+    setMoveProgress(null)
+
+    const moved = allPhotos.length - failed
+    log[failed > 0 ? 'warn' : 'info'](
+      `Bulk verplaatsen klaar: ${moved} verplaatst${failed > 0 ? `, ${failed} mislukt` : ''} uit ${cls.length} pakketjes → "${targetFolder.name}"`,
+      undefined,
+      Date.now() - startedAt,
+    )
+
+    const movedIds = new Set(cls.map(c => c.id))
+    setPhase(prev => prev.name === 'category'
+      ? { ...prev, clusters: prev.clusters.filter(c => !movedIds.has(c.id)) }
+      : prev,
+    )
+    setSelectedIds(new Set())
+  }
+
   const handleSkip = (clusterId: string) => {
     if (phase.name === 'category') {
       const skipped = phase.clusters.find(c => c.id === clusterId)
@@ -246,6 +295,21 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
       ? { ...prev, clusters: prev.clusters.filter(c => c.id !== clusterId) }
       : prev,
     )
+    setSelectedIds(prev => {
+      if (!prev.has(clusterId)) return prev
+      const next = new Set(prev)
+      next.delete(clusterId)
+      return next
+    })
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   // ── Initialisatie ────────────────────────────────────────────────────────────
@@ -493,6 +557,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                     key={cat.key}
                     onClick={() => {
                       if (!active) return
+                      setSelectedIds(new Set())
                       setPhase({ name: 'category', key: cat.key, label: cat.label, clusters: buildClusters(cat.key, result) })
                     }}
                     disabled={!active}
@@ -592,6 +657,12 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
 
   const categoryColors = CATEGORY_COLORS[categoryKey] ?? CATEGORY_COLORS['other-camera']
 
+  // Multi-select: alleen in ondersteunde categorieën én pas zinvol bij ≥2 pakketjes
+  const allowMultiSelect = MULTI_SELECT_CATEGORIES.has(categoryKey) && clusters.length >= 2
+  const selectedClusters = allowMultiSelect ? clusters.filter(c => selectedIds.has(c.id)) : []
+  const selectedPhotoCount = selectedClusters.reduce((s, c) => s + c.photos.length, 0)
+  const multiMoving = moveProgress !== null && moveProgress.clusterId === null
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -657,6 +728,26 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                 <div className="p-3.5 space-y-3">
                   {/* Titel + meta */}
                   <div className="flex items-start gap-2.5">
+                    {allowMultiSelect && (
+                      <button
+                        onClick={() => toggleSelect(cluster.id)}
+                        disabled={busy}
+                        aria-pressed={selectedIds.has(cluster.id)}
+                        title={selectedIds.has(cluster.id) ? 'Selectie opheffen' : 'Selecteer pakketje'}
+                        className="flex-shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-[0.9] disabled:opacity-30"
+                        style={
+                          selectedIds.has(cluster.id)
+                            ? { background: 'var(--color-accent)', border: '1px solid var(--color-accent)' }
+                            : { background: 'transparent', border: '1.5px solid var(--color-border-strong)' }
+                        }
+                      >
+                        {selectedIds.has(cluster.id) && (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
                     <div
                       className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
                       style={{ background: categoryColors.iconBg, color: categoryColors.iconColor }}
@@ -696,7 +787,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                         variant="primary"
                         size="sm"
                         className="flex-1 min-w-0"
-                        onClick={() => setActiveSheet(cluster)}
+                        onClick={() => setMoveSheet({ kind: 'single', cluster })}
                         disabled={busy}
                         icon={
                           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -732,10 +823,62 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
         </div>
       </div>
 
+      {/* Multi-select actiebalk */}
+      {allowMultiSelect && (selectedClusters.length > 0 || multiMoving) && (
+        <div
+          className="flex-shrink-0 pb-safe"
+          style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}
+        >
+          <div className="max-w-2xl mx-auto px-4 py-3">
+            {multiMoving && moveProgress ? (
+              <div className="space-y-1.5">
+                <p className="text-xs text-fluent-text-secondary tabular-nums">
+                  Verplaatsen… {moveProgress.done} / {moveProgress.total}
+                </p>
+                <div className="h-[3px] rounded-full bg-fluent-border overflow-hidden">
+                  <div
+                    className="h-full bg-fluent-accent transition-all duration-200"
+                    style={{ width: `${(moveProgress.done / moveProgress.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  disabled={busy}
+                  className="text-sm text-fluent-text-secondary hover:text-fluent-text-primary transition-colors disabled:opacity-30 flex-shrink-0"
+                >
+                  Wis
+                </button>
+                <p className="flex-1 min-w-0 text-sm text-fluent-text-primary tabular-nums truncate">
+                  <span className="font-semibold">{selectedClusters.length}</span> pakket{selectedClusters.length !== 1 ? 'jes' : ''}
+                  <span className="text-fluent-text-secondary"> · {selectedPhotoCount} foto{selectedPhotoCount !== 1 ? "'s" : ''}</span>
+                </p>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="flex-shrink-0"
+                  onClick={() => setMoveSheet({ kind: 'many', clusters: selectedClusters })}
+                  disabled={busy}
+                  icon={
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                    </svg>
+                  }
+                >
+                  Verplaatsen
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Folder sheet */}
-      {activeSheet && (
+      {moveSheet && (
         <div className="fixed inset-0 z-40 flex flex-col justify-end">
-          <div className="flex-1 bg-black/40 animate-fade" onClick={() => setActiveSheet(null)} />
+          <div className="flex-1 bg-black/40 animate-fade" onClick={() => setMoveSheet(null)} />
           <div
             className="flex flex-col rounded-t-3xl pb-safe animate-sheet"
             style={{
@@ -749,9 +892,13 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
             >
               <div className="min-w-0">
                 <p className="font-semibold text-fluent-text-primary text-sm">Verplaatsen naar</p>
-                <p className="text-fluent-text-secondary text-xs truncate">{activeSheet.label}</p>
+                <p className="text-fluent-text-secondary text-xs truncate">
+                  {moveSheet.kind === 'single'
+                    ? moveSheet.cluster.label
+                    : `${moveSheet.clusters.length} pakketjes · ${moveSheet.clusters.reduce((s, c) => s + c.photos.length, 0)} foto's`}
+                </p>
               </div>
-              <button onClick={() => setActiveSheet(null)} className="text-fluent-text-secondary p-1 flex-shrink-0">
+              <button onClick={() => setMoveSheet(null)} className="text-fluent-text-secondary p-1 flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -762,7 +909,9 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                 key={lastBreadcrumb.map(c => c.id).join('/')}
                 msalInstance={msalInstance}
                 account={account}
-                onMove={(f, bc) => handleBulkMove(activeSheet, f, bc)}
+                onMove={(f, bc) => moveSheet.kind === 'single'
+                  ? handleBulkMove(moveSheet.cluster, f, bc)
+                  : handleBulkMoveMany(moveSheet.clusters, f, bc)}
                 disabled={false}
                 initialBreadcrumb={lastBreadcrumb}
               />
