@@ -124,7 +124,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
               {/* Navigeer in map */}
               <button
                 onClick={() => handleNavigate(folder)}
-                className="flex items-center gap-2 flex-1 min-w-0 text-left py-2"
+                className="flex items-center gap-2 min-w-0 text-left py-2"
                 title={folder.name}
               >
                 <svg className="w-4 h-4 flex-shrink-0 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
