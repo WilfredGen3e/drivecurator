@@ -17,6 +17,11 @@ const SWIPE_COMMIT = 160
 const PRESETS_KEY = 'drivecurator_presets'
 const MAX_PRESETS = 5
 
+// Zichtbare focus-ring voor de eigen knoppen (zelfde patroon als Button.tsx).
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent ' +
+  'focus-visible:ring-offset-2 focus-visible:ring-offset-fluent-bg-primary rounded-lg'
+
 interface FolderPreset { id: string; name: string }
 
 function loadPresets(): FolderPreset[] {
@@ -248,10 +253,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
   if (!photo) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-4 text-center px-6 bg-fluent-bg-secondary">
-        <div
-          className="w-14 h-14 rounded-full flex items-center justify-center"
-          style={{ background: 'var(--color-success-light)' }}
-        >
+        <div className="w-14 h-14 rounded-full flex items-center justify-center bg-fluent-success-light">
           <svg className="w-7 h-7 text-fluent-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
@@ -274,13 +276,10 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
   // ── Touch layout ──────────────────────────────────────────────────────────
   if (isTouch) {
     return (
-      <div className="flex flex-col h-full" style={{ background: 'var(--color-canvas)' }}>
+      <div className="flex flex-col h-full bg-fluent-canvas">
         {/* Topbalk */}
-        <div
-          className="flex items-center gap-2 px-3 flex-shrink-0 h-12"
-          style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}
-        >
-          <button onClick={() => onDone(photos)} className="text-fluent-text-secondary p-2 -ml-1">
+        <div className="flex items-center gap-2 px-3 flex-shrink-0 h-12 bg-fluent-bg-primary border-b border-fluent-border">
+          <button onClick={() => onDone(photos)} className={`text-fluent-text-secondary p-2 -ml-1 ${focusRing}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -290,8 +289,8 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         </div>
 
         {/* Voortgangsbalk */}
-        <div className="h-[3px] flex-shrink-0" style={{ background: 'var(--color-border)' }}>
-          <div className="h-full transition-all duration-300" style={{ width: `${progressPct}%`, background: 'var(--color-accent)' }} />
+        <div className="h-[3px] flex-shrink-0 bg-fluent-border">
+          <div className="h-full transition-all duration-300 bg-fluent-accent" style={{ width: `${progressPct}%` }} />
         </div>
 
         {/* Foto — swipe-gebied */}
@@ -307,7 +306,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
           >
             {thumbnail && !brokenThumbs.has(photo.id)
               ? <img src={thumbnail} alt={photo.name} onError={handleThumbError} className="w-full h-full object-contain" draggable={false} />
-              : <div className="w-full h-full flex items-center justify-center" style={{ background: '#111114' }}><span className="text-fluent-text-secondary text-sm px-6 text-center">{photo.name}</span></div>
+              : <div className="w-full h-full flex items-center justify-center bg-fluent-stage-elevated"><span className="text-fluent-text-secondary text-sm px-6 text-center">{photo.name}</span></div>
             }
           </div>
 
@@ -363,7 +362,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
                   key={preset.id}
                   onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
                   disabled={busy}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-fluent-accent-light text-fluent-accent text-sm font-medium disabled:opacity-40 active:scale-[0.97] transition-transform"
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-fluent-accent-light text-fluent-accent text-sm font-medium disabled:opacity-40 active:scale-[0.97] transition-transform ${focusRing}`}
                 >
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
                   <span className="max-w-[120px] truncate">{preset.name}</span>
@@ -411,10 +410,10 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         {showFolderSheet && (
           <div className="fixed inset-0 z-40 flex flex-col justify-end">
             <div className="flex-1 bg-black/40 animate-fade" onClick={() => setShowFolderSheet(false)} />
-            <div className="flex flex-col rounded-t-3xl pb-safe animate-sheet" style={{ height: '60vh', background: 'var(--color-bg-primary)' }}>
-              <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
+            <div className="flex flex-col rounded-t-3xl pb-safe animate-sheet bg-fluent-bg-primary" style={{ height: '60vh' }}>
+              <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-fluent-border">
                 <span className="font-semibold text-fluent-text-primary">Verplaatsen naar</span>
-                <button onClick={() => setShowFolderSheet(false)} className="text-fluent-text-secondary p-1">
+                <button onClick={() => setShowFolderSheet(false)} className={`text-fluent-text-secondary p-1 ${focusRing}`}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -442,7 +441,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
 
   // ── Desktop layout ────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full" style={{ background: 'var(--color-canvas)' }}>
+    <div className="flex h-full bg-fluent-canvas">
       {/* Sidebar */}
       <div className={`flex-shrink-0 transition-all duration-200 ${sidebarOpen ? 'w-56' : 'w-0 overflow-hidden'}`}>
         <FolderSidebar
@@ -457,14 +456,11 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbalk */}
-        <div
-          className="flex items-center gap-2 px-3 flex-shrink-0 h-10"
-          style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}
-        >
-          <button onClick={() => setSidebarOpen(v => !v)} className="p-2 rounded-lg text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover transition-colors">
+        <div className="flex items-center gap-2 px-3 flex-shrink-0 h-10 bg-fluent-bg-primary border-b border-fluent-border">
+          <button onClick={() => setSidebarOpen(v => !v)} className={`p-2 text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover transition-colors ${focusRing}`}>
             <SidebarIcon />
           </button>
-          <button onClick={() => onDone(photos)} className="flex items-center gap-1 text-fluent-text-secondary hover:text-fluent-text-primary text-sm transition-colors">
+          <button onClick={() => onDone(photos)} className={`flex items-center gap-1 text-fluent-text-secondary hover:text-fluent-text-primary text-sm transition-colors px-1 py-0.5 ${focusRing}`}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Terug
           </button>
@@ -473,17 +469,17 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         </div>
 
         {/* Voortgangsbalk */}
-        <div className="h-[3px] flex-shrink-0" style={{ background: 'var(--color-border)' }}>
-          <div className="h-full transition-all duration-300" style={{ width: `${progressPct}%`, background: 'var(--color-accent)' }} />
+        <div className="h-[3px] flex-shrink-0 bg-fluent-border">
+          <div className="h-full transition-all duration-300 bg-fluent-accent" style={{ width: `${progressPct}%` }} />
         </div>
 
         {/* Foto — altijd donker */}
-        <div className="relative flex-1 min-h-0 flex items-center justify-center" style={{ background: '#06060a' }}>
+        <div className="relative flex-1 min-h-0 flex items-center justify-center bg-fluent-stage">
           {sim.isScanning && <ScanOverlay progress={sim.scanProgress} onCancel={sim.cancelScan} />}
           {thumbnail && !brokenThumbs.has(photo.id) ? (
             <img src={thumbnail} alt={photo.name} onError={handleThumbError} className="w-full h-full object-contain" style={{ boxShadow: '0 2px 32px rgba(0,0,0,0.6)' }} />
           ) : (
-            <div className="w-full h-full flex items-center justify-center" style={{ background: '#111116' }}>
+            <div className="w-full h-full flex items-center justify-center bg-fluent-stage-elevated">
               <div className="flex flex-col items-center gap-3">
                 <svg className="w-10 h-10 text-fluent-text-disabled" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -495,7 +491,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
         </div>
 
         {/* Bottom action bar */}
-        <div className="flex-shrink-0 px-5 py-3" style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}>
+        <div className="flex-shrink-0 px-5 py-3 bg-fluent-bg-primary border-t border-fluent-border">
           <div className="text-center mb-2.5 space-y-0.5">
             <p className="text-fluent-text-secondary text-xs truncate">{photo.name}</p>
             <PhotoMeta photo={photo} />
@@ -507,7 +503,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
                   key={preset.id}
                   onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
                   disabled={busy}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-fluent-accent-light text-fluent-accent text-xs font-medium hover:brightness-95 active:scale-[0.97] disabled:opacity-40 transition-all"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-fluent-accent-light text-fluent-accent text-xs font-medium hover:brightness-95 active:scale-[0.97] disabled:opacity-40 transition-all ${focusRing}`}
                 >
                   <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /></svg>
                   <span className="max-w-[120px] truncate">{preset.name}</span>
@@ -541,10 +537,7 @@ export default function ClusterTriageView({ msalInstance, account, clusterLabel,
 
 function ToastBar({ message }: { message: string }) {
   return (
-    <div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 text-sm px-4 py-2 rounded-full shadow-float z-50"
-      style={{ background: 'var(--color-text-primary)', color: 'var(--color-bg-primary)', whiteSpace: 'nowrap' }}
-    >
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-sm px-4 py-2 rounded-full shadow-float z-50 whitespace-nowrap bg-fluent-text-primary text-fluent-bg-primary">
       {message}
     </div>
   )
@@ -562,7 +555,7 @@ function DesktopBtn({ onClick, disabled, variant, label, children }: {
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <button onClick={onClick} disabled={disabled} className={btnClass}>
+      <button onClick={onClick} disabled={disabled} className={`${btnClass} ${focusRing}`}>
         {children}
         {isPrimary && <span>{label}</span>}
       </button>
