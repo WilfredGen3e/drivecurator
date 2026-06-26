@@ -1,9 +1,12 @@
 import Button from './ui/Button'
+import { branding } from '../branding'
 
 interface Props {
   photosTriaged: number
   onBack: () => void
 }
+
+const limietMailto = `mailto:${branding.supportEmail}?subject=${encodeURIComponent(`${branding.name} - Limiet verhogen`)}`
 
 export default function PaywallModal({ photosTriaged, onBack }: Props) {
   return (
@@ -14,7 +17,7 @@ export default function PaywallModal({ photosTriaged, onBack }: Props) {
           <svg className="w-5 h-5 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
           </svg>
-          <span className="font-semibold text-fluent-text-primary">DriveCurator</span>
+          <span className="font-semibold text-fluent-text-primary">{branding.name}</span>
         </div>
 
         {/* Icoon */}
@@ -33,7 +36,7 @@ export default function PaywallModal({ photosTriaged, onBack }: Props) {
         </p>
 
         <a
-          href="mailto:stefansiemerink@outlook.com?subject=DriveCurator%20-%20Limiet%20verhogen"
+          href={limietMailto}
           className="flex items-center justify-center w-full min-h-[44px] rounded-xl bg-fluent-accent hover:bg-fluent-accent-hover text-white text-[15px] font-semibold transition-colors active:scale-[0.97] mb-2"
         >
           Neem contact op

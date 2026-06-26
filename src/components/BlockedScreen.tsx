@@ -1,8 +1,11 @@
 import Button from './ui/Button'
+import { branding } from '../branding'
 
 interface Props {
   onLogout: () => void
 }
+
+const blockedMailto = `mailto:${branding.supportEmail}?subject=${encodeURIComponent(`${branding.name} - Account geblokkeerd`)}`
 
 export default function BlockedScreen({ onLogout }: Props) {
   return (
@@ -12,7 +15,7 @@ export default function BlockedScreen({ onLogout }: Props) {
           <svg className="w-5 h-5 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
           </svg>
-          <span className="font-semibold text-fluent-text-primary">DriveCurator</span>
+          <span className="font-semibold text-fluent-text-primary">{branding.name}</span>
         </div>
 
         <div className="w-12 h-12 flex items-center justify-center mb-5 rounded-xl bg-fluent-danger-light text-fluent-danger">
@@ -23,11 +26,11 @@ export default function BlockedScreen({ onLogout }: Props) {
 
         <h2 className="text-xl font-semibold text-fluent-text-primary mb-2">Account geblokkeerd</h2>
         <p className="text-sm text-fluent-text-secondary mb-6 leading-relaxed">
-          Je account heeft momenteel geen toegang tot DriveCurator. Neem contact op met de beheerder om dit op te lossen.
+          Je account heeft momenteel geen toegang tot {branding.name}. Neem contact op met de beheerder om dit op te lossen.
         </p>
 
         <a
-          href="mailto:stefansiemerink@outlook.com?subject=DriveCurator%20-%20Account%20geblokkeerd"
+          href={blockedMailto}
           className="flex items-center justify-center w-full min-h-[44px] rounded-xl bg-fluent-accent hover:bg-fluent-accent-hover text-white text-[15px] font-semibold transition-colors active:scale-[0.97] mb-2"
         >
           Neem contact op

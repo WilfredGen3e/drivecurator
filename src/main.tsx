@@ -1,7 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import { applyBranding } from './applyBranding'
 import App from './App'
+
+// Merkkleuren + titel/theme-color toepassen vanuit de centrale branding-config.
+applyBranding()
 
 const root = createRoot(document.getElementById('root')!)
 

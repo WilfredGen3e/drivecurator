@@ -11,6 +11,7 @@ import BlockedScreen from './components/BlockedScreen'
 import AdminPortal from './components/AdminPortal'
 import StepIndicator from './components/StepIndicator'
 import PhotoStackLoader from './components/PhotoStackLoader'
+import { branding } from './branding'
 import { useAppStore } from './store/useAppStore'
 import { usePwaUpdate } from './hooks/usePwaUpdate'
 import { registerUser, AccountBlockedError } from './services/apiService'
@@ -268,7 +269,7 @@ export default function App() {
           <svg className="w-5 h-5 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
           </svg>
-          <span className="font-semibold text-sm">DriveCurator</span>
+          <span className="font-semibold text-sm">{branding.name}</span>
           <span className="text-[10px] text-fluent-text-secondary font-mono group-hover:text-fluent-text-primary transition-colors">
             {__BUILD_ID__}
           </span>

@@ -1,4 +1,5 @@
 import { PhotoCluster } from './clusterService'
+import { userAgent } from '../branding'
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql'
 
@@ -24,7 +25,7 @@ async function runSparql(sparql: string): Promise<string | null> {
       signal: controller.signal,
       headers: {
         Accept: 'application/sparql-results+json',
-        'User-Agent': 'DriveCurator/1.0 (https://drivecurator.azurestaticapps.net)',
+        'User-Agent': userAgent,
       },
     })
     clearTimeout(timer)

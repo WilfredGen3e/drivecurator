@@ -5,6 +5,7 @@ import SmartSortView from '../components/SmartSortView'
 import ClusterGridView from '../components/ClusterGridView'
 import OrganizeHome from '../components/OrganizeHome'
 import { useAppStore } from '../store/useAppStore'
+import { branding } from '../branding'
 import {
   MOCK_ACCOUNT, MOCK_MSAL, MOCK_FOLDER, MOCK_PHOTOS,
   MOCK_FOLDERS, MOCK_ANALYSIS, MOCK_CLUSTER,
@@ -53,7 +54,7 @@ function Shell({ step, children }: { step: number; children: React.ReactNode }) 
           <svg className="w-5 h-5 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
           </svg>
-          <span className="font-semibold text-sm">DriveCurator</span>
+          <span className="font-semibold text-sm">{branding.name}</span>
         </div>
         <span className="hidden lg:block text-fluent-text-secondary text-sm">{MOCK_ACCOUNT.name}</span>
         <span className="lg:hidden w-8 h-8 rounded-full bg-fluent-accent-light text-fluent-accent flex items-center justify-center text-xs font-semibold">DG</span>
