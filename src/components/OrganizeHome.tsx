@@ -7,32 +7,40 @@ interface Props {
   onChangeFolder: () => void
 }
 
+// Zichtbare focus-ring (zelfde patroon als Button.tsx / LandingPage).
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent ' +
+  'focus-visible:ring-offset-2 focus-visible:ring-offset-fluent-bg-secondary'
+
+// Gedeelde kaart-styling; de aanbevolen kaart krijgt een accent-rand.
+const cardBase =
+  'group flex-1 text-left p-5 rounded-2xl bg-fluent-bg-primary shadow-card transition-all ' +
+  'hover:shadow-float hover:-translate-y-0.5 active:scale-[0.99] ' + focusRing
+
 export default function OrganizeHome({ folder, photoCount, onManual, onSmartSort, onVideo, onChangeFolder }: Props) {
   return (
     <div className="h-full flex flex-col bg-fluent-bg-secondary">
 
       {/* Map-header */}
-      <div
-        className="flex items-center gap-3 px-5 py-3 flex-shrink-0"
-        style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}
-      >
+      <div className="flex items-center gap-3 px-5 py-3 flex-shrink-0 bg-fluent-bg-primary border-b border-fluent-border">
         <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
           <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
         </svg>
         <span className="text-sm font-semibold text-fluent-text-primary truncate flex-1">{folder.name}</span>
-        <span className="text-xs text-fluent-text-disabled flex-shrink-0 tabular-nums">
+        <span className="text-xs text-fluent-text-secondary flex-shrink-0 tabular-nums">
           {photoCount.toLocaleString('nl-NL')} foto's
         </span>
         <button
           onClick={onChangeFolder}
-          className="text-xs font-semibold text-fluent-accent hover:text-fluent-accent-hover active:scale-[0.97] transition-all flex-shrink-0"
+          className={`text-xs font-semibold text-fluent-accent hover:text-fluent-accent-hover active:scale-[0.97] transition-all flex-shrink-0 rounded-md px-1 py-0.5 ${focusRing}`}
         >
           Wijzigen
         </button>
       </div>
 
-      {/* Keuze */}
-      <div className="flex-1 flex items-center justify-center px-6 py-8">
+      {/* Keuze — scrollbaar zodat de bovenkant nooit afgeknipt wordt; gecentreerd
+          wanneer er ruimte is. */}
+      <div className="flex-1 overflow-y-auto px-6 py-8 flex items-center justify-center">
         <div className="w-full max-w-2xl">
           <h1 className="text-2xl font-semibold text-fluent-text-primary mb-1 tracking-tight">Hoe wil je opschonen?</h1>
           <p className="text-fluent-text-secondary text-sm mb-7">
@@ -44,7 +52,7 @@ export default function OrganizeHome({ folder, photoCount, onManual, onSmartSort
             {/* Handmatig */}
             <button
               onClick={onManual}
-              className="group flex-1 text-left p-5 rounded-2xl bg-fluent-bg-primary border border-fluent-border shadow-card transition-all hover:shadow-float hover:-translate-y-0.5 active:scale-[0.99]"
+              className={`${cardBase} border border-fluent-border`}
             >
               {/* Icoon */}
               <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 bg-fluent-accent-light text-fluent-accent">
@@ -69,7 +77,7 @@ export default function OrganizeHome({ folder, photoCount, onManual, onSmartSort
             {/* Slim sorteren — aanbevolen */}
             <button
               onClick={onSmartSort}
-              className="group flex-1 text-left p-5 rounded-2xl bg-fluent-bg-primary border border-fluent-accent shadow-card transition-all hover:shadow-float hover:-translate-y-0.5 active:scale-[0.99]"
+              className={`${cardBase} border border-fluent-accent ring-1 ring-fluent-accent/30`}
             >
               {/* Icoon + badge */}
               <div className="flex items-start justify-between mb-4">
@@ -99,7 +107,7 @@ export default function OrganizeHome({ folder, photoCount, onManual, onSmartSort
             {/* Video's opruimen */}
             <button
               onClick={onVideo}
-              className="group flex-1 text-left p-5 rounded-2xl bg-fluent-bg-primary border border-fluent-border shadow-card transition-all hover:shadow-float hover:-translate-y-0.5 active:scale-[0.99]"
+              className={`${cardBase} border border-fluent-border`}
             >
               {/* Icoon */}
               <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 bg-fluent-accent-light text-fluent-accent">
