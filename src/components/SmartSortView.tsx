@@ -140,17 +140,15 @@ function buildClusters(key: string, result: AnalysisResult): PhotoCluster[] {
   }
 }
 
-// Kleur per categorie
-const CATEGORY_COLORS: Record<string, { iconBg: string; iconColor: string; accentBorder: string }> = {
-  'location':       { iconBg: 'rgba(59,130,246,0.12)',  iconColor: '#60a5fa', accentBorder: 'rgba(59,130,246,0.4)' },
-  'screenshots':    { iconBg: 'rgba(100,116,139,0.12)', iconColor: '#94a3b8', accentBorder: 'rgba(100,116,139,0.4)' },
-  'whatsapp':       { iconBg: 'rgba(34,197,94,0.12)',   iconColor: '#4ade80', accentBorder: 'rgba(34,197,94,0.4)' },
-  'monthly':        { iconBg: 'rgba(249,115,22,0.12)',  iconColor: '#fb923c', accentBorder: 'rgba(249,115,22,0.4)' },
-  'bursts':         { iconBg: 'rgba(234,179,8,0.12)',   iconColor: '#facc15', accentBorder: 'rgba(234,179,8,0.4)' },
-  'duplicates':     { iconBg: 'rgba(239,68,68,0.12)',   iconColor: '#f87171', accentBorder: 'rgba(239,68,68,0.4)' },
-  'potential-junk': { iconBg: 'rgba(107,114,128,0.12)', iconColor: '#9ca3af', accentBorder: 'rgba(107,114,128,0.4)' },
-  'other-camera':   { iconBg: 'rgba(139,92,246,0.12)',  iconColor: '#a78bfa', accentBorder: 'rgba(139,92,246,0.4)' },
-}
+// Categorieën worden onderscheiden via icoon + label, niet via kleur. Eén rustige
+// accent-tegel voor alle categorieën (beperkt palet; de foto's/thumbnails springen
+// eruit). Zie redesign-beslissing 2026-06-26.
+const accentTile = 'bg-fluent-accent-light text-fluent-accent'
+
+// Zichtbare focus-ring voor de eigen knoppen (zelfde patroon als Button.tsx).
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent ' +
+  'focus-visible:ring-offset-2 focus-visible:ring-offset-fluent-bg-secondary rounded-lg'
 
 export default function SmartSortView({ msalInstance, account, folder, initialPhotos, cachedResult, onResult, onBack }: Props) {
   const [phase, setPhase] = useState<Phase>({ name: 'initializing', photoCount: 0, geoStep: 0, geoTotal: 0 })
@@ -361,10 +359,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
   if (phase.name === 'error') {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-5 px-6 text-center bg-fluent-bg-secondary">
-        <div
-          className="w-14 h-14 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}
-        >
+        <div className="w-14 h-14 rounded-full flex items-center justify-center bg-fluent-danger-light border border-fluent-danger/25">
           <svg className="w-7 h-7 text-fluent-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
           </svg>
@@ -521,13 +516,10 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
     return (
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div
-          className="flex items-center gap-2 px-4 h-10 flex-shrink-0"
-          style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}
-        >
+        <div className="flex items-center gap-2 px-4 h-10 flex-shrink-0 bg-fluent-bg-primary border-b border-fluent-border">
           <button
             onClick={onBack}
-            className="text-fluent-text-secondary hover:text-fluent-text-primary text-sm flex items-center gap-1 transition-colors"
+            className={`text-fluent-text-secondary hover:text-fluent-text-primary text-sm flex items-center gap-1 transition-colors px-1 py-0.5 ${focusRing}`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -536,7 +528,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
           </button>
           <span className="text-fluent-text-disabled text-sm">·</span>
           <span className="text-sm text-fluent-text-secondary truncate">"{folder.name}"</span>
-          <span className="ml-auto text-xs text-fluent-text-disabled flex-shrink-0 tabular-nums">
+          <span className="ml-auto text-xs text-fluent-text-secondary flex-shrink-0 tabular-nums">
             {result.totalPhotos} foto's geanalyseerd
           </span>
         </div>
@@ -549,7 +541,6 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {categories.map(cat => {
-                const colors = CATEGORY_COLORS[cat.key]
                 const active = cat.count > 0
 
                 return (
@@ -561,28 +552,14 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                       setPhase({ name: 'category', key: cat.key, label: cat.label, clusters: buildClusters(cat.key, result) })
                     }}
                     disabled={!active}
-                    className={`group flex items-start gap-3 px-4 py-4 text-left w-full rounded-2xl shadow-card transition-all ${
-                      active ? 'cursor-pointer active:scale-[0.99]' : 'cursor-default opacity-50'
+                    className={`group flex items-start gap-3 px-4 py-4 text-left w-full rounded-2xl shadow-card bg-fluent-bg-primary border border-fluent-border transition-all ${focusRing} ${
+                      active
+                        ? 'cursor-pointer active:scale-[0.99] hover:border-fluent-accent hover:shadow-float hover:-translate-y-0.5'
+                        : 'cursor-default opacity-50'
                     }`}
-                    style={{
-                      background: 'var(--color-bg-primary)',
-                      border: '1px solid var(--color-border)',
-                    }}
-                    onMouseEnter={e => {
-                      if (!active) return
-                      const el = e.currentTarget as HTMLButtonElement
-                      el.style.borderColor = colors.accentBorder
-                    }}
-                    onMouseLeave={e => {
-                      const el = e.currentTarget as HTMLButtonElement
-                      el.style.borderColor = 'var(--color-border)'
-                    }}
                   >
                     {/* Icoon */}
-                    <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: colors.iconBg, color: colors.iconColor }}
-                    >
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${accentTile}`}>
                       {cat.icon}
                     </div>
 
@@ -594,14 +571,11 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                         </span>
                         {active && (
                           <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <span
-                              className="text-xs font-bold tabular-nums px-1.5 py-0.5 rounded"
-                              style={{ background: colors.iconBg, color: colors.iconColor }}
-                            >
+                            <span className={`text-xs font-bold tabular-nums px-1.5 py-0.5 rounded ${accentTile}`}>
                               {cat.photoCount}
                             </span>
                             <svg
-                              className="w-3.5 h-3.5 text-fluent-text-disabled transition-colors group-hover:text-fluent-text-secondary"
+                              className="w-3.5 h-3.5 text-fluent-text-secondary transition-colors group-hover:text-fluent-accent"
                               fill="none" stroke="currentColor" viewBox="0 0 24 24"
                             >
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -613,7 +587,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                         {cat.description}
                       </p>
                       {active && cat.stat && (
-                        <p className="text-xs mt-1.5" style={{ color: colors.iconColor }}>
+                        <p className="text-xs mt-1.5 text-fluent-text-secondary">
                           {cat.stat}
                         </p>
                       )}
@@ -655,8 +629,6 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
     )
   }
 
-  const categoryColors = CATEGORY_COLORS[categoryKey] ?? CATEGORY_COLORS['other-camera']
-
   // Multi-select: alleen in ondersteunde categorieën én pas zinvol bij ≥2 pakketjes
   const allowMultiSelect = MULTI_SELECT_CATEGORIES.has(categoryKey) && clusters.length >= 2
   const selectedClusters = allowMultiSelect ? clusters.filter(c => selectedIds.has(c.id)) : []
@@ -666,13 +638,10 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div
-        className="flex items-center gap-2 px-4 h-10 flex-shrink-0"
-        style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}
-      >
+      <div className="flex items-center gap-2 px-4 h-10 flex-shrink-0 bg-fluent-bg-primary border-b border-fluent-border">
         <button
           onClick={() => setPhase({ name: 'dashboard' })}
-          className="text-fluent-text-secondary hover:text-fluent-text-primary text-sm flex items-center gap-1 transition-colors"
+          className={`text-fluent-text-secondary hover:text-fluent-text-primary text-sm flex items-center gap-1 transition-colors px-1 py-0.5 ${focusRing}`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -681,7 +650,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
         </button>
         <span className="text-fluent-text-disabled text-sm">·</span>
         <span className="text-sm font-semibold text-fluent-text-primary truncate">{categoryLabel}</span>
-        <span className="ml-auto text-xs text-fluent-text-disabled flex-shrink-0 tabular-nums">
+        <span className="ml-auto text-xs text-fluent-text-secondary flex-shrink-0 tabular-nums">
           {clusters.length} pakket{clusters.length !== 1 ? 'jes' : ''}
         </span>
       </div>
@@ -704,7 +673,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                   <button
                     onClick={() => setPhase({ name: 'grid', key: categoryKey, label: categoryLabel, clusters, clusterId: cluster.id })}
                     disabled={busy}
-                    className="w-full flex items-stretch gap-px overflow-hidden disabled:pointer-events-none"
+                    className={`w-full flex items-stretch gap-px overflow-hidden disabled:pointer-events-none ${focusRing}`}
                     style={{ height: 80 }}
                   >
                     {thumbs.map((photo, idx) => (
@@ -734,7 +703,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                         disabled={busy}
                         aria-pressed={selectedIds.has(cluster.id)}
                         title={selectedIds.has(cluster.id) ? 'Selectie opheffen' : 'Selecteer pakketje'}
-                        className="flex-shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-[0.9] disabled:opacity-30"
+                        className="flex-shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-[0.9] disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent focus-visible:ring-offset-2 focus-visible:ring-offset-fluent-bg-primary"
                         style={
                           selectedIds.has(cluster.id)
                             ? { background: 'var(--color-accent)', border: '1px solid var(--color-accent)' }
@@ -748,10 +717,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                         )}
                       </button>
                     )}
-                    <div
-                      className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
-                      style={{ background: categoryColors.iconBg, color: categoryColors.iconColor }}
-                    >
+                    <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${accentTile}`}>
                       <ClusterIcon type={cluster.type} small />
                     </div>
                     <div className="min-w-0">
@@ -825,10 +791,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
 
       {/* Multi-select actiebalk */}
       {allowMultiSelect && (selectedClusters.length > 0 || multiMoving) && (
-        <div
-          className="flex-shrink-0 pb-safe"
-          style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}
-        >
+        <div className="flex-shrink-0 pb-safe bg-fluent-bg-primary border-t border-fluent-border">
           <div className="max-w-2xl mx-auto px-4 py-3">
             {multiMoving && moveProgress ? (
               <div className="space-y-1.5">
@@ -847,7 +810,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                 <button
                   onClick={() => setSelectedIds(new Set())}
                   disabled={busy}
-                  className="text-sm text-fluent-text-secondary hover:text-fluent-text-primary transition-colors disabled:opacity-30 flex-shrink-0"
+                  className={`text-sm text-fluent-text-secondary hover:text-fluent-text-primary transition-colors disabled:opacity-30 flex-shrink-0 px-1 py-0.5 ${focusRing}`}
                 >
                   Wis
                 </button>
@@ -880,16 +843,10 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
         <div className="fixed inset-0 z-40 flex flex-col justify-end">
           <div className="flex-1 bg-black/40 animate-fade" onClick={() => setMoveSheet(null)} />
           <div
-            className="flex flex-col rounded-t-3xl pb-safe animate-sheet"
-            style={{
-              height: '60vh',
-              background: 'var(--color-bg-primary)',
-            }}
+            className="flex flex-col rounded-t-3xl pb-safe animate-sheet bg-fluent-bg-primary"
+            style={{ height: '60vh' }}
           >
-            <div
-              className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-              style={{ borderBottom: '1px solid var(--color-border)' }}
-            >
+            <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-fluent-border">
               <div className="min-w-0">
                 <p className="font-semibold text-fluent-text-primary text-sm">Verplaatsen naar</p>
                 <p className="text-fluent-text-secondary text-xs truncate">
@@ -898,7 +855,7 @@ export default function SmartSortView({ msalInstance, account, folder, initialPh
                     : `${moveSheet.clusters.length} pakketjes · ${moveSheet.clusters.reduce((s, c) => s + c.photos.length, 0)} foto's`}
                 </p>
               </div>
-              <button onClick={() => setMoveSheet(null)} className="text-fluent-text-secondary p-1 flex-shrink-0">
+              <button onClick={() => setMoveSheet(null)} className={`text-fluent-text-secondary p-1 flex-shrink-0 ${focusRing}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
