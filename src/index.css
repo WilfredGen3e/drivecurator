@@ -20,6 +20,7 @@
   --color-border:        #e5e5ea;  /* separator */
   --color-border-strong: #c6c6c8;
   --color-danger:        #ff3b30;  /* systemRed */
+  --color-danger-hover:  #e0322a;
   --color-danger-light:  #ffeceb;
   --color-success:       #34c759;  /* systemGreen */
   --color-success-light: #e7f9ed;
@@ -30,6 +31,11 @@
 
   /* App-achtergrond achter de fototriage (zacht Apple-zwart i.p.v. #080809) */
   --color-canvas: #f2f2f7;
+
+  /* Fotopodium — ALTIJD donker (in light én dark), zodat de foto's oppoppen.
+     Eén bron i.p.v. drie losse bijna-zwarten. */
+  --color-stage:          #06060a;  /* fotovlak */
+  --color-stage-elevated: #111116;  /* lege/kapotte thumbnail-kaart */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -47,6 +53,7 @@
     --color-border:        #38383a;
     --color-border-strong: #48484a;
     --color-danger:        #ff453a;
+    --color-danger-hover:  #ff5b52;
     --color-danger-light:  #3a0f0d;
     --color-success:       #30d158;
     --color-success-light: #0c2e16;

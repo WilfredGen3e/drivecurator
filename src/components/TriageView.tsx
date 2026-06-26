@@ -24,6 +24,11 @@ const SWIPE_COMMIT = 160
 const PRESETS_KEY = 'drivecurator_presets'
 const MAX_PRESETS = 5
 
+// Zichtbare focus-ring voor de eigen knoppen (zelfde patroon als Button.tsx).
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent ' +
+  'focus-visible:ring-offset-2 focus-visible:ring-offset-fluent-bg-primary rounded-lg'
+
 interface FolderPreset { id: string; name: string }
 
 function loadPresets(): FolderPreset[] {
@@ -380,10 +385,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       <div className="flex flex-col items-center justify-center h-full gap-5 text-center px-6 bg-fluent-bg-primary">
         {total > 0 || filterActive ? (
           <>
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center"
-              style={{ background: 'var(--color-success-light)' }}
-            >
+            <div className="w-14 h-14 rounded-full flex items-center justify-center bg-fluent-success-light">
               <svg className="w-7 h-7 text-fluent-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
@@ -407,21 +409,9 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         )}
         <div className="flex gap-3">
           {filterActive && (
-            <button
-              onClick={clearFilter}
-              className="border border-fluent-border-strong text-fluent-text-secondary hover:bg-fluent-bg-hover px-5 py-2 text-sm transition-colors"
-              style={{ borderRadius: 10 }}
-            >
-              Wis filter
-            </button>
+            <Button variant="neutral" onClick={clearFilter}>Wis filter</Button>
           )}
-          <button
-            onClick={onBack}
-            className="bg-fluent-accent hover:bg-fluent-accent-hover text-white font-semibold px-5 py-2 text-sm transition-colors"
-            style={{ borderRadius: 10 }}
-          >
-            Andere map kiezen
-          </button>
+          <Button variant="primary" onClick={onBack}>Andere map kiezen</Button>
         </div>
       </div>
     )
@@ -430,14 +420,11 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
   // ── TOUCH LAYOUT ────────────────────────────────────────────────────────
   if (isTouch) {
     return (
-      <div className="flex flex-col h-full" style={{ background: 'var(--color-canvas)' }}>
+      <div className="flex flex-col h-full bg-fluent-canvas">
 
         {/* Topbalk */}
-        <div
-          className="flex items-center gap-2 px-3 flex-shrink-0 h-12"
-          style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}
-        >
-          <button onClick={onBack} className="text-fluent-text-secondary p-2 -ml-1">
+        <div className="flex items-center gap-2 px-3 flex-shrink-0 h-12 bg-fluent-bg-primary border-b border-fluent-border">
+          <button onClick={onBack} className={`text-fluent-text-secondary p-2 -ml-1 ${focusRing}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -447,7 +434,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           </span>
           <button
             onClick={() => setShowTouchFilter(v => !v)}
-            className={`p-2 transition-colors ${showTouchFilter ? 'text-fluent-accent' : 'text-fluent-text-secondary'}`}
+            className={`p-2 transition-colors ${showTouchFilter ? 'text-fluent-accent' : 'text-fluent-text-secondary'} ${focusRing}`}
             title="Filter"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -461,17 +448,12 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 
         {/* Filter balk (inklapbaar) */}
         {showTouchFilter && availableYears.length > 0 && (
-          <div
-            className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm flex-shrink-0"
-            style={{ background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)' }}
-          >
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm flex-shrink-0 bg-fluent-bg-secondary border-b border-fluent-border">
             <span className="text-fluent-text-secondary text-xs font-semibold">Van</span>
             <select
               value={fromYear ?? ''}
               onChange={e => { setFromYear(e.target.value ? +e.target.value : null); setFromMonth(null) }}
-              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm"
-              style={{ borderRadius: 10 }}
-            >
+              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm rounded-lg"            >
               <option value="">Alle jaren</option>
               {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -479,9 +461,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               value={fromMonth ?? ''}
               onChange={e => setFromMonth(e.target.value ? +e.target.value : null)}
               disabled={!fromYear}
-              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm disabled:opacity-40"
-              style={{ borderRadius: 10 }}
-            >
+              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm rounded-lg disabled:opacity-40"            >
               <option value="">Alle maanden</option>
               {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
             </select>
@@ -489,9 +469,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             <select
               value={toYear ?? ''}
               onChange={e => { setToYear(e.target.value ? +e.target.value : null); setToMonth(null) }}
-              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm"
-              style={{ borderRadius: 10 }}
-            >
+              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm rounded-lg"            >
               <option value="">Heden</option>
               {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -499,9 +477,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               value={toMonth ?? ''}
               onChange={e => setToMonth(e.target.value ? +e.target.value : null)}
               disabled={!toYear}
-              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm disabled:opacity-40"
-              style={{ borderRadius: 10 }}
-            >
+              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-2 py-1 text-sm rounded-lg disabled:opacity-40"            >
               <option value="">Alle maanden</option>
               {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
             </select>
@@ -512,10 +488,10 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         )}
 
         {/* Voortgangsbalk */}
-        <div className="h-[3px] flex-shrink-0" style={{ background: 'var(--color-border)' }}>
+        <div className="h-[3px] flex-shrink-0 bg-fluent-border">
           <div
-            className="h-full transition-all duration-300"
-            style={{ width: `${progressPct}%`, background: 'var(--color-accent)' }}
+            className="h-full transition-all duration-300 bg-fluent-accent"
+            style={{ width: `${progressPct}%` }}
           />
         </div>
 
@@ -538,7 +514,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             {thumbnail && !brokenThumbs.has(photo.id)
               ? <img src={thumbnail} alt={photo.name} onError={handleThumbError} className="w-full h-full object-contain" draggable={false} />
               : (
-                <div className="w-full h-full flex items-center justify-center" style={{ background: '#111114' }}>
+                <div className="w-full h-full flex items-center justify-center bg-fluent-stage-elevated">
                   <span className="text-fluent-text-secondary text-sm px-6 text-center">{photo.name}</span>
                 </div>
               )
@@ -631,7 +607,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
                   key={preset.id}
                   onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
                   disabled={busy}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-fluent-accent-light text-fluent-accent text-sm font-medium disabled:opacity-40 active:scale-[0.97] transition-transform"
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-fluent-accent-light text-fluent-accent text-sm font-medium disabled:opacity-40 active:scale-[0.97] transition-transform ${focusRing}`}
                 >
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
@@ -690,13 +666,10 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
           <div className="fixed inset-0 z-40 flex flex-col justify-end">
             <div className="flex-1 bg-black/40 animate-fade" onClick={() => setShowFolderSheet(false)} />
             <div
-              className="flex flex-col rounded-t-3xl pb-safe animate-sheet"
-              style={{ height: '60vh', background: 'var(--color-bg-primary)' }}
+              className="flex flex-col rounded-t-3xl pb-safe animate-sheet bg-fluent-bg-primary"
+              style={{ height: '60vh' }}
             >
-              <div
-                className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-                style={{ borderBottom: '1px solid var(--color-border)' }}
-              >
+              <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-fluent-border">
                 <span className="font-semibold text-fluent-text-primary">Verplaatsen naar</span>
                 <button onClick={() => setShowFolderSheet(false)} className="text-fluent-text-secondary p-1">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -735,7 +708,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 
   // ── DESKTOP LAYOUT ───────────────────────────────────────────────────────
   return (
-    <div className="flex h-full" style={{ background: 'var(--color-canvas)' }}>
+    <div className="flex h-full bg-fluent-canvas">
 
       {/* Sidebar — mapnavigatie */}
       <div className={`flex-shrink-0 transition-all duration-200 ${sidebarOpen ? 'w-56' : 'w-0 overflow-hidden'}`}>
@@ -753,21 +726,17 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Topbar */}
-        <div
-          className="flex items-center gap-2 px-3 flex-shrink-0 h-10"
-          style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}
-        >
+        <div className="flex items-center gap-2 px-3 flex-shrink-0 h-10 bg-fluent-bg-primary border-b border-fluent-border">
           <button
             onClick={() => setSidebarOpen(v => !v)}
-            className="p-1.5 text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover transition-colors"
-            style={{ borderRadius: 10 }}
+            className={`p-1.5 text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover transition-colors ${focusRing}`}
             title="Sidebar (M)"
           >
             <SidebarIcon />
           </button>
           <button
             onClick={onBack}
-            className="flex items-center gap-1 text-fluent-text-secondary hover:text-fluent-text-primary text-sm transition-colors"
+            className={`flex items-center gap-1 text-fluent-text-secondary hover:text-fluent-text-primary text-sm transition-colors px-1 py-0.5 ${focusRing}`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -784,17 +753,12 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
 
         {/* Filterbalk */}
         {availableYears.length > 0 && (
-          <div
-            className="flex items-center gap-2 px-3 py-1.5 flex-shrink-0 text-xs"
-            style={{ background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)' }}
-          >
+          <div className="flex items-center gap-2 px-3 py-1.5 flex-shrink-0 text-xs bg-fluent-bg-secondary border-b border-fluent-border">
             <span className="text-fluent-text-secondary font-semibold">Van</span>
             <select
               value={fromYear ?? ''}
               onChange={e => { setFromYear(e.target.value ? +e.target.value : null); setFromMonth(null) }}
-              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs"
-              style={{ borderRadius: 10 }}
-            >
+              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs rounded-lg"            >
               <option value="">Alle jaren</option>
               {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -802,9 +766,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               value={fromMonth ?? ''}
               onChange={e => setFromMonth(e.target.value ? +e.target.value : null)}
               disabled={!fromYear}
-              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs disabled:opacity-40"
-              style={{ borderRadius: 10 }}
-            >
+              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs rounded-lg disabled:opacity-40"            >
               <option value="">Alle maanden</option>
               {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
             </select>
@@ -812,9 +774,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
             <select
               value={toYear ?? ''}
               onChange={e => { setToYear(e.target.value ? +e.target.value : null); setToMonth(null) }}
-              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs"
-              style={{ borderRadius: 10 }}
-            >
+              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs rounded-lg"            >
               <option value="">Heden</option>
               {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -822,9 +782,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               value={toMonth ?? ''}
               onChange={e => setToMonth(e.target.value ? +e.target.value : null)}
               disabled={!toYear}
-              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs disabled:opacity-40"
-              style={{ borderRadius: 10 }}
-            >
+              className="border border-fluent-border bg-fluent-bg-primary text-fluent-text-primary px-1.5 py-0.5 text-xs rounded-lg disabled:opacity-40"            >
               <option value="">Alle maanden</option>
               {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
             </select>
@@ -833,22 +791,22 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
                 × Wis
               </button>
             )}
-            <span className="ml-auto text-fluent-text-disabled">
+            <span className="ml-auto text-fluent-text-secondary">
               {total} foto{total !== 1 ? '\'s' : ''}
             </span>
           </div>
         )}
 
         {/* Voortgangsbalk */}
-        <div className="h-[3px] flex-shrink-0" style={{ background: 'rgba(255,255,255,0.05)' }}>
+        <div className="h-[3px] flex-shrink-0 bg-fluent-border">
           <div
-            className="h-full transition-all duration-300"
-            style={{ width: `${progressPct}%`, background: 'var(--color-accent)' }}
+            className="h-full transition-all duration-300 bg-fluent-accent"
+            style={{ width: `${progressPct}%` }}
           />
         </div>
 
         {/* Foto-area — altijd donker */}
-        <div className="flex-1 min-h-0 flex items-center justify-center relative" style={{ background: '#06060a' }}>
+        <div className="flex-1 min-h-0 flex items-center justify-center relative bg-fluent-stage">
           {isScanning && <ScanOverlay progress={scanProgress} onCancel={cancelScan} />}
           {thumbnail && !brokenThumbs.has(photo.id) ? (
             <img
@@ -859,10 +817,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
               style={{ boxShadow: '0 2px 32px rgba(0,0,0,0.6)' }}
             />
           ) : (
-            <div
-              className="w-full h-full flex items-center justify-center border border-fluent-border"
-              style={{ background: '#111116' }}
-            >
+            <div className="w-full h-full flex items-center justify-center border border-fluent-border bg-fluent-stage-elevated">
               <div className="flex flex-col items-center gap-3">
                 <svg className="w-10 h-10 text-fluent-text-disabled" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -874,10 +829,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
         </div>
 
         {/* Bottom action bar */}
-        <div
-          className="flex-shrink-0 px-5 py-3"
-          style={{ background: 'var(--color-bg-primary)', borderTop: '1px solid var(--color-border)' }}
-        >
+        <div className="flex-shrink-0 px-5 py-3 bg-fluent-bg-primary border-t border-fluent-border">
           {/* Filename + metadata */}
           <div className="text-center mb-2.5 space-y-0.5">
             <p className="text-fluent-text-secondary text-xs truncate">{photo.name}</p>
@@ -892,8 +844,7 @@ export default function TriageView({ msalInstance, account, onBack }: Props) {
                   key={preset.id}
                   onClick={() => handleMove({ id: preset.id, name: preset.name } as DriveItem)}
                   disabled={busy}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-fluent-accent-light text-fluent-accent text-xs font-medium border border-fluent-accent hover:bg-fluent-accent hover:text-white disabled:opacity-40 transition-colors"
-                  style={{ borderRadius: 10 }}
+                  className={`flex items-center gap-1.5 px-3 py-1 bg-fluent-accent-light text-fluent-accent text-xs font-medium border border-fluent-accent hover:bg-fluent-accent hover:text-white disabled:opacity-40 transition-colors ${focusRing}`}
                 >
                   <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
@@ -987,17 +938,16 @@ function ActionBtn({ onClick, disabled, variant, label, hint, children }: {
   const isPrimary = variant === 'danger' || variant === 'success'
   const btnClass = isPrimary
     ? variant === 'danger'
-      ? 'flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-fluent-danger hover:bg-red-700 disabled:opacity-30 transition-colors'
-      : 'flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-fluent-accent hover:bg-fluent-accent-hover disabled:opacity-30 transition-colors'
-    : 'flex items-center gap-1.5 px-4 py-2.5 text-sm text-fluent-text-secondary bg-fluent-bg-secondary border border-fluent-border-strong hover:bg-fluent-bg-hover hover:text-fluent-text-primary disabled:opacity-30 transition-colors'
+      ? 'flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-fluent-danger hover:bg-fluent-danger-hover disabled:opacity-30 transition-colors active:scale-[0.97]'
+      : 'flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-fluent-accent hover:bg-fluent-accent-hover disabled:opacity-30 transition-colors active:scale-[0.97]'
+    : 'flex items-center gap-1.5 px-4 py-2.5 text-sm text-fluent-text-secondary bg-fluent-bg-secondary border border-fluent-border-strong hover:bg-fluent-bg-hover hover:text-fluent-text-primary disabled:opacity-30 transition-colors active:scale-[0.97]'
 
   return (
     <div className="flex flex-col items-center gap-1">
       <button
         onClick={onClick}
         disabled={disabled}
-        className={btnClass}
-        style={{ borderRadius: 10 }}
+        className={`${btnClass} ${focusRing}`}
       >
         {children}
         {isPrimary && <span>{label}</span>}

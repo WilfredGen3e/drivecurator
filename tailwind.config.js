@@ -18,10 +18,13 @@ export default {
           border:          'var(--color-border)',
           'border-strong': 'var(--color-border-strong)',
           danger:          'var(--color-danger)',
+          'danger-hover':  'var(--color-danger-hover)',
           'danger-light':  'var(--color-danger-light)',
           success:         'var(--color-success)',
           'success-light': 'var(--color-success-light)',
           canvas:          'var(--color-canvas)',
+          stage:           'var(--color-stage)',
+          'stage-elevated':'var(--color-stage-elevated)',
         },
       },
       fontFamily: {
