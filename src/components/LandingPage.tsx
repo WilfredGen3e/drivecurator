@@ -1,8 +1,22 @@
 import { useState } from 'react'
+import { branding } from '../branding'
 
 interface Props {
   onLogin: () => Promise<void>
 }
+
+// Eén rustig, toegankelijk eyebrow-systeem (klein, hoofdletters, gespatieerd).
+// Bewust secundair grijs i.p.v. accent: haalt WCAG AA op klein formaat en houdt
+// de pagina kalm — de kleur-pop komt van knoppen, icoontegels en de foto's.
+const eyebrow = 'text-xs font-semibold uppercase tracking-widest text-fluent-text-secondary'
+
+// Sectiekop — consistente schaal + gebalanceerde regelafbreking.
+const sectionHeading = 'text-3xl sm:text-4xl font-bold tracking-tight text-balance'
+
+// Zichtbare focus-ring voor de eigen knoppen/links (zelfde patroon als Button.tsx).
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent ' +
+  'focus-visible:ring-offset-2 focus-visible:ring-offset-fluent-bg-primary'
 
 // ── App preview voor hero ─────────────────────────────────────────────────────
 
@@ -189,21 +203,21 @@ const showcaseRows = [
     title: 'Eén foto, één beslissing',
     body: 'Elke foto groot in beeld met datum, camera en grootte. Links weg, rechts bewaren, of verplaats naar een map — met de muis, met sneltoetsen, of met een swipe. Geen checkboxjes, geen gepriegel.',
     src: '/screenshots/triage-desktop.png',
-    alt: 'DriveCurator triage-scherm: één foto groot in beeld met verwijder- en bewaarknoppen',
+    alt: `${branding.name} triage-scherm: één foto groot in beeld met verwijder- en bewaarknoppen`,
   },
   {
     eyebrow: 'Slim sorteren',
     title: 'De rommel sorteert zichzelf',
     body: 'De app analyseert je hele map en groepeert automatisch: vakanties op locatie, screenshots, WhatsApp-foto\'s, burst-reeksen en duplicaten — elk met een teller. Verzet een hele categorie in één keer.',
     src: '/screenshots/smartsort-dashboard.png',
-    alt: 'DriveCurator slim-sorteren-dashboard met categorieën en aantallen',
+    alt: `${branding.name} slim-sorteren-dashboard met categorieën en aantallen`,
   },
   {
     eyebrow: 'In één oogopslag',
     title: 'Hele reeksen tegelijk',
     body: 'Open een groep en zie alle foto\'s naast elkaar. Bewaar de beste, gooi de rest weg, of verplaats de hele set — zonder eindeloos te scrollen.',
     src: '/screenshots/smartsort-cluster.png',
-    alt: 'DriveCurator cluster-grid met meerdere foto\'s naast elkaar',
+    alt: `${branding.name} cluster-grid met meerdere foto's naast elkaar`,
   },
 ]
 
@@ -211,10 +225,10 @@ function Showcase() {
   return (
     <section className="border-t border-fluent-border">
       <div className="max-w-6xl mx-auto px-6 py-24">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-center text-fluent-accent">
+        <p className={`${eyebrow} mb-3 text-center`}>
           Zie het zelf
         </p>
-        <h2 className="text-3xl font-bold text-center mb-4 tracking-tight">
+        <h2 className={`${sectionHeading} text-center mb-4`}>
           Zo ziet opruimen eruit
         </h2>
         <p className="text-base text-center max-w-xl mx-auto mb-16 text-fluent-text-secondary">
@@ -231,8 +245,8 @@ function Showcase() {
                 <BrowserFrame src={row.src} alt={row.alt} />
               </div>
               <div className="flex-1 max-w-md">
-                <p className={`${'text-xs font-semibold uppercase tracking-widest text-fluent-accent'} mb-3`}>{row.eyebrow}</p>
-                <h3 className="text-2xl font-bold mb-3 tracking-tight">{row.title}</h3>
+                <p className={`${eyebrow} mb-3`}>{row.eyebrow}</p>
+                <h3 className="text-2xl sm:text-[1.75rem] font-bold mb-3 tracking-tight text-balance">{row.title}</h3>
                 <p className="text-base leading-relaxed text-fluent-text-secondary">{row.body}</p>
               </div>
             </div>
@@ -242,12 +256,12 @@ function Showcase() {
         {/* Mobiel-accent */}
         <div className="mt-20 rounded-3xl bg-fluent-bg-secondary px-6 py-12">
           <div className="flex flex-col md:flex-row items-center gap-10 max-w-4xl mx-auto">
-            <PhoneFrame src="/screenshots/triage-mobile.png" alt="DriveCurator op een telefoon, met grote touch-knoppen" />
+            <PhoneFrame src="/screenshots/triage-mobile.png" alt={`${branding.name} op een telefoon, met grote touch-knoppen`} />
             <div className="flex-1 text-center md:text-left">
-              <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-fluent-accent">Ook op je telefoon</p>
-              <h3 className="text-2xl font-bold mb-3 tracking-tight">Opruimen vanaf de bank</h3>
+              <p className={`${eyebrow} mb-3`}>Ook op je telefoon</p>
+              <h3 className="text-2xl sm:text-[1.75rem] font-bold mb-3 tracking-tight text-balance">Opruimen vanaf de bank</h3>
               <p className="text-base leading-relaxed text-fluent-text-secondary">
-                Op mobiel krijg je een touch-layout met grote knoppen en swipe-gebaren. Installeer DriveCurator als
+                Op mobiel krijg je een touch-layout met grote knoppen en swipe-gebaren. Installeer {branding.name} als
                 app op je beginscherm en ruim je camerarol op waar en wanneer je wilt.
               </p>
             </div>
@@ -265,7 +279,7 @@ function MsftButton({ onClick, loading }: { onClick: () => void; loading: boolea
     <button
       onClick={onClick}
       disabled={loading}
-      className="group flex items-center justify-center gap-3 px-6 rounded-xl font-semibold text-[15px] text-white transition-all duration-200 disabled:opacity-60 active:scale-[0.97] hover:brightness-110"
+      className={`group flex items-center justify-center gap-3 px-6 rounded-xl font-semibold text-[15px] text-white transition-all duration-200 disabled:opacity-60 active:scale-[0.97] hover:brightness-110 ${focusRing}`}
       style={{ background: 'var(--color-accent)', minHeight: 50 }}
     >
       {loading ? (
@@ -293,8 +307,6 @@ export default function LandingPage({ onLogin }: Props) {
     try { await onLogin() } finally { setLoggingIn(false) }
   }
 
-  const eyebrow = 'text-xs font-semibold uppercase tracking-widest text-fluent-accent'
-
   return (
     <div className="bg-fluent-bg-primary text-fluent-text-primary">
 
@@ -308,12 +320,12 @@ export default function LandingPage({ onLogin }: Props) {
             <svg className="w-5 h-5 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
               <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
             </svg>
-            <span className="font-semibold text-sm tracking-tight">DriveCurator</span>
+            <span className="font-semibold text-sm tracking-tight">{branding.name}</span>
           </div>
           <button
             onClick={handleLogin}
             disabled={loggingIn}
-            className="text-sm font-semibold px-4 py-2 rounded-full bg-fluent-accent-light text-fluent-accent transition-all active:scale-[0.97] hover:brightness-95 disabled:opacity-60"
+            className={`text-sm font-semibold px-4 py-2 rounded-full bg-fluent-accent-light text-fluent-accent transition-all duration-200 active:scale-[0.97] hover:brightness-95 disabled:opacity-60 ${focusRing}`}
           >
             {loggingIn ? 'Aanmelden…' : 'Aanmelden'}
           </button>
@@ -333,19 +345,28 @@ export default function LandingPage({ onLogin }: Props) {
 
             {/* Linker kolom: tekst */}
             <div className="flex-1 max-w-xl animate-rise">
-              <p className={`${eyebrow} mb-5`}>OneDrive foto beheer</p>
-              <h1 className="text-4xl sm:text-5xl font-bold leading-[1.1] mb-6 tracking-tight">
+              <p className={`${eyebrow} mb-5`}>{branding.slogan}</p>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] mb-6 tracking-tight text-balance">
                 Je OneDrive staat vol.
                 <br />
                 <span className="text-fluent-text-secondary">En je weet precies hoe dat is gekomen.</span>
               </h1>
-              <p className="text-base mb-8 leading-relaxed text-fluent-text-secondary">
+              <p className="text-lg mb-8 leading-relaxed text-fluent-text-secondary text-pretty">
                 OneDrive heeft jarenlang automatisch je camerarol opgeslagen. Nu heb je duizenden foto's —
                 screenshots, dubbelingen, WhatsApp-rotzooi — en geen fatsoenlijk gereedschap om er doorheen te komen.
               </p>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <MsftButton onClick={handleLogin} loading={loggingIn} />
-                <p className="text-sm text-fluent-text-disabled">Gratis · 200 foto's · Geen installatie</p>
+                <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-fluent-text-secondary">
+                  {['Gratis', "200 foto's", 'Geen installatie'].map(item => (
+                    <li key={item} className="flex items-center gap-1.5">
+                      <svg className="w-4 h-4 flex-shrink-0 text-fluent-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
 
@@ -360,14 +381,14 @@ export default function LandingPage({ onLogin }: Props) {
       {/* ── Quote strip ──────────────────────────────────────────────────── */}
       <div className="border-y border-fluent-border bg-fluent-bg-secondary">
         <div className="max-w-6xl mx-auto px-6 py-10">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-6 text-center text-fluent-text-disabled">
+          <p className={`${eyebrow} mb-6 text-center`}>
             Wat gebruikers zeggen op Microsoft forums
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {userQuotes.map((q, i) => (
-              <div key={i} className="p-5 rounded-2xl bg-fluent-bg-primary shadow-card border-l-[3px] border-fluent-accent">
+              <div key={i} className="p-5 rounded-2xl bg-fluent-bg-primary shadow-card border-l-[3px] border-fluent-accent transition-all duration-200 hover:shadow-float hover:-translate-y-0.5">
                 <p className="text-sm leading-relaxed mb-3 text-fluent-text-primary">{q.text}</p>
-                <p className="text-xs text-fluent-text-disabled">— {q.source}</p>
+                <p className="text-xs text-fluent-text-secondary">— {q.source}</p>
               </div>
             ))}
           </div>
@@ -377,7 +398,7 @@ export default function LandingPage({ onLogin }: Props) {
       {/* ── Verhaal ───────────────────────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-6 py-24">
         <div className="space-y-6 text-base leading-relaxed text-fluent-text-secondary">
-          <h2 className="text-3xl font-bold mb-8 tracking-tight text-fluent-text-primary">
+          <h2 className={`${sectionHeading} mb-8 text-fluent-text-primary`}>
             Het probleem is niet de backup.<br />Het is wat daarna komt.
           </h2>
 
@@ -395,7 +416,7 @@ export default function LandingPage({ onLogin }: Props) {
 
           <blockquote className="my-8 pl-5 py-1 border-l-[3px] border-fluent-accent text-fluent-text-primary italic" style={{ fontSize: '1.1rem' }}>
             "OneDrive camera backup puts all photos together with no option to change this."
-            <footer className="mt-2 text-sm not-italic text-fluent-text-disabled">— Microsoft Q&A, Android gebruiker</footer>
+            <footer className="mt-2 text-sm not-italic text-fluent-text-secondary">— Microsoft Q&A, Android gebruiker</footer>
           </blockquote>
 
           <p>
@@ -406,7 +427,7 @@ export default function LandingPage({ onLogin }: Props) {
           </p>
 
           <p>
-            DriveCurator lost dit op met één simpel principe: één foto groot op het scherm,
+            {branding.name} lost dit op met één simpel principe: één foto groot op het scherm,
             jij beslist wat ermee gebeurt. De app herkent automatisch je screenshots, burst-reeksen
             en WhatsApp-foto's — zodat je die categorie in één keer kunt wegzetten zonder alles te
             hoeven bekijken.
@@ -420,11 +441,11 @@ export default function LandingPage({ onLogin }: Props) {
       {/* ── Features ─────────────────────────────────────────────────────── */}
       <section className="border-t border-fluent-border bg-fluent-bg-secondary">
         <div className="max-w-6xl mx-auto px-6 py-24">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-center text-fluent-text-disabled">
+          <p className={`${eyebrow} mb-3 text-center`}>
             Hoe het werkt
           </p>
-          <h2 className="text-3xl font-bold text-center mb-12 tracking-tight">
-            Waarom DriveCurator anders is
+          <h2 className={`${sectionHeading} text-center mb-12`}>
+            Waarom {branding.name} anders is
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {features.map((f) => (
@@ -445,10 +466,10 @@ export default function LandingPage({ onLogin }: Props) {
 
       {/* ── Stappen ──────────────────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-24">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-center text-fluent-text-disabled">
+        <p className={`${eyebrow} mb-3 text-center`}>
           Aan de slag
         </p>
-        <h2 className="text-3xl font-bold text-center mb-12 tracking-tight">
+        <h2 className={`${sectionHeading} text-center mb-12`}>
           In drie stappen je fotobak op orde
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -500,7 +521,7 @@ export default function LandingPage({ onLogin }: Props) {
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
       <section className="border-t border-fluent-border bg-fluent-bg-secondary">
         <div className="relative max-w-6xl mx-auto px-6 py-24 text-center">
-          <h2 className="text-3xl font-bold mb-4 tracking-tight">
+          <h2 className={`${sectionHeading} mb-4`}>
             Hoeveel foto's staan er bij jou al jaren onbekeken?
           </h2>
           <p className="text-base mb-10 max-w-xl mx-auto text-fluent-text-secondary">
@@ -519,9 +540,9 @@ export default function LandingPage({ onLogin }: Props) {
             <svg className="w-4 h-4 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
               <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
             </svg>
-            <span className="text-sm font-medium text-fluent-text-secondary">DriveCurator</span>
+            <span className="text-sm font-medium text-fluent-text-secondary">{branding.name}</span>
           </div>
-          <span className="text-sm text-fluent-text-disabled">
+          <span className="text-sm text-fluent-text-secondary">
             Werkt met Microsoft OneDrive via de Graph API
           </span>
         </div>
