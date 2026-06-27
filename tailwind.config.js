@@ -25,6 +25,8 @@ export default {
           canvas:          'var(--color-canvas)',
           stage:           'var(--color-stage)',
           'stage-elevated':'var(--color-stage-elevated)',
+          folder:          'var(--color-folder)',
+          'folder-strong': 'var(--color-folder-strong)',
         },
       },
       fontFamily: {

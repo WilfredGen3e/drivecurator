@@ -36,6 +36,11 @@
      Eén bron i.p.v. drie losse bijna-zwarten. */
   --color-stage:          #06060a;  /* fotovlak */
   --color-stage-elevated: #111116;  /* lege/kapotte thumbnail-kaart */
+
+  /* Map-glyph + favoriet-ster — bewust Windows-geel/goud voor herkenning
+     ("dit is een map"). Functionele kleur, geen decoratie; centraal beheerd. */
+  --color-folder:        #fbbf24;  /* amber-400 */
+  --color-folder-strong: #f59e0b;  /* amber-500 — hover/gevulde ster */
 }
 
 @media (prefers-color-scheme: dark) {

@@ -21,6 +21,11 @@ interface SavedFolder { id: string; name: string }
 const FAVORITE_KEY = 'drivecurator_favorite_folder'
 const LAST_FOLDER_KEY = 'drivecurator_last_folder'
 
+// Zichtbare focus-ring voor de eigen knoppen (zelfde patroon als Button.tsx).
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent ' +
+  'focus-visible:ring-offset-2 focus-visible:ring-offset-fluent-bg-secondary rounded-md'
+
 function loadFavorite(): SavedFolder | null {
   try { return JSON.parse(localStorage.getItem(FAVORITE_KEY) ?? 'null') } catch { return null }
 }
@@ -118,7 +123,7 @@ export default function FolderBrowser({ msalInstance, account, onBack, onFolderS
           {onBack && (
             <button
               onClick={onBack}
-              className="text-fluent-text-secondary hover:text-fluent-text-primary text-sm mb-3 flex items-center gap-1 transition-colors"
+              className={`text-fluent-text-secondary hover:text-fluent-text-primary text-sm mb-3 flex items-center gap-1 transition-colors px-1 py-0.5 ${focusRing}`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -134,7 +139,7 @@ export default function FolderBrowser({ msalInstance, account, onBack, onFolderS
           <nav className="flex items-center gap-1 flex-wrap">
             <button
               onClick={handleRootClick}
-              className="flex items-center gap-1 text-sm text-fluent-accent hover:text-fluent-accent-hover transition-colors"
+              className={`flex items-center gap-1 text-sm text-fluent-accent hover:text-fluent-accent-hover transition-colors px-1 py-0.5 ${focusRing}`}
             >
               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
@@ -148,7 +153,7 @@ export default function FolderBrowser({ msalInstance, account, onBack, onFolderS
                 </svg>
                 <button
                   onClick={() => handleBreadcrumbClick(i)}
-                  className={`text-sm transition-colors ${
+                  className={`text-sm transition-colors px-1 py-0.5 ${focusRing} ${
                     i === breadcrumb.length - 1
                       ? 'text-fluent-text-primary font-medium'
                       : 'text-fluent-accent hover:text-fluent-accent-hover'
@@ -171,11 +176,8 @@ export default function FolderBrowser({ msalInstance, account, onBack, onFolderS
             </div>
 
             {favorite && (
-              <div
-                className="flex items-center gap-3 px-4 py-3"
-                style={{ borderBottom: showLastFolder ? '1px solid var(--color-border)' : 'none' }}
-              >
-                <svg className="w-4 h-4 flex-shrink-0 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+              <div className={`flex items-center gap-3 px-4 py-3 ${showLastFolder ? 'border-b border-fluent-border' : ''}`}>
+                <svg className="w-4 h-4 flex-shrink-0 text-fluent-folder" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
                 <span className="text-sm text-fluent-text-primary flex-1 truncate">{favorite.name}</span>
@@ -232,10 +234,7 @@ export default function FolderBrowser({ msalInstance, account, onBack, onFolderS
         ) : (
           <div className="rounded-2xl bg-fluent-bg-primary shadow-card overflow-hidden">
             {currentFolder && (
-              <div
-                className="px-4 py-2.5"
-                style={{ background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)' }}
-              >
+              <div className="px-4 py-2.5 bg-fluent-bg-secondary border-b border-fluent-border">
                 <span className="text-xs font-semibold text-fluent-text-secondary uppercase tracking-wider">
                   Submappen
                 </span>
@@ -246,20 +245,17 @@ export default function FolderBrowser({ msalInstance, account, onBack, onFolderS
               return (
                 <div
                   key={folder.id}
-                  className="flex items-center gap-3 px-4 hover:bg-fluent-bg-hover transition-colors"
-                  style={{
-                    background: 'var(--color-bg-primary)',
-                    borderBottom: i < folders.length - 1 ? '1px solid var(--color-border)' : 'none',
-                    minHeight: 44,
-                  }}
+                  className={`flex items-center gap-3 px-4 min-h-[44px] bg-fluent-bg-primary hover:bg-fluent-bg-hover transition-colors ${
+                    i < folders.length - 1 ? 'border-b border-fluent-border' : ''
+                  }`}
                 >
                   {/* Map naam + navigeer in */}
                   <button
                     onClick={() => handleFolderClick(folder)}
-                    className="flex items-center gap-2.5 flex-1 min-w-0 text-left py-2.5"
+                    className={`flex items-center gap-2.5 flex-1 min-w-0 text-left py-2.5 ${focusRing}`}
                   >
                     <svg
-                      className="w-4 h-4 flex-shrink-0 text-amber-400"
+                      className="w-4 h-4 flex-shrink-0 text-fluent-folder"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -272,8 +268,8 @@ export default function FolderBrowser({ msalInstance, account, onBack, onFolderS
                   <button
                     onClick={e => handleToggleFavorite(folder, e)}
                     title={isFav ? 'Verwijder als favoriet' : 'Stel in als favoriet'}
-                    className={`flex-shrink-0 p-1.5 transition-colors ${
-                      isFav ? 'text-amber-400 hover:text-amber-500' : 'text-fluent-text-disabled hover:text-amber-400'
+                    className={`flex-shrink-0 p-1.5 transition-colors ${focusRing} ${
+                      isFav ? 'text-fluent-folder hover:text-fluent-folder-strong' : 'text-fluent-text-secondary hover:text-fluent-folder'
                     }`}
                   >
                     <svg
@@ -290,7 +286,7 @@ export default function FolderBrowser({ msalInstance, account, onBack, onFolderS
                   {/* Chevron: navigeer in */}
                   <button
                     onClick={() => handleFolderClick(folder)}
-                    className="flex-shrink-0 p-1.5 text-fluent-text-disabled hover:text-fluent-text-secondary transition-colors"
+                    className={`flex-shrink-0 p-1.5 text-fluent-text-secondary hover:text-fluent-text-primary transition-colors ${focusRing}`}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

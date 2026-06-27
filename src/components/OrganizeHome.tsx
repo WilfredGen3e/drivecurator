@@ -23,7 +23,7 @@ export default function OrganizeHome({ folder, photoCount, onManual, onSmartSort
 
       {/* Map-header */}
       <div className="flex items-center gap-3 px-5 py-3 flex-shrink-0 bg-fluent-bg-primary border-b border-fluent-border">
-        <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-4 h-4 text-fluent-folder flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
           <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
         </svg>
         <span className="text-sm font-semibold text-fluent-text-primary truncate flex-1">{folder.name}</span>

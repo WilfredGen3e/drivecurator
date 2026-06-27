@@ -4,6 +4,11 @@ import { DriveItem, getRootFolders, getSubFolders, createFolder } from '../servi
 
 export interface Crumb { id: string; name: string }
 
+// Zichtbare focus-ring voor de eigen knoppen (zelfde patroon als Button.tsx).
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent ' +
+  'focus-visible:ring-offset-1 focus-visible:ring-offset-fluent-bg-secondary rounded-md'
+
 interface Props {
   msalInstance: PublicClientApplication
   account: AccountInfo
@@ -70,19 +75,13 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
   }
 
   return (
-    <div
-      className="flex flex-col h-full"
-      style={{ background: 'var(--color-bg-secondary)', borderRight: '1px solid var(--color-border)' }}
-    >
+    <div className="flex flex-col h-full bg-fluent-bg-secondary border-r border-fluent-border">
       {/* Breadcrumb */}
-      <div
-        className="px-3 py-2 flex items-center min-h-[38px]"
-        style={{ borderBottom: '1px solid var(--color-border)' }}
-      >
+      <div className="px-3 py-2 flex items-center min-h-[38px] border-b border-fluent-border">
         <div className="flex items-center gap-0.5 flex-wrap text-xs min-w-0">
           <button
             onClick={handleRoot}
-            className="text-fluent-accent hover:text-fluent-accent-hover transition-colors truncate max-w-[60px]"
+            className={`text-fluent-accent hover:text-fluent-accent-hover transition-colors truncate max-w-[60px] ${focusRing}`}
           >
             OneDrive
           </button>
@@ -93,7 +92,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
               </svg>
               <button
                 onClick={() => handleBreadcrumbClick(i)}
-                className={`transition-colors truncate max-w-[68px] ${
+                className={`transition-colors truncate max-w-[68px] ${focusRing} ${
                   i === breadcrumb.length - 1
                     ? 'text-fluent-text-primary font-medium'
                     : 'text-fluent-accent hover:text-fluent-accent-hover'
@@ -114,7 +113,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
             <div className="w-4 h-4 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : folders.length === 0 ? (
-          <p className="text-fluent-text-disabled text-xs text-center py-6 px-3">Geen mappen</p>
+          <p className="text-fluent-text-secondary text-xs text-center py-6 px-3">Geen mappen</p>
         ) : (
           folders.map(folder => (
             <div
@@ -124,10 +123,10 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
               {/* Navigeer in map */}
               <button
                 onClick={() => handleNavigate(folder)}
-                className="flex items-center gap-2 min-w-0 text-left py-2"
+                className={`flex items-center gap-2 min-w-0 text-left py-2 ${focusRing}`}
                 title={folder.name}
               >
-                <svg className="w-4 h-4 flex-shrink-0 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-4 h-4 flex-shrink-0 text-fluent-folder" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                 </svg>
                 <span className="text-sm text-fluent-text-primary truncate">{folder.name}</span>
@@ -138,7 +137,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
                 onClick={() => onMove(folder, breadcrumb)}
                 disabled={disabled}
                 title={`Verplaats naar ${folder.name}`}
-                className="flex-shrink-0 p-2 rounded-lg text-fluent-text-secondary hover:text-white hover:bg-fluent-accent active:scale-[0.94] transition-all disabled:opacity-30"
+                className={`flex-shrink-0 p-2 rounded-lg text-fluent-text-secondary hover:text-white hover:bg-fluent-accent active:scale-[0.94] transition-all disabled:opacity-30 ${focusRing}`}
               >
                 <MoveArrowIcon />
               </button>
@@ -148,7 +147,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
       </div>
 
       {/* Nieuwe map */}
-      <div className="p-2" style={{ borderTop: '1px solid var(--color-border)' }}>
+      <div className="p-2 border-t border-fluent-border">
         {showInput ? (
           <div className="flex gap-1">
             <input
@@ -166,13 +165,13 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
             <button
               onClick={handleCreateFolder}
               disabled={creating || !newFolderName.trim()}
-              className="px-3 py-2 rounded-lg bg-fluent-accent text-white text-sm hover:bg-fluent-accent-hover active:scale-[0.94] disabled:opacity-40 transition-all flex-shrink-0"
+              className={`px-3 py-2 rounded-lg bg-fluent-accent text-white text-sm hover:bg-fluent-accent-hover active:scale-[0.94] disabled:opacity-40 transition-all flex-shrink-0 ${focusRing}`}
             >
               {creating ? '…' : '✓'}
             </button>
             <button
               onClick={() => { setShowInput(false); setNewFolderName('') }}
-              className="px-3 py-2 rounded-lg text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover text-sm transition-colors flex-shrink-0"
+              className={`px-3 py-2 rounded-lg text-fluent-text-secondary hover:text-fluent-text-primary hover:bg-fluent-bg-hover text-sm transition-colors flex-shrink-0 ${focusRing}`}
             >
               ✕
             </button>
@@ -180,7 +179,7 @@ export default function FolderSidebar({ msalInstance, account, onMove, disabled,
         ) : (
           <button
             onClick={() => setShowInput(true)}
-            className="w-full flex items-center gap-2 px-2 py-2 rounded-xl text-fluent-text-secondary hover:text-fluent-text-primary text-sm hover:bg-fluent-bg-hover transition-colors"
+            className={`w-full flex items-center gap-2 px-2 py-2 rounded-xl text-fluent-text-secondary hover:text-fluent-text-primary text-sm hover:bg-fluent-bg-hover transition-colors ${focusRing}`}
           >
             <span className="text-base leading-none">+</span>
             <span>Nieuwe map</span>
