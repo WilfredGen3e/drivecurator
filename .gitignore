@@ -14,9 +14,10 @@ build/
 *.log
 npm-debug.log*
 
-# Editor
+# Editor / lokale agent-tooling
 .vscode/
 .idea/
+AGENTS.md
 *.suo
 *.ntvs*
 *.njsproj
