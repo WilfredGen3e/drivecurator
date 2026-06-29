@@ -237,6 +237,9 @@ export default function App() {
         authLog.info(`Ingelogd: ${result.account.username}`)
         setAccount(result.account)
         setShowApp(true)
+        // Verse login = rustig moment: nu stil checken op een nieuwe versie.
+        // Staat er één klaar, dan herlaadt autoUpdate vanzelf (nog ingelogd).
+        pwa.checkSilently()
         await handleRegistration(result.account)
       }
     } catch (e) {
