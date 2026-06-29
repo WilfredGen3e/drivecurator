@@ -8,11 +8,11 @@ export default function StepIndicator({ current }: Props) {
   const activeLabel = STEPS[Math.min(current, STEPS.length) - 1]
 
   return (
-    <div className="border-b border-fluent-border bg-fluent-bg-secondary flex-shrink-0">
+    <nav aria-label="Voortgang" className="border-b border-fluent-border bg-fluent-bg-secondary flex-shrink-0">
 
       {/* Mobiel/tablet (iPhone, iPad) — alleen de huidige stap */}
       <div className="flex lg:hidden items-center gap-2.5 px-5 py-2.5">
-        <div className="w-6 h-6 rounded-full bg-fluent-accent text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+        <div aria-hidden="true" className="w-6 h-6 rounded-full bg-fluent-accent text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
           {current}
         </div>
         <span className="text-sm font-semibold text-fluent-text-primary flex-1 truncate">{activeLabel}</span>
@@ -20,19 +20,19 @@ export default function StepIndicator({ current }: Props) {
       </div>
 
       {/* Desktop — volledige stappenbalk */}
-      <div className="hidden lg:flex items-center px-6 py-2.5">
+      <ol className="hidden lg:flex items-center px-6 py-2.5">
         {STEPS.map((label, i) => {
           const stepNum = i + 1
           const done = stepNum < current
           const active = stepNum === current
 
           return (
-            <div key={i} className="flex items-center">
+            <li key={i} className="flex items-center" aria-current={active ? 'step' : undefined}>
               {i > 0 && (
-                <div className={`w-8 h-px mx-3 flex-shrink-0 ${done ? 'bg-fluent-accent' : 'bg-fluent-border-strong'}`} />
+                <div aria-hidden="true" className={`w-8 h-px mx-3 flex-shrink-0 ${done ? 'bg-fluent-accent' : 'bg-fluent-border-strong'}`} />
               )}
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
+                <div aria-hidden="true" className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
                   done || active ? 'bg-fluent-accent text-white' : 'border border-fluent-border-strong text-fluent-text-disabled'
                 }`}>
                   {done ? <CheckIcon /> : stepNum}
@@ -44,12 +44,13 @@ export default function StepIndicator({ current }: Props) {
                 }`}>
                   {label}
                 </span>
+                {done && <span className="sr-only"> (afgerond)</span>}
               </div>
-            </div>
+            </li>
           )
         })}
-      </div>
-    </div>
+      </ol>
+    </nav>
   )
 }
 

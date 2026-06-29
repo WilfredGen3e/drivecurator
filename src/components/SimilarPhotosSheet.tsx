@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, deleteItem, moveItem } from '../services/graphService'
 import FolderSidebar from './FolderSidebar'
@@ -65,11 +65,23 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
 
   const progressPct = progress ? (progress.total > 0 ? (progress.done / progress.total) * 100 : 0) : 0
 
+  // Escape sluit de sheet, behalve tijdens een lopende actie
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !busy) onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [busy, onClose])
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <div className="flex-1 bg-black/50 animate-fade" onClick={busy ? undefined : onClose} />
+      <div aria-hidden="true" className="flex-1 bg-black/50 animate-fade" onClick={busy ? undefined : onClose} />
 
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="similar-title"
         className="flex flex-col rounded-t-3xl pb-safe animate-sheet"
         style={{ height: '70vh', background: 'var(--color-bg-primary)' }}
       >
@@ -79,14 +91,14 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
           style={{ borderBottom: '1px solid var(--color-border)' }}
         >
           <div className="flex items-center gap-3">
-            <span className="font-semibold text-fluent-text-primary">
+            <span id="similar-title" className="font-semibold text-fluent-text-primary">
               {matchCount} vergelijkbare foto{matchCount !== 1 ? "'s" : ''}
             </span>
             <span className="text-xs text-fluent-text-secondary">· {selectedCount} geselecteerd</span>
             <button
               onClick={toggleAll}
               disabled={busy}
-              className="text-xs text-fluent-accent hover:text-fluent-accent-hover disabled:opacity-40"
+              className="text-xs text-fluent-accent hover:text-fluent-accent-hover disabled:opacity-40 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent"
             >
               {allSelected ? 'Niets' : 'Alles'}
             </button>
@@ -94,10 +106,10 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
           <button
             onClick={onClose}
             disabled={busy}
-            className="text-fluent-text-secondary p-1 disabled:opacity-40"
-            title="Sluiten"
+            className="text-fluent-text-secondary p-1 disabled:opacity-40 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent"
+            aria-label="Sluiten"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -112,9 +124,9 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
             >
               <button
                 onClick={() => setShowFolderPicker(false)}
-                className="flex items-center gap-1 text-fluent-text-secondary hover:text-fluent-text-primary text-sm"
+                className="flex items-center gap-1 text-fluent-text-secondary hover:text-fluent-text-primary text-sm rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 Terug
@@ -141,21 +153,23 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
                     key={photo.id}
                     onClick={() => !busy && toggle(photo.id)}
                     disabled={busy}
-                    className="relative aspect-square overflow-hidden flex items-center justify-center rounded-lg active:scale-[0.97] transition-transform"
+                    aria-pressed={isSelected}
+                    aria-label={isReference ? `${photo.name} (referentie)` : photo.name}
+                    className="relative aspect-square overflow-hidden flex items-center justify-center rounded-lg active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent focus-visible:ring-offset-1 focus-visible:ring-offset-fluent-bg-primary"
                     style={{
                       background: '#111116',
                       border: isSelected
                         ? '2px solid var(--color-danger)'
                         : isReference ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
                     }}
-                    title={isReference ? `${photo.name} (referentie)` : photo.name}
                   >
                     {thumb
-                      ? <img src={thumb} alt={photo.name} className={`w-full h-full object-cover transition-opacity ${isSelected ? '' : 'opacity-60'}`} draggable={false} />
+                      ? <img src={thumb} alt="" className={`w-full h-full object-cover transition-opacity ${isSelected ? '' : 'opacity-60'}`} draggable={false} />
                       : <span className="text-fluent-text-secondary text-[10px] px-1 text-center truncate">{photo.name}</span>
                     }
                     {/* Selectievinkje */}
                     <span
+                      aria-hidden="true"
                       className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center"
                       style={{
                         background: isSelected ? 'var(--color-danger)' : 'rgba(0,0,0,0.45)',
@@ -169,7 +183,7 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
                       )}
                     </span>
                     {isReference && (
-                      <span className="absolute bottom-1 left-1 text-[9px] font-semibold text-white px-1 rounded-lg" style={{ background: 'var(--color-accent)' }}>
+                      <span aria-hidden="true" className="absolute bottom-1 left-1 text-[9px] font-semibold text-white px-1 rounded-lg" style={{ background: 'var(--color-accent)' }}>
                         referentie
                       </span>
                     )}
@@ -182,7 +196,15 @@ export default function SimilarPhotosSheet({ photos, msalInstance, account, onCl
 
         {/* Voortgangsbalk — alleen tijdens een actie */}
         {progress && (
-          <div className="flex-shrink-0 px-4 py-2" style={{ borderTop: '1px solid var(--color-border)' }}>
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={progress.total}
+            aria-valuenow={progress.done}
+            aria-label="Bezig"
+            className="flex-shrink-0 px-4 py-2"
+            style={{ borderTop: '1px solid var(--color-border)' }}
+          >
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-fluent-text-secondary">Bezig…</span>
               <span className="text-xs text-fluent-text-secondary tabular-nums">{progress.done} / {progress.total}</span>

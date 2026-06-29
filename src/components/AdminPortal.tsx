@@ -12,7 +12,7 @@ interface Props {
 function UserInitials({ name }: { name: string }) {
   const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
   return (
-    <div className="w-8 h-8 rounded-lg bg-fluent-accent-light flex items-center justify-center flex-shrink-0">
+    <div aria-hidden="true" className="w-8 h-8 rounded-lg bg-fluent-accent-light flex items-center justify-center flex-shrink-0">
       <span className="text-xs font-semibold text-fluent-accent">{initials}</span>
     </div>
   )
@@ -47,6 +47,7 @@ function LimitCell({ user, onSave }: { user: UserProfile; onSave: (val: number) 
         onChange={e => setValue(e.target.value)}
         onBlur={commit}
         onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setValue(String(user.freeTierLimit)); setEditing(false) } }}
+        aria-label={`Limiet voor ${user.displayName}`}
         className="w-24 border border-fluent-accent px-2 py-0.5 text-sm rounded-lg outline-none"
       />
     )
@@ -55,8 +56,8 @@ function LimitCell({ user, onSave }: { user: UserProfile; onSave: (val: number) 
   return (
     <button
       onClick={() => { setValue(String(user.freeTierLimit)); setEditing(true) }}
-      className="text-sm text-fluent-text-primary hover:text-fluent-accent underline decoration-dotted underline-offset-2"
-      title="Klik om te bewerken"
+      className="text-sm text-fluent-text-primary hover:text-fluent-accent underline decoration-dotted underline-offset-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent"
+      aria-label={`Limiet bewerken voor ${user.displayName}, nu ${user.freeTierLimit}`}
     >
       {user.freeTierLimit.toLocaleString('nl-NL')}
     </button>
@@ -73,7 +74,8 @@ function ToggleButton({ active, labelOn, labelOff, colorOn, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${
+      aria-pressed={active}
+      className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent ${
         active ? colorOn : 'bg-fluent-bg-secondary text-fluent-text-secondary hover:bg-fluent-bg-hover'
       }`}
     >
@@ -137,8 +139,8 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
       {/* Subheader */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-fluent-border bg-fluent-bg-secondary flex-shrink-0">
         <div className="flex items-center gap-4">
-          <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-fluent-text-secondary hover:text-fluent-text-primary transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-fluent-text-secondary hover:text-fluent-text-primary transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent">
+            <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Terug
@@ -149,7 +151,8 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`text-xs px-3 py-1 rounded-lg transition-colors ${
+                aria-pressed={tab === t}
+                className={`text-xs px-3 py-1 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent ${
                   tab === t
                     ? 'bg-fluent-accent text-white'
                     : 'text-fluent-text-secondary hover:bg-fluent-bg-hover'
@@ -165,8 +168,8 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
             <span><strong className="text-fluent-text-primary">{total}</strong> gebruikers</span>
             <span><strong className="text-fluent-text-primary">{premium}</strong> premium</span>
             <span><strong className="text-fluent-danger">{blocked}</strong> geblokkeerd</span>
-            <button onClick={load} className="text-fluent-accent hover:text-fluent-accent-hover transition-colors" title="Verversen">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onClick={load} className="text-fluent-accent hover:text-fluent-accent-hover transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent" aria-label="Verversen">
+              <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
@@ -178,19 +181,20 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
         /* Gebruikerstabel */
         <div className="flex-1 overflow-auto">
         {loading && (
-          <div className="flex items-center justify-center h-48">
-            <div className="w-6 h-6 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin" />
+          <div role="status" aria-label="Gebruikers laden" className="flex items-center justify-center h-48">
+            <div aria-hidden="true" className="w-6 h-6 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
         {error && (
-          <div className="m-6 p-4 border border-fluent-danger bg-fluent-danger-light text-fluent-danger text-sm rounded-lg">
+          <div role="alert" className="m-6 p-4 border border-fluent-danger bg-fluent-danger-light text-fluent-danger text-sm rounded-lg">
             {error}
           </div>
         )}
 
         {!loading && !error && (
           <table className="w-full text-sm border-collapse">
+            <caption className="sr-only">Gebruikers en hun limiet, premium- en blokkeerstatus</caption>
             <thead>
               <tr className="border-b border-fluent-border bg-fluent-bg-secondary">
                 <th className="text-left px-6 py-2.5 font-semibold text-fluent-text-secondary text-xs uppercase tracking-wide">Gebruiker</th>
@@ -277,13 +281,15 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
                             <button
                               onClick={() => remove(user.id)}
                               disabled={isBusy}
-                              className="text-xs font-semibold text-white bg-fluent-danger px-2.5 py-1 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                              aria-label={`Ja, ${user.displayName} verwijderen`}
+                              className="text-xs font-semibold text-white bg-fluent-danger px-2.5 py-1 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-danger focus-visible:ring-offset-1"
                             >
                               Ja
                             </button>
                             <button
                               onClick={() => setConfirmDelete(null)}
-                              className="text-xs text-fluent-text-secondary hover:text-fluent-text-primary"
+                              aria-label="Verwijderen annuleren"
+                              className="text-xs text-fluent-text-secondary hover:text-fluent-text-primary rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent"
                             >
                               Nee
                             </button>
@@ -292,17 +298,17 @@ export default function AdminPortal({ msalInstance, account, onClose }: Props) {
                           <button
                             onClick={() => setConfirmDelete(user.id)}
                             disabled={isBusy}
-                            className="text-fluent-text-disabled hover:text-fluent-danger transition-colors disabled:opacity-50"
-                            title="Gebruiker verwijderen"
+                            className="text-fluent-text-disabled hover:text-fluent-danger transition-colors disabled:opacity-50 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-danger"
+                            aria-label={`${user.displayName} verwijderen`}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                           </button>
                         )
                       )}
                       {isBusy && (
-                        <div className="inline-block w-4 h-4 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin ml-2" />
+                        <div role="status" aria-label="Bezig" className="inline-block w-4 h-4 border-2 border-fluent-accent border-t-transparent rounded-full animate-spin ml-2" />
                       )}
                     </td>
                   </tr>

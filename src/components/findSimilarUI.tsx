@@ -21,9 +21,9 @@ export function SimilarControls({
       <button
         onClick={onFind}
         disabled={disabled}
-        className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-fluent-accent bg-fluent-accent-light hover:brightness-95 active:scale-[0.97] disabled:opacity-40 transition-all"
+        className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-fluent-accent bg-fluent-accent-light hover:brightness-95 active:scale-[0.97] disabled:opacity-40 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent focus-visible:ring-offset-2 focus-visible:ring-offset-fluent-bg-primary"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
         </svg>
         Vind vergelijkbare
@@ -32,24 +32,26 @@ export function SimilarControls({
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs text-fluent-text-secondary">
           <label className="flex items-center gap-2">
             <span className="w-10 text-right">Vorm</span>
-            <span className="text-fluent-text-disabled">Strikt</span>
+            <span aria-hidden="true" className="text-fluent-text-disabled">Strikt</span>
             <input
               type="range" min={2} max={24} step={1} value={thresholdHash}
               onChange={e => setThresholdHash(+e.target.value)}
+              aria-label="Gevoeligheid op vorm (lager is strikter)"
               className="accent-fluent-accent"
             />
-            <span className="text-fluent-text-disabled">Ruim</span>
+            <span aria-hidden="true" className="text-fluent-text-disabled">Ruim</span>
             <span className="tabular-nums font-semibold text-fluent-text-primary w-6 text-right">{thresholdHash}</span>
           </label>
           <label className="flex items-center gap-2">
             <span className="w-10 text-right">Kleur</span>
-            <span className="text-fluent-text-disabled">Ruim</span>
+            <span aria-hidden="true" className="text-fluent-text-disabled">Ruim</span>
             <input
               type="range" min={0.5} max={0.99} step={0.01} value={thresholdColor}
               onChange={e => setThresholdColor(+e.target.value)}
+              aria-label="Gevoeligheid op kleur (hoger is strikter)"
               className="accent-fluent-accent"
             />
-            <span className="text-fluent-text-disabled">Strikt</span>
+            <span aria-hidden="true" className="text-fluent-text-disabled">Strikt</span>
             <span className="tabular-nums font-semibold text-fluent-text-primary w-9 text-right">{thresholdColor.toFixed(2)}</span>
           </label>
         </div>
@@ -67,9 +69,16 @@ export function SimilarControls({
 // Donkere overlay met voortgang over de huidige foto tijdens een scan.
 export function ScanOverlay({ progress, onCancel }: { progress: number; onCancel: () => void }) {
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 px-8" style={{ background: 'rgba(0,0,0,0.72)' }}>
+    <div role="status" aria-live="polite" className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 px-8" style={{ background: 'rgba(0,0,0,0.72)' }}>
       <span className="text-white text-sm font-semibold">Vergelijkbare foto's zoeken…</span>
-      <div className="w-full max-w-xs">
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progress}
+        aria-label="Vergelijkbare foto's zoeken"
+        className="w-full max-w-xs"
+      >
         <div className="h-[4px]" style={{ background: 'rgba(255,255,255,0.2)' }}>
           <div className="h-full transition-all duration-200" style={{ width: `${progress}%`, background: 'var(--color-accent)' }} />
         </div>
@@ -77,7 +86,7 @@ export function ScanOverlay({ progress, onCancel }: { progress: number; onCancel
       </div>
       <button
         onClick={onCancel}
-        className="px-5 py-2 text-sm font-semibold text-white border border-white/40 hover:bg-white/10 transition-colors"
+        className="px-5 py-2 text-sm font-semibold text-white border border-white/40 hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         style={{ borderRadius: 10 }}
       >
         Annuleren
@@ -96,6 +105,8 @@ export function NoMatchBanner({
 }) {
   return (
     <div
+      role="status"
+      aria-live="polite"
       className="fixed left-1/2 -translate-x-1/2 bottom-4 z-40 flex items-center gap-3 px-4 py-2.5 shadow-lg"
       style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border-strong)', borderRadius: 12 }}
     >
@@ -110,10 +121,10 @@ export function NoMatchBanner({
       </div>
       <button
         onClick={onClose}
-        className="text-fluent-text-secondary hover:text-fluent-text-primary p-1 flex-shrink-0"
-        title="Sluiten"
+        className="text-fluent-text-secondary hover:text-fluent-text-primary p-1 flex-shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent"
+        aria-label="Sluiten"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>

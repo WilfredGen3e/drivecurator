@@ -6,10 +6,10 @@ interface Props {
 
 export default function PhotoStackLoader({ currentThumb, photoCount, folderName }: Props) {
   return (
-    <div className="flex flex-col items-center gap-8">
+    <div role="status" aria-live="polite" aria-busy="true" className="flex flex-col items-center gap-8">
 
       {/* Fotostapel */}
-      <div className="relative" style={{ width: 200, height: 200 }}>
+      <div aria-hidden="true" className="relative" style={{ width: 200, height: 200 }}>
         <div
           className="absolute inset-0 rounded-2xl bg-fluent-bg-hover"
           style={{ transform: 'rotate(-9deg) translate(-6px, 8px)', zIndex: 0 }}

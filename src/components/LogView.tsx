@@ -80,18 +80,19 @@ export default function LogView() {
           <span className="text-fluent-text-secondary">{visible.length} regels</span>
           <button
             onClick={() => setFilter(f => (f === 'all' ? 'issues' : 'all'))}
-            className="text-fluent-accent hover:text-fluent-accent-hover"
+            aria-pressed={filter === 'issues'}
+            className="text-fluent-accent hover:text-fluent-accent-hover rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent"
           >
             {filter === 'all' ? 'Toon alleen waarschuwingen/fouten' : 'Toon alles'}
           </button>
         </div>
         <div className="flex items-center gap-3 text-xs">
-          <button onClick={copy} className="text-fluent-accent hover:text-fluent-accent-hover">
+          <button onClick={copy} className="text-fluent-accent hover:text-fluent-accent-hover rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent">
             {copied ? 'Gekopieerd ✓' : 'Kopieer'}
           </button>
           <button
             onClick={() => { if (confirm('Logboek wissen?')) clearLogs() }}
-            className="text-fluent-danger hover:opacity-80"
+            className="text-fluent-danger hover:opacity-80 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-danger"
           >
             Wissen
           </button>
@@ -113,7 +114,7 @@ export default function LogView() {
       )}
 
       {/* Regels */}
-      <div className="flex-1 overflow-auto font-mono text-xs">
+      <div role="log" aria-live="polite" aria-label="Logregels" className="flex-1 overflow-auto font-mono text-xs">
         {visible.length === 0 ? (
           <p className="text-center text-fluent-text-secondary py-16">Geen logregels.</p>
         ) : (
@@ -156,7 +157,8 @@ function ScopeChip({
   return (
     <button
       onClick={onClick}
-      className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+      aria-pressed={active}
+      className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent ${
         active
           ? 'bg-fluent-accent text-white'
           : 'bg-fluent-bg-hover text-fluent-text-secondary hover:text-fluent-text-primary'

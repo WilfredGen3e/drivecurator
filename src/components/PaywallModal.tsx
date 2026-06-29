@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import Button from './ui/Button'
 import { branding } from '../branding'
 
@@ -9,12 +10,27 @@ interface Props {
 const limietMailto = `mailto:${branding.supportEmail}?subject=${encodeURIComponent(`${branding.name} - Limiet verhogen`)}`
 
 export default function PaywallModal({ photosTriaged, onBack }: Props) {
+  // Escape sluit de modal — verwachte toetsenbordgedrag voor een dialog
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onBack()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onBack])
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-md p-8 rounded-2xl bg-fluent-bg-primary shadow-float animate-rise">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="paywall-title"
+        aria-describedby="paywall-desc"
+        className="w-full max-w-md p-8 rounded-2xl bg-fluent-bg-primary shadow-float animate-rise"
+      >
         {/* Logo */}
         <div className="flex items-center gap-2 mb-6">
-          <svg className="w-5 h-5 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
+          <svg aria-hidden="true" className="w-5 h-5 text-fluent-accent" fill="currentColor" viewBox="0 0 20 20">
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
           </svg>
           <span className="font-semibold text-fluent-text-primary">{branding.name}</span>
@@ -22,22 +38,24 @@ export default function PaywallModal({ photosTriaged, onBack }: Props) {
 
         {/* Icoon */}
         <div className="w-12 h-12 flex items-center justify-center mb-5 rounded-xl bg-fluent-accent-light text-fluent-accent">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg aria-hidden="true" className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
 
-        <h2 className="text-xl font-semibold text-fluent-text-primary mb-2">Je gratis tegoed is op</h2>
-        <p className="text-sm text-fluent-text-secondary mb-1 leading-relaxed">
-          Je hebt {photosTriaged} foto's beoordeeld — dat is jouw huidige maximum.
-        </p>
-        <p className="text-sm text-fluent-text-secondary mb-6 leading-relaxed">
-          Wil je meer foto's cureren? Neem contact op met de beheerder om je limiet te verhogen.
-        </p>
+        <h2 id="paywall-title" className="text-xl font-semibold text-fluent-text-primary mb-2">Je gratis tegoed is op</h2>
+        <div id="paywall-desc">
+          <p className="text-sm text-fluent-text-secondary mb-1 leading-relaxed">
+            Je hebt {photosTriaged} foto's beoordeeld — dat is jouw huidige maximum.
+          </p>
+          <p className="text-sm text-fluent-text-secondary mb-6 leading-relaxed">
+            Wil je meer foto's cureren? Neem contact op met de beheerder om je limiet te verhogen.
+          </p>
+        </div>
 
         <a
           href={limietMailto}
-          className="flex items-center justify-center w-full min-h-[44px] rounded-xl bg-fluent-accent hover:bg-fluent-accent-hover text-white text-[15px] font-semibold transition-colors active:scale-[0.97] mb-2"
+          className="flex items-center justify-center w-full min-h-[44px] rounded-xl bg-fluent-accent hover:bg-fluent-accent-hover text-white text-[15px] font-semibold transition-colors active:scale-[0.97] mb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent focus-visible:ring-offset-2 focus-visible:ring-offset-fluent-bg-primary"
         >
           Neem contact op
         </a>

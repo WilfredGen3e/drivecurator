@@ -1,4 +1,4 @@
-import { useState, useRef, Dispatch, SetStateAction } from 'react'
+import { useState, useRef, useEffect, Dispatch, SetStateAction } from 'react'
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { DriveItem, moveItem, deleteItem } from '../services/graphService'
 import { PhotoCluster } from '../services/clusterService'
@@ -43,6 +43,18 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
   const toggleSelectAll = () => {
     setSelectedIds(allSelected ? new Set() : new Set(photos.map(p => p.id)))
   }
+
+  // Escape sluit een open overlay (bevestiging of mappen-sheet)
+  useEffect(() => {
+    if (!showSheet && !showDeleteConfirm) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setShowDeleteConfirm(false)
+      setShowSheet(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showSheet, showDeleteConfirm])
 
   // ── Gedeelde bulk-worker ───────────────────────────────────────────────────
 
@@ -99,14 +111,14 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
 
       {/* Header */}
       <div className="flex items-center gap-2 px-4 h-10 border-b border-fluent-border bg-fluent-bg-primary flex-shrink-0">
-        <button onClick={() => onDone(photos)} className="text-fluent-text-secondary hover:text-fluent-text-primary text-sm flex items-center gap-1 transition-colors">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        <button onClick={() => onDone(photos)} className="text-fluent-text-secondary hover:text-fluent-text-primary text-sm flex items-center gap-1 transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent focus-visible:ring-offset-2 focus-visible:ring-offset-fluent-bg-primary">
+          <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           Terug
         </button>
-        <span className="text-fluent-text-disabled text-sm">·</span>
+        <span aria-hidden="true" className="text-fluent-text-disabled text-sm">·</span>
         <span className="text-sm font-semibold text-fluent-text-primary truncate flex-1">{cluster.label}</span>
         {hasSelection
-          ? <button onClick={toggleSelectAll} className="text-xs text-fluent-accent hover:underline flex-shrink-0">{allSelected ? 'Geen' : 'Alles'}</button>
+          ? <button onClick={toggleSelectAll} className="text-xs text-fluent-accent hover:underline flex-shrink-0 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent">{allSelected ? 'Geen' : 'Alles'}</button>
           : <span className="text-xs text-fluent-text-disabled flex-shrink-0">{photos.length} foto{photos.length !== 1 ? "'s" : ''}</span>
         }
       </div>
@@ -115,7 +127,7 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       {hasSelection && (
         <div className="flex-shrink-0 px-4 py-2 bg-fluent-accent-light border-b border-fluent-accent flex items-center justify-between">
           <span className="text-sm font-semibold text-fluent-accent">{selectedIds.size} geselecteerd</span>
-          <button onClick={() => setSelectedIds(new Set())} className="text-xs text-fluent-accent hover:underline">Selectie opheffen</button>
+          <button onClick={() => setSelectedIds(new Set())} className="text-xs text-fluent-accent hover:underline rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent">Selectie opheffen</button>
         </div>
       )}
 
@@ -123,7 +135,15 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       {(moveProgress || deleteProgress) && (() => {
         const p = moveProgress ?? deleteProgress!
         return (
-          <div className="flex-shrink-0" style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}>
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={p.total}
+            aria-valuenow={p.done}
+            aria-label={moveProgress ? 'Verplaatsen' : 'Verwijderen'}
+            className="flex-shrink-0"
+            style={{ background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)' }}
+          >
             <div className="px-4 pt-2.5 pb-1 flex items-center justify-between">
               <p className="text-xs text-fluent-text-secondary">{moveProgress ? 'Verplaatsen' : 'Verwijderen'}…</p>
               <p className="text-xs text-fluent-text-disabled tabular-nums">{p.done} / {p.total}</p>
@@ -146,15 +166,17 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
                 key={photo.id}
                 onClick={() => toggleSelect(photo.id)}
                 disabled={busy}
-                className="aspect-square bg-fluent-bg-hover overflow-hidden relative rounded-lg disabled:pointer-events-none active:scale-[0.97] transition-transform"
+                aria-pressed={selected}
+                aria-label={photo.name}
+                className="aspect-square bg-fluent-bg-hover overflow-hidden relative rounded-lg disabled:pointer-events-none active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent focus-visible:ring-offset-1 focus-visible:ring-offset-fluent-bg-secondary"
                 style={{ outline: selected ? '2px solid var(--color-accent)' : 'none', outlineOffset: '-2px' }}
               >
                 {thumb
-                  ? <img src={thumb} alt={photo.name} className="w-full h-full object-cover" />
+                  ? <img src={thumb} alt="" className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center p-1"><span className="text-fluent-text-disabled text-xs text-center leading-tight truncate">{photo.name}</span></div>
                 }
                 {selected && (
-                  <div className="absolute inset-0 bg-fluent-accent/20 flex items-start justify-end p-1 pointer-events-none">
+                  <div aria-hidden="true" className="absolute inset-0 bg-fluent-accent/20 flex items-start justify-end p-1 pointer-events-none">
                     <div className="w-5 h-5 rounded-full bg-fluent-accent flex items-center justify-center flex-shrink-0">
                       <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                     </div>
@@ -198,9 +220,9 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       {/* Bevestigingsdialog */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowDeleteConfirm(false)} />
-          <div className="relative w-full max-w-sm p-6 space-y-4 rounded-2xl bg-fluent-bg-primary shadow-float animate-rise">
-            <h2 className="font-semibold text-fluent-text-primary text-base">Weet u het zeker?</h2>
+          <div aria-hidden="true" className="absolute inset-0 bg-black/40" onClick={() => setShowDeleteConfirm(false)} />
+          <div role="dialog" aria-modal="true" aria-labelledby="cluster-delete-title" className="relative w-full max-w-sm p-6 space-y-4 rounded-2xl bg-fluent-bg-primary shadow-float animate-rise">
+            <h2 id="cluster-delete-title" className="font-semibold text-fluent-text-primary text-base">Weet u het zeker?</h2>
             <p className="text-sm text-fluent-text-secondary">
               {actionCount} foto{actionCount !== 1 ? "'s" : ''} worden naar de <strong>OneDrive-prullenbak</strong> verplaatst. U kunt ze daar nog terugzetten.
             </p>
@@ -215,15 +237,15 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       {/* Folder sheet */}
       {showSheet && (
         <div className="fixed inset-0 z-40 flex flex-col justify-end">
-          <div className="flex-1 bg-black/40 animate-fade" onClick={() => setShowSheet(false)} />
-          <div className="flex flex-col rounded-t-3xl pb-safe animate-sheet" style={{ height: '60vh', background: 'var(--color-bg-primary)' }}>
+          <div aria-hidden="true" className="flex-1 bg-black/40 animate-fade" onClick={() => setShowSheet(false)} />
+          <div role="dialog" aria-modal="true" aria-labelledby="cluster-move-title" className="flex flex-col rounded-t-3xl pb-safe animate-sheet" style={{ height: '60vh', background: 'var(--color-bg-primary)' }}>
             <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
               <div className="min-w-0">
-                <p className="font-semibold text-fluent-text-primary text-sm">Verplaatsen naar</p>
+                <p id="cluster-move-title" className="font-semibold text-fluent-text-primary text-sm">Verplaatsen naar</p>
                 <p className="text-fluent-text-secondary text-xs truncate">{cluster.label} · {actionCount} foto{actionCount !== 1 ? "'s" : ''}</p>
               </div>
-              <button onClick={() => setShowSheet(false)} className="text-fluent-text-secondary p-1 flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              <button onClick={() => setShowSheet(false)} aria-label="Sluiten" className="text-fluent-text-secondary p-1 flex-shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fluent-accent">
+                <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="flex-1 overflow-auto">
@@ -234,7 +256,7 @@ export default function ClusterGridView({ msalInstance, account, cluster, onDone
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-fluent-text-primary text-fluent-bg-primary text-sm px-4 py-2 rounded-full shadow-float z-50">{toast}</div>
+        <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-fluent-text-primary text-fluent-bg-primary text-sm px-4 py-2 rounded-full shadow-float z-50">{toast}</div>
       )}
     </div>
   )
