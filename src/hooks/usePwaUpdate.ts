@@ -2,40 +2,31 @@ import { useEffect, useRef, useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 
 export interface PwaUpdate {
-  /** Er staat een nieuwe versie klaar om toe te passen. */
-  needRefresh: boolean
   /** Er wordt op dit moment actief gezocht naar een nieuwe versie. */
   checking: boolean
-  /** Past de wachtende update toe en herlaadt op de nieuwe versie. */
-  applyUpdate: () => void
   /** Vraagt de service worker actief om naar een nieuwe versie te zoeken. */
   checkForUpdate: () => void
 }
 
-// Beheert PWA-updates: detecteert een wachtende nieuwe versie, checkt bij het
-// heropenen van de (geïnstalleerde) app, en past de update op verzoek toe. Zo
-// blijft een geïnstalleerde PWA niet op een oude buildversie hangen.
+// Beheert PWA-updates in 'autoUpdate'-modus (zie vite.config.ts). Een nieuwe
+// versie wordt automatisch geïnstalleerd en toegepast: de service worker
+// activeert direct (skipWaiting) en vite-plugin-pwa herlaadt de pagina op de
+// nieuwe versie. We hoeven dus niets handmatig toe te passen — we checken alleen
+// op het juiste moment: bij het (her)openen van de app en op verzoek via de
+// app-naam in de header. Zo blijft een geïnstalleerde PWA niet op een oude build
+// hangen, zónder mid-sessie te herladen.
 export function usePwaUpdate(): PwaUpdate {
   const [checking, setChecking] = useState(false)
   const registrationRef = useRef<ServiceWorkerRegistration | undefined>(undefined)
 
-  const {
-    needRefresh: [needRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
+  useRegisterSW({
     onRegisteredSW(_swUrl, registration) {
       registrationRef.current = registration ?? undefined
-      // Periodiek (elk uur) checken op een nieuwe versie zolang de app open is.
-      if (registration) {
-        setInterval(() => { registration.update().catch(() => {}) }, 60 * 60 * 1000)
-      }
     },
   })
 
-  // Zodra een update klaarstaat, stopt de "checken"-indicatie.
-  useEffect(() => { if (needRefresh) setChecking(false) }, [needRefresh])
-
-  // Bij terugkeer naar de app (PWA heropend of tab weer zichtbaar) opnieuw checken.
+  // Bij terugkeer naar de app (PWA heropend of tab weer zichtbaar) checken op een
+  // nieuwe versie. Wordt er een gevonden, dan past autoUpdate 'm toe en herlaadt.
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === 'visible') registrationRef.current?.update().catch(() => {})
@@ -44,14 +35,13 @@ export function usePwaUpdate(): PwaUpdate {
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
-  const applyUpdate = () => { void updateServiceWorker(true) }
-
   const checkForUpdate = () => {
     setChecking(true)
     void registrationRef.current?.update().catch(() => {})
     // Vindt hij niets, dan zou de spinner anders blijven hangen; stop 'm zelf.
+    // (Vindt hij wél een nieuwe versie, dan herlaadt de pagina vanzelf.)
     setTimeout(() => setChecking(false), 2500)
   }
 
-  return { needRefresh, checking, applyUpdate, checkForUpdate }
+  return { checking, checkForUpdate }
 }

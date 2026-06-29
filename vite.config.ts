@@ -69,11 +69,12 @@ export default defineConfig(({ command }) => ({
     brandingHtml(),
     mockPhotos(),
     VitePWA({
-      // 'prompt': een nieuwe versie staat klaar zonder direct te herladen; de
-      // gebruiker past 'm toe via de verstopte update-actie in de app-naam
-      // (zie usePwaUpdate + App-header). Voorkomt dat een geïnstalleerde PWA op
-      // een oude buildversie blijft hangen.
-      registerType: 'prompt',
+      // 'autoUpdate': een nieuwe versie wordt automatisch geïnstalleerd en
+      // toegepast. De plugin zet skipWaiting + clientsClaim aan en herlaadt de
+      // pagina zodra de nieuwe SW activeert. Gekozen omdat Safari-dock-PWA's de
+      // handmatige prompt-modus onbetrouwbaar oppakten (zie usePwaUpdate). De
+      // app-naam in de header blijft een handmatige "check nu"-knop.
+      registerType: 'autoUpdate',
       // Iconen + statische SVG's staan in public/ en worden zo meegekopieerd.
       includeAssets: ['apple-touch-icon-180x180.png', 'icon-any.svg'],
       manifest: {

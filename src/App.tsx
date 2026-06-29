@@ -256,12 +256,10 @@ export default function App() {
     <div className="h-screen bg-fluent-bg-primary text-fluent-text-primary flex flex-col">
       <header className="flex items-center justify-between px-4 border-b border-fluent-border bg-fluent-bg-primary flex-shrink-0 h-12">
         <button
-          onClick={() => pwa.needRefresh ? pwa.applyUpdate() : pwa.checkForUpdate()}
+          onClick={() => pwa.checkForUpdate()}
           className="flex items-center gap-2 group rounded-lg px-1 -mx-1 py-1 hover:bg-fluent-bg-hover active:scale-[0.98] transition-all"
           title={
-            pwa.needRefresh
-              ? 'Nieuwe versie beschikbaar — tik om bij te werken'
-              : pwa.checking
+            pwa.checking
               ? 'Controleren op updates…'
               : 'Tik om op updates te controleren'
           }
@@ -275,12 +273,6 @@ export default function App() {
           </span>
           {pwa.checking && (
             <span className="w-3 h-3 border-[1.5px] border-fluent-accent border-t-transparent rounded-full animate-spin" />
-          )}
-          {pwa.needRefresh && !pwa.checking && (
-            <span className="flex items-center gap-1 text-[10px] font-semibold text-fluent-accent">
-              <span className="w-1.5 h-1.5 rounded-full bg-fluent-accent animate-pulse" />
-              bijwerken
-            </span>
           )}
         </button>
         {/* Desktop — volledige header (geen ruimtegebrek hier) */}
